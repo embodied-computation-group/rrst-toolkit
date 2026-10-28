@@ -228,12 +228,14 @@ end
             [down, ~, code] = KbCheck;
             if down && any(code(keys.go)), break; end
             if down && any(code(keys.abort)), aborted = true; break; end
+            GetMouse;                    % keeps the window responsive (KbCheck alone lets Windows grey it out)
+            WaitSecs(0.001);
         end
         waitRelease();
     end
 
     function waitRelease()
-        while KbCheck, end
+        while KbCheck, GetMouse; end
         [~, ~, b] = GetMouse;
         while any(b), [~, ~, b] = GetMouse; end
     end
