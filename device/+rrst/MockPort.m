@@ -40,6 +40,11 @@ classdef MockPort < handle
         SoftwareVersion = "Patient-Regulator (Oct  7 2026 08:45:06)"
         Fault = ""
         Timeout = 10
+        % true: like Patient-Regulator on the stim laptop (2026-10-28), every move is
+        % followed by one extra empty prompt. It is sent with the host's next command,
+        % and that command's reply only follows on a later read: the race seen when a
+        % move is sent within milliseconds of the previous one.
+        StrayPromptAfterMove = false
     end
 
     properties (SetAccess = private)
@@ -53,6 +58,9 @@ classdef MockPort < handle
     properties (Access = private)
         OutBuffer = ''
         Awaiting = ""                  % command whose value line comes next: a, f or g
+        StrayPending = false           % a stray prompt goes out with the next write
+        Deferring = false              % output held back until the stray has been read
+        Delayed = ''
     end
 
     properties (Constant, Access = private)
@@ -67,12 +75,22 @@ classdef MockPort < handle
         end
 
         function n = get.NumBytesAvailable(obj)
+            if isempty(obj.OutBuffer) && obj.Deferring
+                obj.OutBuffer = obj.Delayed;
+                obj.Delayed = '';
+                obj.Deferring = false;
+            end
             n = numel(obj.OutBuffer);
         end
 
         function writeline(obj, txt)
             txt = string(txt);
             obj.Written(end + 1, 1) = txt;
+            if obj.StrayPending
+                obj.StrayPending = false;
+                obj.OutBuffer = [obj.OutBuffer, obj.PROMPT];
+                obj.Deferring = true;
+            end
             if obj.Fault == "silent"
                 return
             end
@@ -130,7 +148,11 @@ classdef MockPort < handle
 
     methods (Access = private)
         function emit(obj, text)
-            obj.OutBuffer = [obj.OutBuffer, char(text)];
+            if obj.Deferring
+                obj.Delayed = [obj.Delayed, char(text)];
+            else
+                obj.OutBuffer = [obj.OutBuffer, char(text)];
+            end
         end
 
         function calibrate(obj)
@@ -242,6 +264,7 @@ classdef MockPort < handle
                 end
             end
             obj.emit([out, obj.PROMPT]);
+            obj.StrayPending = obj.StrayPromptAfterMove;
         end
 
         function status(obj)

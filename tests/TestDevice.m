@@ -226,6 +226,23 @@ classdef TestDevice < matlab.unittest.TestCase
             tc.verifyTrue(any([dev.Transcript.direction] == "unsolicited"));
         end
 
+        function strayPromptIsNotTakenAsTheNextReply(tc)
+            % Pilot 2026-10-28 14:00: a move sent 9 ms after the previous one read the
+            % previous move's extra empty prompt as its reply and failed; the park
+            % that followed then read the leftover reply and failed too.
+            port = rrst.MockPort('MaxPosition', 45123, 'StrayPromptAfterMove', true);
+            dev = rrst.Device(port);
+            dev.calibrate();
+            dev.moveTo(33108);
+            mv = dev.moveTo(15604);              % sent at once, before the stray is read
+            tc.verifyTrue(mv.ok);
+            tc.verifyEqual(mv.target, 15604);
+            mv = dev.moveTo(1600);
+            tc.verifyTrue(mv.ok);
+            tc.verifyEqual(mv.target, 1600);
+            tc.verifyTrue(any([dev.Transcript.direction] == "unsolicited"));
+        end
+
         function unsolicitedNonErrorTextIsLoggedNotFatal(tc)
             port = rrst.MockPort('MaxPosition', 45123);
             dev = rrst.Device(port);
