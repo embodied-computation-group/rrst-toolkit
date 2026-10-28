@@ -27,7 +27,7 @@ try
     after = dev.status();
     dev.command("x", dev.DefaultTimeout);
 catch err
-    saveTranscript(root, dev, before.deviceId);
+    saveTranscript(root, dev, 'calibrate', before.deviceId);
     rethrow(err);
 end
 
@@ -37,21 +37,5 @@ fprintf('MaxPosition %d steps, first contact %d steps (retract %g mm)\n', ...
 fprintf('Previous saved max: %g\n', cal.previousSaved);
 fprintf('After: calibrated %d, enabled %d, position %g\n', ...
     after.calibrated, after.stepperEnabled, after.currentPosition);
-saveTranscript(root, dev, before.deviceId);
-end
-
-function saveTranscript(root, dev, deviceId)
-outDir = fullfile(root, 'bench', 'captures');
-if ~exist(outDir, 'dir'), mkdir(outDir); end
-fname = fullfile(outDir, sprintf('calibrate__device_%s__%s.txt', deviceId, datestr(now, 'yyyy-mm-dd_HHMMSS')));
-% read(...,'char') yields one char per byte, so ISO-8859-1 writes the device's bytes back unchanged.
-fid = fopen(fname, 'w', 'n', 'ISO-8859-1');
-for k = 1:numel(dev.Transcript)
-    tr = dev.Transcript(k);
-    fprintf(fid, '===== %.3f s  %s\n', tr.t, tr.direction);
-    fwrite(fid, char(tr.text));
-    fprintf(fid, '\n');
-end
-fclose(fid);
-fprintf('Transcript saved to %s\n', fname);
+saveTranscript(root, dev, 'calibrate', before.deviceId);
 end

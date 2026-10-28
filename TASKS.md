@@ -34,6 +34,15 @@ session so a fresh session can continue from the files.
     MaxPosition **40079** (previous saved 39963, +116 steps = 0.07 mm), computed
     first contact 16079, travel 25.0 mm at 1600 steps/mm, 25.6 s. The firmware
     saves the new max to EEPROM on `c`. `x` diagnostics all OK. Replies are now fixtures;
+  - [x] `bench/openForSetup.m` (recalibrate, then park at 1600), 2026-10-28:
+    move 41220 -> 1600 took **4.09 s** from command to "Move complete.", well over the
+    ~2.5 s the old task allows before inhalation. **MaxPosition read 41220 (+1141
+    steps, 0.7 mm)**: the tube was fitted during this calibration, so the wedge
+    probably closed onto it and the motor lost steps (the tube cannot lengthen the
+    real travel). Unconfirmed. To test: repeat `c` with and without the tube and
+    compare. If confirmed, calibrate tube-out, or raise the run current, and ask
+    Martin about this. Also seen: the move reply was followed by a second `Valve>`
+    prompt; check how the firmware handles the value line;
   - capture real transcripts into `tests/fixtures/`;
   - measure the physical 0 and full-scale anchors;
   - time real moves.
