@@ -199,13 +199,15 @@ class Noise:
         self.snd = None
         if not self.enabled:
             return
+        speaker = {"speaker": n["speaker"]} if n["speaker"] else {}
         if n["source"] == "file":
             # hamming=False: PsychoPy would otherwise fade each end, a dip at every loop
-            self.snd = sound.Sound(value=str(n["file"]), loops=-1, volume=n["volume"], hamming=False)
+            self.snd = sound.Sound(value=str(n["file"]), loops=-1, volume=n["volume"], hamming=False,
+                                   **speaker)
         else:
             x = masking_noise(n["fs"], n["dur_s"], n["colour"], seed=1)
             self.snd = sound.Sound(value=np.column_stack([x, x]), sampleRate=n["fs"], loops=-1,
-                                   volume=n["volume"], hamming=False, stereo=True)
+                                   volume=n["volume"], hamming=False, stereo=True, **speaker)
 
     def start(self):
         if self.snd is not None:

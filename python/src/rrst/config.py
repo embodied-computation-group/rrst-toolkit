@@ -35,8 +35,8 @@ _SCHEMA = {
     "timing": {k: None for k in ("fixed_timing", "prepare", "inhale", "breath_pause", "response",
                                  "confidence", "isi", "iti_min", "iti_max", "pause", "pause_every",
                                  "experience_question")},
-    "noise": {"enabled": None, "source": None, "file": None, "volume": None, "colour": None,
-              "fs": None, "dur_s": None},
+    "noise": {"enabled": None, "source": None, "file": None, "volume": None, "speaker": None,
+              "colour": None, "fs": None, "dur_s": None},
     "output": {"dir": None, "devices_dir": None},
 }
 _GRIDS = ("stim_range", "prior_alpha_range", "prior_log10_beta_range",
@@ -133,6 +133,8 @@ def validate(cfg):
         _bad("timing.iti_min must not exceed timing.iti_max.")
 
     noise = cfg["noise"]
+    if not isinstance(noise["speaker"], str):
+        _bad('noise.speaker must be an audio output name, or "" to let PsychoPy choose.')
     if noise["enabled"]:
         if noise["source"] == "file":
             f = Path(noise["file"])

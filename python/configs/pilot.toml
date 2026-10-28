@@ -70,6 +70,7 @@ enabled = true
 source = "file"              # "file" (looped wav) or "generated" (colour below)
 file = "task/helpers/audio/rain_loop_30s.wav"
 volume = 0.2                 # PROVISIONAL: by ear, relative to the system volume
+speaker = ""                 # audio output name ("": PsychoPy's choice); list with --list-audio
 colour = "brown"             # generated only
 fs = 44100                   # generated only
 dur_s = 30                   # generated only

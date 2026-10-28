@@ -47,7 +47,13 @@ def main(argv=None):
     ap.add_argument("--subject", type=int)
     ap.add_argument("--language", choices=["e", "d"])
     ap.add_argument("--seed", type=int)
+    ap.add_argument("--list-audio", action="store_true", help="print the audio outputs and exit")
     args = ap.parse_args(argv)
+    if args.list_audio:
+        from psychopy.hardware.speaker import SpeakerDevice
+        for d in SpeakerDevice.getAvailableDevices():
+            print(d["deviceName"])
+        return
 
     cfg = load_config(args.config)
     if args.mock:
