@@ -90,6 +90,31 @@ row per trial. Prefixes: `MOCK_`, `SIM_`, `Aborted_`, `Error_`, `PracticeFailed_
 - Masking sound: the adult task's rain loop at volume 0.6; check the level for small
   headphones by ear.
 
+## Simulated precision (`simulateKids`, 100 runs per profile, slope 8, lapse 0.1)
+
+| True threshold | False alarms | Bias | RMS error | Final SE | Trials used | Stopped early | Flagged unusable |
+|---|---|---|---|---|---|---|---|
+| 55 | 0.05 | +1.7 | 3.9 | 6.1 | 27 | 99 % | 0 % |
+| 55 | 0.35 | +0.5 | 4.8 | 7.7 | 31 | 81 % | 34 % |
+| 70 | 0.05 | +1.0 | 3.9 | 5.6 | 26 | 100 % | 3 % |
+| 70 | 0.20 | +0.5 | 3.6 | 6.4 | 27 | 99 % | 11 % |
+| 70 | 0.35 | -0.4 | 4.7 | 7.1 | 29 | 90 % | 33 % |
+| 80 | 0.05 | -1.1 | 2.9 | 4.0 | 26 | 100 % | 43 % |
+| 80 | 0.35 | -4.7 | 6.2 | 5.9 | 27 | 98 % | 46 % |
+
+Threshold estimates are within about 4-6 % (RMS) for every profile, and most runs stop
+early after about 27 trials (20 Psi + catch), i.e. about 5 minutes of trials. No level
+ever exceeded the cap. Two problems:
+
+- **The "low hit rate" flag misfires for children with high thresholds.** It flags a
+  child who says "yes" to fewer than 60 % of trials at 80 % and above, but for a child
+  whose threshold is near 80 that is expected, not a sign of a bad session (43 % of
+  low-bias children at threshold 80 were flagged). The rule should only apply when the
+  estimated threshold is well below 80, or be dropped. Not changed yet: a design call.
+- **The false-alarm flag is noisy** with only about 8 catch trials per run: a third of
+  children with a true false-alarm rate of 0.35 cross the 0.4 line. More catch trials
+  or a posterior-based rule (the guess rate is estimated anyway) would be steadier.
+
 ## Not done or not checked
 
 - Never run with the real device or with a child; only the simulated device.
