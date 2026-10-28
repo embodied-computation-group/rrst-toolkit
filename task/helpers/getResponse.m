@@ -56,11 +56,16 @@ while ((GetSecs - vars.StartRT) <= vars.RespT)
             
         case 2 % Mouse
             
+            % Only a press that starts after the prompt counts: a button still
+            % held from before is ignored until it has been released
             [~,~,buttons] = GetMouse;
-            while (~any(buttons)) && ((GetSecs - vars.StartRT) <= vars.RespT) % wait for press & response time
+            released = ~any(buttons);
+            while (~released || ~any(buttons)) && ((GetSecs - vars.StartRT) <= vars.RespT) % wait for press & response time
                 [~,~,buttons] = GetMouse; % L [1 0 0], R [0 0 1]
+                released = released || ~any(buttons);
             end
-            
+            if ~released, buttons(:) = 0; end   % held for the whole window: no response
+
             if buttons == [1 0 0]       % Left - Stim 1
                 % update results
                 vars.RespLR = 0;

@@ -236,6 +236,7 @@ scaleRangeShifted = round((scaleRange)-mean(scaleRange));                      %
 %% Loop for scale loop
 t0                         = GetSecs;
 answer                     = 0;
+released                   = false;    % a button held from the previous screen must be released first
 while answer == 0
     % Parse user input for x location
     if strcmp(device, 'mouse')
@@ -308,9 +309,10 @@ while answer == 0
     % Check if answer has been given
     if strcmp(device, 'mouse')
         secs = GetSecs;
-        if buttons(mouseButton) == 1
+        if buttons(mouseButton) == 1 && released
             answer = 1;
         end
+        released = released || ~any(buttons);
     elseif strcmp(device, 'keyboard')
         [~, secs, keyCode] = KbCheck;
         if keyCode(responseKeys(1)) == 1

@@ -113,9 +113,12 @@ session so a fresh session can continue from the files.
     COM7 via hub. Device side clean (calibration 23 steps from the record, 32/32
     moves confirmed, parked open). Record and transcript in
     `bench/sessions/pilot__device_2E4441D76D5F2996__2026-10-28_1257/`.
-  - [ ] Fix: a held mouse button answers both the breath question and the
-    confidence scale (trial 3, RT 0.00 s / 0.01 s). Wait for release before
-    polling in `getResponse` and before `slideScale`'s loop.
+  - [x] Fixed: a held mouse button answered both the breath question and the
+    confidence scale (trial 3, RT 0.00 s / 0.01 s). `getResponse` and `slideScale`
+    now count only a press that starts after the button has been released; held
+    for the whole window means no response. Checked with stubbed GetMouse/GetSecs
+    (held-then-released, held throughout, clean press, no press): the old helpers
+    accept the held button, the new ones do not. Not yet clicked through for real.
   - [ ] Check: confidence 0 on 5 of 9 trials. Tester's choice, or slider start?
   - [x] Device not detected on the stim laptop, 2026-10-28. Plugged directly into
     either USB-A port of the X1 Carbon Gen 6, the unit produced no USB event at all
