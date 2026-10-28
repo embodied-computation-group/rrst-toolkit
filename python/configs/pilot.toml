@@ -66,10 +66,10 @@ pause_every = 20             # trials
 experience_question = 10
 
 [noise]
-enabled = true
+enabled = true               # pilotConfig.m has false and switches it on per run
 source = "file"              # "file" (looped wav) or "generated" (colour below)
 file = "task/helpers/audio/rain_loop_30s.wav"
-volume = 0.2                 # PROVISIONAL: by ear, relative to the system volume
+volume = 1.0                 # as pilotConfig.m (2026-10-28: "basically perfect", motor not audible)
 speaker = ""                 # audio output name ("": PsychoPy's choice); list with --list-audio
 colour = "brown"             # generated only
 fs = 44100                   # generated only
