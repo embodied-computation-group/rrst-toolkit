@@ -129,7 +129,9 @@ wedge closes fully during calibration. Then press Enter.
    masking noise starts, if it's enabled.
 3. **Tutorial** (optional, off in the pilot settings: `cfg.runTutorial = false`). An
    easy trial and a hard trial with feedback, a confidence-rating example, practice
-   trials, then a break of `cfg.timing.pause` (120 s). See the warning below.
+   trials (one per `cfg.tutorial.exampleStimuli` level, 3 in the pilot settings), then
+   a break of `cfg.timing.pause` (120 s). Esc during the tutorial skips the rest of it;
+   the wedge goes to a rest position and the main task starts.
 4. **Start.** "The experiment will start now. Press SPACE to start." After Space,
    "Get ready" shows for 3 s.
 5. **Trials.** Each trial is a two-interval forced choice: two breaths, one with the
@@ -171,12 +173,9 @@ legacy task took 30-35 min for 100 Psi trials, and the tutorial text says 30-40 
 The command window logs each trial: trial number, level, which breath had the load,
 and whether the response was correct.
 
-!!! warning "Tutorial not yet checked"
-    The tutorial is ported from `RRS_3-0` but hasn't been run in 2.0. It runs 6 practice
-    trials but the pilot settings define only 3 (`cfg.tutorial.exampleStimuli`), so it
-    is expected to stop with an error at the fourth practice trial. Esc during the
-    tutorial skips the rest of the tutorial; it doesn't abort the session. Keep
-    `cfg.runTutorial = false` until this is fixed.
+!!! note "Tutorial checked on the mock device only"
+    The tutorial is ported from `RRS_3-0`. It has run end to end on the mock device with
+    scripted key presses and clicks, but not yet with a participant on the real device.
 
 ## Experimenter keys
 
@@ -184,11 +183,11 @@ and whether the response was correct.
 |---|---|---|
 | **Enter** | Command window, before the window opens | Starts calibration |
 | **Space** | Instruction, start and "continue" screens | Continues |
-| **Esc** | Countdowns before each breath, inter-trial interval, break countdown | Aborts the session |
+| **Esc** | Any screen of the main task (countdowns, breathing circle, response, confidence, inter-trial interval, break) | Aborts the session |
+| **Esc** | During the tutorial | Skips the rest of the tutorial |
 
-With the mouse (the default, `cfg.inputDevice = 2`), Esc is **not** checked on the
-response and confidence screens, while the circle expands, or during calibration. Press
-it during a countdown or the inter-trial interval.
+Esc is not checked while the device calibrates (about 25 s); press it once the
+calibration screen is gone.
 
 **Esc aborts the session.** The wedge is parked open, the noise stops, "Experiment was
 aborted!" shows for 2 s, and the data so far are saved with an `Aborted_` prefix. The
@@ -277,8 +276,7 @@ the record says, then start again.
 
 **The window greys out or shows "Not responding".** Windows does this when the task
 doesn't poll the window. The wait loops of the main task now call `GetMouse`, which
-fixes it. If you see it in the main task, check you are on the current `main`. The
-tutorial's loops don't have this fix yet.
+fixes it. If you see it, check you are on the current `main`.
 
 **No sound.** Check `cfg.noise.enabled = true`, that the command window printed the
 `Masking noise:` line, the Windows volume, and that the headphones or speakers are the
