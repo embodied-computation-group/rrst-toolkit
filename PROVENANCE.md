@@ -38,6 +38,9 @@ University, and are included under GPL-3.0 by decision of the PI (Micah Allen,
 | `task/helpers/` | `task/helpers/` | `expandingRing60.avi` (25 MB) **not imported**: only the commented-out movie stimulus (`showExpandingRing.m`) uses it; the task uses `showExpandingRingGenerated.m`. Get it from the source commit if needed. |
 | `task/respDeviceHelpers_3-0/` | `task/respDeviceHelpers_3-0/` | reference only; replaced by `device/+rrst` |
 | `LICENSE` | `LICENSE` | |
+| `task/apparatus/version_2-2/`, `task/apparatus/version_3-0/` | `hardware/legacy/version_2-2/`, `hardware/legacy/version_3-0/` | legacy 3D-print STLs, PCB Gerbers/CAM files and layout PDF, build photos (2022); `.DS_Store` files dropped. Imported on the `handbook` branch |
+| `figs/RRST_devicePhoto.png` | `hardware/legacy/RRST_devicePhoto.png` | |
+| `task/arduino/RRST_Arduino/` | `firmware/legacy/` | Teensy 3.1 sketches (`RRST_Arduino.ino`, `Resp_valve_3-0.ino`) and the May-2026 `RRST_Teensy_4_version.zip` |
 
 ### Msnejbjerg/RRST (firmware, Control Panel, 4-0 helpers)
 - Repository: https://github.com/Msnejbjerg/RRST (private)
