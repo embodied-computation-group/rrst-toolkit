@@ -7,15 +7,16 @@ text is English only and must be translated (Swiss German / Danish) before use.
 ## Story
 
 A purple monster drinks milkshake through a long straw (the mouthpiece). A cheeky
-mouse sometimes pinches the straw, so the slurp feels "squishy". Each trial is one
-slurp; the child says whether the mouse pinched. Every answer earns a star; ten stars
+mouse sometimes pinches the straw, so the slurp feels "squishy". On each trial the
+experimenter starts the slurping when the child is ready; the child takes three slurps
+at the same level and says whether the mouse pinched. Every answer earns a star; ten stars
 finish a milkshake and earn a real sticker from the experimenter.
 
 ## Why it differs from the adult task
 
 | | Adult RRST 2.0 | Kids |
 |---|---|---|
-| Judgement | 2 breaths, which was harder (2IFC) | 1 breath, yes/no ("did the mouse pinch?") |
+| Judgement | 2 breaths, which was harder (2IFC) | 3 breaths at one level, yes/no ("did the mouse pinch?") |
 | Why | | A 4-year-old forgets breath 1 and shows interval bias, which a 2IFC Psi (guess fixed at 0.5) would misread. A yes/no bias is measurable with catch trials. |
 | Bias | none modelled | guess rate (false alarms) 0-0.5 in the posterior, marginalised |
 | Catch trials | none | 10 at level 0 (wedge just touching), never first, never two in a row |
@@ -24,7 +25,7 @@ finish a milkshake and earn a real sticker from the experimenter.
 | Start | Psi's choice | forced 70 % (just perceptible for an adult) |
 | Jumps | any | at most 15 % above the highest level so far |
 | Trials | 100 | 30 Psi + 10 catch; stops early when SE < 8 after 20 Psi trials |
-| Breath | 0.8 s inhale, no exhale cue | 1.2 s inhale (belly grows, milkshake drains), 1.8 s exhale (belly shrinks, bubbles) |
+| Breathing | 0.8 s timed inhale | experimenter presses Space when the child is ready; `cfg.child.slurps` (3) slurps paced at 1.2 s in (belly grows, milkshake drains a third), 1.8 s out (bubbles); pacing is not enforced and Space ends the slurps early. One timed breath was too hard to catch for a 4.5-year-old (first try, 2026-10-28). |
 | Answer | participant clicks | **experimenter clicks** what the child says or points at |
 | Feedback | none | practice only (the truth, every time); main trials: a star for every answer |
 
@@ -53,13 +54,14 @@ the answer screen, a white ring marks the face under it, and clicks in the middl
 ignored), or Left arrow / `n` = "easy" (no), Right arrow / `y` = "squishy" (yes). The chosen
 face lights up for half a second so you can see what was recorded. `x` = bad breath (trial repeated later). Space = pause
 (wedge to 0) and continue. Esc = abort (wedge parked open, data saved as `Aborted_`).
-Space also moves on from the story, "ready" and break screens.
+Space also moves on from the story, "Ready to slurp?" and break screens, and ends the
+slurps early.
 
 **Session:** calibration with nobody on the tube (about 0.5 min) -> story -> 2 free
 slurps and 6 practice trials with feedback (80, 0, 80, 0, 75, 0; pass: 5 of 6 and both
 80s right; one retry, then the session ends as `PracticeFailed_`, which is itself an
-outcome) -> up to 40 main trials with a 45-s break every 10 -> sticker. About 10 s per
-trial, so about 15 minutes in all.
+outcome) -> up to 40 main trials with a 45-s break every 10 -> sticker. About 15-20 s per
+trial, so about 15-20 minutes in all.
 
 **Saved** to `data/raw/` (never committed): `RRSTkids_<ID>_<date>.mat` with the result
 (every trial including repeats, practice, Psi posterior, bias flags, outcome), the
