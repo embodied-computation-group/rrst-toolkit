@@ -144,6 +144,16 @@ session so a fresh session can continue from the files.
     in a pilot, and not yet checked against the 14 kHz SpreadCycle whine.
     (A synthesised "rain" colour was tried and dropped unpushed: scratchy, and
     built for a 1 kHz whine that Martin's measurements do not show.)
+  - [x] Fourth pilot, 2026-10-28 14:00, rain loop at volume 1: "basically perfect",
+    motor not audible next to the device, not unpleasant. The run stopped after 3
+    trials with `Move to 15604 failed: No 'Move complete.' line`, and the park
+    failed too (`Firmware confirmed target NaN`). Cause: Patient-Regulator sends one
+    extra empty prompt after every move; a null move sent 9 ms after the previous
+    move read that prompt as its reply, and the park then read the leftover reply.
+    Host bug, not a device fault. Fixed in `rrst.Device.command`: a bare prompt is
+    logged as unsolicited and reading continues (MockPort reproduces the race).
+    Device afterwards (`s`): disabled, not calibrated, at 8612 steps, i.e. open
+    (zero is 15604): the park was cut off when the port closed.
   - [ ] Masking noise: brown had to be loud ("a bit eye watering") and the motor was
     still faintly audible next to the device. Try a blend of colours that sounds
     like rain (the RRS_3-0 rain recording masked well); measure the motor's
