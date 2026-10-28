@@ -1,0 +1,79 @@
+# Settings for piloting the RRST 2.0 task in Python. NOT a study configuration.
+#
+# Mirrors task/RRST_2-0/config/pilotConfig.m. Differences, all marked below:
+#   - the threshold grid starts above 0 (the Weibull is undefined at alpha = 0);
+#   - masking uses the rain loop (task/helpers/audio/), not generated noise.
+# The open scientific decisions (TASKS.md, "Open questions") are NOT settled here.
+#
+# Grids are { start, stop, n } (numpy.linspace) or an explicit list. Paths are relative
+# to the repository root. Unknown keys are an error.
+
+label = "PILOT"
+procedure = "psi"            # Psi on questplus (QUEST+); "quest" is not ported
+metacog_trials = 0           # extra near-threshold trials: not ported
+confidence = true
+input_device = "mouse"       # "mouse" or "keyboard"
+run_tutorial = false
+probe_task_satisfaction = true
+collect_experience_ratings = true
+small_window = false         # true: 1/3-size window for debugging
+
+[device]
+mock = false                 # true: simulated device, no hardware needed
+port = "auto"                # "auto": the only Teensy (USB VID 16C0), or e.g. "COM7"
+recalibrate_at_breaks = true
+
+[device.motion]
+# Set and checked at every calibration, never trusted from the device's EEPROM.
+# PROVISIONAL, {{MOTION}} undecided: what unit 2E4441D76D5F2996 already runs.
+speed = 16000
+acceleration = 10000
+chopperMode = "SpreadCycle"
+
+[stim]
+unit = "percent"             # 0 = wedge touching the tube, 100 = barely possible to inhale
+rest_range = [20, 80]        # where the wedge rests between trials
+calibration_tolerance = 300  # steps; catches tube in/out mismatch (about 1150)
+
+[psi]
+num_trials = 100
+stim_range = { start = 0, stop = 100, n = 41 }          # 2.5 % steps, used exactly
+# PROVISIONAL, differs from pilotConfig.m: linspace(0, 100, 72) without its 0 point
+# (start = 100/71). Which lower bound to use is an open decision; see TASKS.md.
+prior_alpha_range = { start = 1.408450704225352, stop = 100, n = 71 }
+prior_log10_beta_range = { start = 0, stop = 1.2041199826559248, n = 72 }   # log10(1) to log10(16)
+prior_gamma_range = [0.5]
+prior_lambda_range = [0.02]
+
+[tutorial]
+easy_stim = 97
+hard_stim = 65
+example_stimuli = [98, 61, 82]
+stim_in_alt = [1, 2, 2]
+
+[timing]                     # seconds
+fixed_timing = false
+prepare = 1.5
+inhale = 0.8
+breath_pause = 0.5
+response = 3
+confidence = 5
+isi = 2                      # countdown before each breath, AFTER the move is confirmed
+iti_min = 2
+iti_max = 4
+pause = 120
+pause_every = 20             # trials
+experience_question = 10
+
+[noise]
+enabled = true
+source = "file"              # "file" (looped wav) or "generated" (colour below)
+file = "task/helpers/audio/rain_loop_30s.wav"
+volume = 0.2                 # PROVISIONAL: by ear, relative to the system volume
+colour = "brown"             # generated only
+fs = 44100                   # generated only
+dur_s = 30                   # generated only
+
+[output]
+dir = "data/raw"
+devices_dir = "devices"
