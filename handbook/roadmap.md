@@ -41,4 +41,4 @@
 
 ## Site
 
-- [x] Published on GitHub Pages (2026-10-28): <https://micahgallen.github.io/rrst-toolkit/>
+- [x] Published on GitHub Pages (2026-10-28): <https://www.the-ecg.org/rrst-toolkit/>

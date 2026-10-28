@@ -1,6 +1,7 @@
 site_name: RRST Toolkit
+site_url: https://www.the-ecg.org/rrst-toolkit/
 site_description: Build, set up and run the Respiratory Resistance Sensitivity Task (RRST) device - legacy and 2.0
-repo_url: https://github.com/micahgallen/rrst-toolkit
+repo_url: https://github.com/embodied-computation-group/rrst-toolkit
 edit_uri: edit/main/handbook/
 docs_dir: handbook
 site_dir: site

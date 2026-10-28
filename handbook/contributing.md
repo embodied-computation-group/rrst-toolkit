@@ -1,7 +1,7 @@
 # Contributing
 
 This handbook lives in the `handbook/` folder of the
-[rrst-toolkit repository](https://github.com/micahgallen/rrst-toolkit) and is built with
+[rrst-toolkit repository](https://github.com/embodied-computation-group/rrst-toolkit) and is built with
 [MkDocs Material](https://squidfunk.github.io/mkdocs-material/).
 
 ## Placeholders
