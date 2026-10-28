@@ -148,6 +148,22 @@ classdef TestKids < matlab.unittest.TestCase
             tc.verifyEqual(f.hitRateHigh, 1);
             tc.verifyFalse(f.unusable);
         end
+
+        % --- answer screen ----------------------------------------------------
+        function clickSideGivesTheAnswer(tc)
+            W = 1000;                                   % "easy" is drawn left, "squishy" right
+            tc.verifyEqual(kidsClickAnswer(100, W), "no");
+            tc.verifyEqual(kidsClickAnswer(440, W), "no");
+            tc.verifyEqual(kidsClickAnswer(900, W), "yes");
+            tc.verifyEqual(kidsClickAnswer(560, W), "yes");
+        end
+
+        function clickInTheMiddleIsIgnored(tc)
+            W = 1000;
+            tc.verifyEqual(kidsClickAnswer(500, W), "none");
+            tc.verifyEqual(kidsClickAnswer(460, W), "none");
+            tc.verifyEqual(kidsClickAnswer(540, W), "none");
+        end
     end
 end
 
