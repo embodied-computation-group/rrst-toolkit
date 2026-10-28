@@ -1,0 +1,5 @@
+
+Enter absolute target position (steps):
+Error: Must calibrate ('c') before moving.
+
+Valve>

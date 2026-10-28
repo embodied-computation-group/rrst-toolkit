@@ -1,0 +1,6 @@
+
+Starting calibration...
+Min Endstop found. Position set to 0.
+ERROR: Max endstop not found - calibration aborted.
+
+Valve>

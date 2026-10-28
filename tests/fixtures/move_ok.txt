@@ -1,0 +1,6 @@
+
+Enter absolute target position (steps):
+Moving to absolute position: 32500
+Move complete.
+
+Valve>

@@ -16,3 +16,4 @@
 *.parquet binary
 *.hex binary
 *.zip binary
+tests/fixtures/*.txt -text

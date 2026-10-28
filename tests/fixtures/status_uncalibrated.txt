@@ -1,0 +1,18 @@
+
+--- SYSTEM STATUS ---
+Software Version: Patient-Regulator (Oct  7 2026 08:45:06)
+Device ID:        0123456789ABCDEF
+Stepper Enabled:  NO
+Current Position: 20000 steps
+Max Range Limit:  45000 steps (stale - not calibrated)
+Calibrated:       NO
+Saved Max Pos:    none
+Retract Distance: 24000 steps (15.000 mm)
+First-Contact:    unavailable (not calibrated)
+Current Speed:    16000 steps/s
+Microsteps:       16
+Soft Limit Guard: inactive - not calibrated, moves refused
+---
+
+
+Valve>

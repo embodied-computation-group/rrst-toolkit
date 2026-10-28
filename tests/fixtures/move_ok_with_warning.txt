@@ -1,0 +1,8 @@
+
+Enter absolute target position (steps):
+Moving to absolute position: 32500
+WARNING: Unexpected MAX endstop hit! Position auto-corrected to 45123.
+Resuming toward original target...
+Move complete.
+
+Valve>
