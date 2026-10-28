@@ -152,6 +152,7 @@ try
     % Wait for space
     while keys.KeyCode(keys.Space) == 0
         [~, ~, keys.KeyCode] = KbCheck;
+        GetMouse;                           % keeps the window responsive (KbCheck alone lets Windows grey it out)
         WaitSecs(0.001);
     end
     Results.SessionStartT = GetSecs;            % Session start timestamp
@@ -235,6 +236,7 @@ try
                     return
                 end
                 [~, ~, keys.KeyCode] = KbCheck;
+                GetMouse;                           % keeps the window responsive (KbCheck alone lets Windows grey it out)
                 WaitSecs(0.001);
             end
 
@@ -372,6 +374,7 @@ try
                 return
             end
             [~, ~, keys.KeyCode] = KbCheck;
+            GetMouse;                           % keeps the window responsive (KbCheck alone lets Windows grey it out)
             WaitSecs(0.001);
         end
 
@@ -456,6 +459,7 @@ try
                     return
                 end
                 [~, ~, keys.KeyCode] = KbCheck;
+                GetMouse;                           % keeps the window responsive (KbCheck alone lets Windows grey it out)
                 WaitSecs(0.001);
             end
 
@@ -467,6 +471,7 @@ try
             [~, ~, keys.KeyCode] = KbCheck;
             while keys.KeyCode(keys.Space) == 0
                 [~, ~, keys.KeyCode] = KbCheck;
+                GetMouse;                           % keeps the window responsive (KbCheck alone lets Windows grey it out)
                 WaitSecs(0.001);
             end
 
