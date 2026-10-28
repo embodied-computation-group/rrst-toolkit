@@ -64,6 +64,11 @@ class Device:
         cal = parse_calibration_reply(lines)
         self.last_calibration = cal
         if not cal.ok:
+            # The firmware leaves the driver energised after a failed 'c'.
+            try:
+                self.disable()
+            except errors.RrstError:
+                pass
             msg = f"Calibration failed: {cal.error_text}"
             if any("Serial connection lost" in line for line in lines):
                 msg += (" The firmware reported the serial link as closed: the host may not be "
@@ -75,8 +80,9 @@ class Device:
         return cal
 
     def enable(self):
-        # 'c' energises the driver but does not set the firmware's enabled flag, and
-        # driver-fault monitoring only runs while that flag is set.
+        # Before Precise-Piston (Msnejbjerg/RRST 7dc58a0), 'c' energises the driver but
+        # does not set the firmware's enabled flag, and driver-fault monitoring only runs
+        # while that flag is set. Harmless on later firmware.
         lines = self.command("e", self.default_timeout)
         if not any(line.startswith("Stepper enabled") for line in lines):
             raise errors.EnableFailed(f"Enable not confirmed. Reply: {' | '.join(lines)}")
@@ -87,6 +93,49 @@ class Device:
         self.command("d", self.default_timeout)
         self.enabled = False
         self._invalidate()
+
+    def apply_motion(self, motion, status=None):
+        """Set speed, acceleration and chopper mode, and check them with 's'.
+
+        motion has keys speed, acceleration (steps/s, steps/s^2, positive integers) and
+        chopperMode ("SpreadCycle" or "StealthChop"). Only values that differ from the
+        device's are sent ('f', 'g', 't'). Settings stay in RAM: 'v' (save to EEPROM) is
+        never sent. status: a status just read, to save one 's'. Returns the status
+        read afterwards."""
+        if not (isinstance(motion, dict) and {"speed", "acceleration", "chopperMode"} <= motion.keys()):
+            raise errors.BadSetting("motion needs the keys speed, acceleration and chopperMode.")
+        for name in ("speed", "acceleration"):
+            v = motion[name]
+            if not (isinstance(v, Integral) and not isinstance(v, bool) and v > 0):
+                raise errors.BadSetting(f"{name} must be a positive integer; got {v!r}.")
+        if motion["chopperMode"] not in ("SpreadCycle", "StealthChop"):
+            raise errors.BadSetting(
+                f'chopperMode must be "SpreadCycle" or "StealthChop"; got {motion["chopperMode"]!r}.')
+
+        st = status or self.status()
+        changed = False
+        if st.speed != motion["speed"]:
+            self._set_value("f", "Speed", motion["speed"])
+            changed = True
+        if st.acceleration != motion["acceleration"]:
+            self._set_value("g", "Acceleration", motion["acceleration"])
+            changed = True
+        if st.chopper_mode != motion["chopperMode"]:
+            lines = self.command("t", self.default_timeout)
+            if any("UART link is down" in line for line in lines):
+                raise errors.SettingFailed(
+                    "Chopper mode may not have reached the driver: the TMC2209 UART link is "
+                    f"down. Reply: {' | '.join(lines)}")
+            changed = True
+        if changed:
+            st = self.status()
+        if (st.speed, st.acceleration, st.chopper_mode) != \
+                (motion["speed"], motion["acceleration"], motion["chopperMode"]):
+            raise errors.SettingFailed(
+                f"Device reports {st.speed:g} steps/s, {st.acceleration:g} steps/s^2, "
+                f"{st.chopper_mode}; requested {motion['speed']}, {motion['acceleration']}, "
+                f"{motion['chopperMode']}.")
+        return st
 
     def move_to(self, steps, timeout=None):
         if not self.calibrated:
@@ -138,6 +187,12 @@ class Device:
                     f'No complete reply to "{", ".join(cmds)}" within {timeout} s. '
                     f"Partial reply: {' | '.join(split_reply(buf)[0])}")
             time.sleep(self.poll_interval)
+
+    def _set_value(self, cmd, label, value):
+        # 'f' and 'g' prompt for a value; the firmware confirms "<label> set to <value>".
+        lines = self.command([cmd, str(value)], self.default_timeout)
+        if f"{label} set to {value}" not in lines:
+            raise errors.SettingFailed(f"{label} {value} not confirmed. Reply: {' | '.join(lines)}")
 
     def _check_unsolicited(self):
         n = self.port.in_waiting

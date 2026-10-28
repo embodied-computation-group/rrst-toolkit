@@ -1,7 +1,7 @@
 """Stimulus levels -> confirmed device moves, for the task. Port of rrst.Stimulator.
 
     stim = Stimulator(device, record, unit="percent", rest_range=(20, 80))
-    stim.calibrate()           # 'c' + 'e', checked against the device record
+    stim.calibrate()           # motion settings, 'c' + 'e', checked against the record
     stim.present(level)        # move to a stimulus level
     stim.null()                # level 0: wedge just touching the tube
     level, mv = stim.rest()    # random level in rest_range (between trials)
@@ -11,7 +11,13 @@ Levels are in unit: "percent" (0-100 between the record's anchors) or "mm" (wedg
 travel past the zero anchor, steps_per_mm steps per mm). A level outside
 [0, scale_max] is an error, never clipped. Every move waits for the firmware's
 confirmation (Device.move_to) and is logged with its duration.
+
+motion={"speed": s, "acceleration": a, "chopperMode": m} makes every calibrate() set
+and check these first (Device.apply_motion), so a session never runs on whatever tuning
+the device loaded from EEPROM. None (default): the device's settings are left alone and
+only logged.
 """
+import dataclasses
 import math
 import time
 
@@ -23,7 +29,8 @@ from .mapping import anchors_from_calibration, obstruction_to_steps
 
 class Stimulator:
     def __init__(self, device, record, unit="percent", rest_range=(20, 80), park_step=1600,
-                 calibration_tolerance=300, steps_per_mm=1600, seed=None, clock=time.monotonic):
+                 calibration_tolerance=300, steps_per_mm=1600, seed=None, motion=None,
+                 clock=time.monotonic):
         if unit not in ("percent", "mm"):
             raise ValueError(f'unit must be "percent" or "mm", got {unit!r}')
         if not (len(rest_range) == 2 and rest_range[0] <= rest_range[1]):
@@ -34,6 +41,8 @@ class Stimulator:
         self.park_step = park_step                     # 1 mm from the min endstop: wedge well open
         self.calibration_tolerance = calibration_tolerance   # steps; tube in/out is about 1150
         self.steps_per_mm = steps_per_mm               # TR8x2 leadscrew, 1.8 deg motor, 16 microsteps
+        self.motion = motion
+        self.device_status = None                      # 's' read at the last calibration, after motion
         a = record["anchors"]
         self.scale_max = 100 if unit == "percent" else (a["zeroOffset"] - a["fullOffset"]) / steps_per_mm
         self.rest_range = tuple(rest_range)
@@ -56,11 +65,14 @@ class Stimulator:
                 f"{np.round(bad, 4).tolist()}. Change the configuration; levels are never clipped.")
 
     def calibrate(self):
-        """'c' then 'e'; checks the device ID and MaxPosition against the record."""
+        """Motion settings, 'c' then 'e'; checks device ID and MaxPosition against the record."""
         st = self.device.status()
         if st.device_id != self.record["deviceId"]:
             raise errors.WrongDevice(
                 f"Connected device is {st.device_id}, but the record is for {self.record['deviceId']}.")
+        if self.motion is not None:
+            st = self.device.apply_motion(self.motion, st)
+        self.device_status = _status_record(st)
         self.zero_step = self.full_step = math.nan
         cal = self.device.calibrate()
         self.device.enable()
@@ -106,7 +118,8 @@ class Stimulator:
         """Everything needed to audit the session, for saving with the data."""
         return {"deviceId": self.record["deviceId"], "record": self.record, "unit": self.unit,
                 "scaleMax": self.scale_max, "restRange": list(self.rest_range),
-                "parkStep": self.park_step, "calibrations": self.calibrations,
+                "parkStep": self.park_step, "motion": self.motion,
+                "deviceStatus": self.device_status, "calibrations": self.calibrations,
                 "moves": self.log, "transcript": self.device.transcript}
 
     def _now(self):
@@ -114,3 +127,10 @@ class Stimulator:
 
     def _add_log(self, kind, level, steps, elapsed):
         self.log.append({"t": self._now(), "kind": kind, "level": level, "steps": steps, "elapsed": elapsed})
+
+
+def _status_record(st):
+    """The parsed status without its raw fields, keyed as in the MATLAB summary (camelCase)."""
+    d = dataclasses.asdict(st)
+    d.pop("fields")
+    return {k.split("_")[0] + "".join(w.title() for w in k.split("_")[1:]): v for k, v in d.items()}

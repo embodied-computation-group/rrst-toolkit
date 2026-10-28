@@ -28,4 +28,6 @@ NoPort = _error("NoPort", "rrst:noPort", "The requested serial port is not avail
 AmbiguousPort = _error("AmbiguousPort", "rrst:ambiguousPort", "Several ports are available; name one.")
 BadNoise = _error("BadNoise", "rrst:badNoise", "Unknown masking-noise colour.")
 BadConfig = _error("BadConfig", "rrst:badConfig", "The task configuration cannot run as intended.")
+BadSetting = _error("BadSetting", "rrst:badSetting", "apply_motion given an invalid speed, acceleration or mode.")
+SettingFailed = _error("SettingFailed", "rrst:settingFailed", "Firmware did not confirm a setting, or 's' disagrees.")
 BadGrid = _error("BadGrid", "rrst:badGrid", "A Psi grid the psychometric function cannot evaluate.")

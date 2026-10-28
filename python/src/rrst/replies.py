@@ -107,6 +107,7 @@ def parse_move_reply(lines):
 class Status:
     fields: dict
     software_version: str
+    git_commit: str          # "" before Precise-Piston; "-dirty"/"unknown" possible
     device_id: str
     stepper_enabled: bool
     calibrated: bool
@@ -159,6 +160,7 @@ def parse_status(lines):
     return Status(
         fields=raw,
         software_version=text("SoftwareVersion"),
+        git_commit=text("GitCommit"),
         device_id=text("DeviceID"),
         stepper_enabled=text("StepperEnabled") == "YES",
         calibrated=calibrated,

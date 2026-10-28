@@ -2,7 +2,8 @@
 
 Implements the parts of serial.Serial that Device uses: write, read, in_waiting,
 reset_input_buffer and the dtr attribute. Each reply is written byte for byte from the
-format strings in RRST_Teensy_4_version_TMC2209.ino (Msnejbjerg/RRST c298eed),
+format strings in RRST_Teensy_4_version_TMC2209.ino (Msnejbjerg/RRST c298eed; 'f', 'g',
+'t' and the Git Commit status line from 8720abc),
 including its mixed CRLF/LF line endings and the trailing "Valve>" prompt. Replies are
 available as soon as the command is written: there is no motion time.
 
@@ -11,6 +12,8 @@ Fault injection (the fault attribute):
   "moveWarning"          'a' succeeds after one auto-corrected endstop hit
   "moveSafetyDisable"    'a' fails: three unexpected hits, driver disabled
   "silent"               no reply to anything (tests timeouts)
+  "settingIgnored"       'f'/'g' prompt, but the value is not accepted
+  "uartDown"             't' warns that the TMC2209 UART link is down
 dtr = False simulates a host that never asserts DTR: the firmware's
 CheckSerialConnection() then aborts the seek or move. That reply text is inferred from
 the source, not captured from hardware.
@@ -25,6 +28,7 @@ class MockPort:
                  device_id="0123456789ABCDEF",
                  software_version="Patient-Regulator (Oct  7 2026 08:45:06)",
                  retract_steps=24000, retract_mm=15, speed=16000, acceleration=10000,
+                 run_current=800, chopper_mode="SpreadCycle", git_commit="",
                  dtr=True, fault="", chunk_size=None):
         self.max_position = max_position
         self.saved_max_position = saved_max_position   # -1: nothing saved in EEPROM yet
@@ -35,6 +39,9 @@ class MockPort:
         self.retract_mm = retract_mm
         self.speed = speed
         self.acceleration = acceleration
+        self.run_current = run_current
+        self.chopper_mode = chopper_mode
+        self.git_commit = git_commit                   # "": firmware before the Git Commit line
         self.dtr = dtr
         self.fault = fault
         self.chunk_size = chunk_size
@@ -43,7 +50,7 @@ class MockPort:
         self.written = []                              # every line the host wrote, in order
         self._out = b""
         self._in = b""
-        self._awaiting_target = False
+        self._awaiting = ""                            # command whose value line comes next: a, f or g
 
     # --- pyserial interface ---------------------------------------------------------
 
@@ -84,9 +91,12 @@ class MockPort:
         self.written.append(line)
         if self.fault == "silent":
             return
-        if self._awaiting_target:
-            self._awaiting_target = False
-            self._finish_move(float(line))
+        if self._awaiting:
+            cmd, self._awaiting = self._awaiting, ""
+            if cmd == "a":
+                self._finish_move(float(line))
+            else:
+                self._finish_setting(cmd, line)
             return
         if line == "c":
             self._calibrate()
@@ -100,9 +110,17 @@ class MockPort:
                        "recalibrate ('c') before moving.\n\r\n" + PROMPT)
         elif line == "s":
             self._status()
+        elif line == "t":
+            self._toggle_chopper()
         elif line == "a":
             self._emit("\nEnter absolute target position (steps):\r\n")
-            self._awaiting_target = True
+            self._awaiting = "a"
+        elif line == "f":
+            self._emit(f"\nCurrent speed is {self.speed}. Enter new max speed: \n")
+            self._awaiting = "f"
+        elif line == "g":
+            self._emit(f"\nCurrent acceleration is {self.acceleration}. Enter new acceleration: \n")
+            self._awaiting = "g"
 
     def _connection_lost(self):
         return ("\nSerial connection lost - stepper disabled. Reconnect and use 'e' "
@@ -131,6 +149,34 @@ class MockPort:
             self.saved_max_position = self.max_position
             self.position = self.max_position
             self.calibrated = True
+        self._emit(out + PROMPT)
+
+    def _finish_setting(self, cmd, line):
+        # cmd9_Speed / cmd10_Acceleration: parseInt, accepted only if > 0.
+        try:
+            value = int(line)
+        except ValueError:
+            value = 0
+        out = ""
+        if self.fault != "settingIgnored" and value > 0:
+            if cmd == "f":
+                self.speed = value
+                out = f"Speed set to {value}\n\n"
+            else:
+                self.acceleration = value
+                out = f"Acceleration set to {value}\n\n"
+        self._emit(out + PROMPT)
+
+    def _toggle_chopper(self):
+        out = ""
+        if self.fault == "uartDown":
+            out = "WARNING: TMC2209 UART link is down - this setting may not have reached the driver\r\n"
+        if self.chopper_mode == "SpreadCycle":
+            self.chopper_mode = "StealthChop"
+            out += "\nChopper mode set to StealthChop (near-silent, reduced high-speed torque)\n\r\n"
+        else:
+            self.chopper_mode = "SpreadCycle"
+            out += "\nChopper mode set to SpreadCycle (louder, full torque/speed headroom)\n\r\n"
         self._emit(out + PROMPT)
 
     def _finish_move(self, target):
@@ -164,8 +210,10 @@ class MockPort:
     def _status(self):
         yn = ("NO", "YES")
         out = ("\n--- SYSTEM STATUS ---\r\n"
-               f"Software Version: {self.software_version}\n"
-               f"Device ID:        {self.device_id}\n"
+               f"Software Version: {self.software_version}\n")
+        if self.git_commit:
+            out += f"Git Commit:       {self.git_commit}\n"
+        out += (f"Device ID:        {self.device_id}\n"
                f"Stepper Enabled:  {yn[self.enabled]}\n"
                f"Current Position: {self.position} steps\n")
         if self.calibrated:
@@ -180,5 +228,9 @@ class MockPort:
             out += "First-Contact:    unavailable (not calibrated)\r\n"
         out += (f"Current Speed:    {self.speed} steps/s\n"
                 f"Acceleration:     {self.acceleration} steps/s²\n"
+                f"Run Current:      {self.run_current} mA\n"
+                "Hold Current:     50%\n"
+                "Microsteps:       16\n"
+                f"Chopper Mode:     {self.chopper_mode}\n"
                 "---\r\n\r\n")
         self._emit(out + PROMPT)
