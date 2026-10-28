@@ -127,6 +127,31 @@ session so a fresh session can continue from the files.
 - Firmware snapshot: hex, SHA-256, source commit, library versions.
 - Hardware bench checklist and pre-study acceptance checklist in `docs/`.
 
+## Martin's answers (2026-10-28, `../context/sources/Martin_reply_2026-10-28.pdf`)
+
+- [x] Imported Msnejbjerg/RRST 8720abc (firmware source, Control Panel with the
+  Precise-Piston hex built from aa8dd72, 4-0 helpers with the `isSerialportHandle` fix,
+  `recalibrateResp`, `waitForCalibration`). PROVENANCE updated.
+- [x] Task sets speed, acceleration and chopper mode at every calibration
+  (`cfg.device.motion`, `rrst.Device.applyMotion`), never saves with `v`. Pilot value =
+  what this unit already runs (SpreadCycle 16000/10000), PROVISIONAL.
+- [x] `Git Commit:` status line parsed and saved with the session.
+- [x] Failed calibration now sends `d` (Martin left this to us; the conservative choice;
+  revert `Device.calibrate` if unwanted).
+- Already covered in 2.0, nothing to change: per-unit anchors (our zeroOffset 25600 =
+  16.0 mm agrees with Martin's paper test, 16 mm on his unit); explicit `setDTR` in
+  `rrst.openPort`; no `isa(port, 'serialport')` in `device/+rrst`. The 3-0/4-0
+  `scale2motorstep` 12000-38000 constants are reference code only, unused by 2.0.
+- Martin's figures (max 40900-40930, first contact about 15320) are for **his** unit.
+  Ours: max 41296, zero 15696 (tube in).
+- [ ] Flash Precise-Piston on 2E4441D76D5F2996? Gains fault monitoring after `c`, the Git
+  Commit line, faster `s`. Needs Micah's approval; re-check anchors afterwards (default
+  retract changes 15 -> 16 mm, but the toolkit uses its own anchors, not the retract).
+- [ ] Re-run Martin's reliability check on our unit out to real full scale (his tests
+  stopped about 3 mm short of max; tube load peaks about 900 steps short of max).
+- [ ] Send Martin the masking sound (or the generated-noise settings) so he can test
+  motor noise against it; `helpers/audio/32-Waterfall-60min.wav` is not in either repo.
+
 ## Decisions
 
 - 2026-10-28: Renamed from rrst-zurich to **rrst-toolkit** (RRST Toolkit 2.0): a general-purpose toolkit, with Zurich as its first deployment.
@@ -150,6 +175,15 @@ Scientific decisions for the scientist (see the decision sheet):
 - Where the wedge rests between trials (the original code meant 50 +/- 30 %).
 - How close full scale may come to the max endstop.
 - The pause between breaths, given measured move times.
+- Motion settings ({{MOTION}}), from Martin's measurements on his unit (tube in, 24000-step
+  move): SpreadCycle 16000/10000 is quietest (+17.3 dBA above room) but has a narrow
+  whine near 14 kHz; StealthChop 16000/10000 +22.1 dBA (3.1 s), 16000/20000 +25.5 dBA
+  (2.3 s), 16000/30000 +26.4 dBA (2.0 s). StealthChop loses steps above about 16000
+  steps/s. The old TMC2100 device ran StealthChop 16000/10000. Relative levels at the
+  device, one session, no masking, no headphones. The 2.0 task waits for the confirmed
+  move before the countdown, so a slower move lengthens the trial, it never shortens
+  the pause. Martin suggests a 3.5 s pause with 16000/10000, or 16000/20000 if 2.5 s
+  must stay.
 - Whether to record pressure and flow.
 - Licence for Martin's code. Asked by email on 2026-10-28, together with questions on
   this unit's EEPROM state, anchors, the enabled flag after `c`, DTR, motor noise, move
