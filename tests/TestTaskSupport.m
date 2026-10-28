@@ -4,7 +4,7 @@ classdef TestTaskSupport < matlab.unittest.TestCase
     methods (TestClassSetup)
         function addConfigPath(tc)
             root = fileparts(fileparts(mfilename('fullpath')));
-            p = fullfile(root, 'task', 'RRST_2-0', {'config', 'code'});
+            p = [fullfile(root, 'task', 'RRST_2-0', {'config', 'code'}), {fullfile(root, 'task', 'helpers')}];
             addpath(p{:});
             tc.addTeardown(@() rmpath(p{:}));
         end
@@ -182,6 +182,23 @@ classdef TestTaskSupport < matlab.unittest.TestCase
             R.ExpRareEnd = [1; 2; 3; 4];
             T = trialTable(R);
             tc.verifyFalse(any(ismember({'ExpRateTask', 'ExpRareEnd'}, T.Properties.VariableNames)));
+        end
+
+        % --- event markers --------------------------------------------------
+        function markersSwitchMustBeLogical(tc)
+            cfg = pilotConfig();
+            cfg.markers.lsl = "yes";
+            tc.verifyError(@() validateConfig(cfg), 'rrst:badConfig');
+        end
+
+        function markerIsANoOpUntilOpened(tc)
+            rrstMarker('close');
+            rrstMarker('trial_1_interval1_onset_load', 12.3);   % no outlet: no error, no LSL needed
+        end
+
+        function missingLiblslIsAClearError(tc)
+            rrstMarker('close');
+            tc.verifyError(@() rrstMarker('open', fullfile(tempdir, 'no_liblsl_here')), 'rrst:noLiblsl');
         end
 
         function zurichConfigRefusesUntilDecided(tc)

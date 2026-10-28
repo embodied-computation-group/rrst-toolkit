@@ -34,6 +34,7 @@ WaitSecs(vars.breathPauseT);
 % Perform initial flip to gray background and sync us to the retrace:
 Screen('FrameOval', scr.win, firstColor, [scr.x_middle-rad scr.y_middle-rad scr.x_middle+rad scr.y_middle+rad], 3, 3);
 [~, StimOn] = Screen('Flip', scr.win);
+vars.StimOn = StimOn;   % inhale cue onset, for the caller's event marker
 
 % Calculate frames
 nInhaleFr = round(vars.inhaleT * scr.hz);

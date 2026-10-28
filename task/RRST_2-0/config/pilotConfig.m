@@ -86,6 +86,12 @@ cfg.noise.colour = "brown";              % generated noise only. Pilot 2026-10-2
 cfg.noise.fs = 44100;                    % generated noise only
 cfg.noise.durS = 30;                     % generated noise only; looped
 
+% --- Event markers --------------------------------------------------------
+% LSL marker stream "RRST" (trial and interval onsets) for recording with
+% physiology and airflow. Opened at launch: start RRST before the recorder.
+cfg.markers.lsl = true;
+cfg.markers.liblslDir = "C:\toolbox\liblsl-Matlab";
+
 % --- Output --------------------------------------------------------------
 cfg.output.dir = fullfile(root, 'data', 'raw');
 cfg.devicesDir = fullfile(root, 'devices');

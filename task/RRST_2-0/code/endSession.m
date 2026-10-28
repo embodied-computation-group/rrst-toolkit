@@ -8,6 +8,8 @@ function endSession(vars, scr, keys, Results, stair, status)
 % scr, keys) and <DataFileName>.csv (one row per trial, trialTable.m); aborted and error runs get an
 % Aborted_ / Error_ prefix. An existing file is never overwritten: the name gets _2, _3.
 
+rrstMarker("session_end_" + status);
+
 switch status
     case "complete"
         message = vars.InstructionEnd;
