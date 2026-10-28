@@ -109,14 +109,20 @@ session so a fresh session can continue from the files.
   - [ ] Not covered by the stubbed run: real clicks and key presses, Esc, how the
     text size looks on this screen. Esc does not abort while the "which breath"
     mouse prompt is up (inherited from RRS_3-0). A short manual check is still due.
-  - [ ] Device not detected on the stim laptop, 2026-10-28. Same unit enumerated fine
-    on the home desktop minutes earlier (VID_16C0&PID_0483, `s` OK, max 41296). On
-    the laptop (right-side USB-A, direct, two cables tried) Windows shows no
-    VID_16C0 device, not even as previously connected, and no failed or unknown
-    USB device. COM4/COM5 are the laptop's own Intel parts (VID_8087&PID_0ACA),
-    not the Teensy. The missing connect sound means nothing (notifications are off).
-    Next: reboot; then test the port with a mouse/stick, the desktop cable directly,
-    and the left-side USB-A port. Nothing has been sent to the device.
+  - [x] Device not detected on the stim laptop, 2026-10-28. Plugged directly into
+    either USB-A port of the X1 Carbon Gen 6, the unit produced no USB event at all
+    (no VID_16C0 device, no unknown device, no Kernel-PnP event), with the cable
+    that works on the desktop. The ports themselves are fine: a USB 2.0 stick
+    enumerated in the same port on its High-Speed lane. Not drivers or policy
+    (inbox xHCI drivers, no device control). Root cause unknown.
+    **Fix: connect through a USB hub** (Genesys GL3523 hub, VID_05E3). It then
+    enumerated at once as COM7 (serial 20933290), and a read-only `s` answered in
+    73 ms: Device ID 2E4441D76D5F2996, Patient-Regulator (Oct  7 2026 08:45:06),
+    Saved Max Pos 41296, both endstops ok, not calibrated. COM4/COM5 are the
+    laptop's LTE modem (VID_8087&PID_0ACA), so `port = "auto"` stops with
+    `rrst:ambiguousPort` here: set `cfg.device.port = "COM7"` after `pilotConfig()`.
+    BIOS 1.50 could not be updated from Windows (Lenovo's flash driver
+    `TdkLib64.sys` is on Microsoft's vulnerable-driver blocklist); not needed.
 - Per-device calibration records (`devices/<device_id>.json`).
 - Firmware snapshot: hex, SHA-256, source commit, library versions.
 - Hardware bench checklist and pre-study acceptance checklist in `docs/`.
