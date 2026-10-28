@@ -4,9 +4,9 @@ classdef TestTaskSupport < matlab.unittest.TestCase
     methods (TestClassSetup)
         function addConfigPath(tc)
             root = fileparts(fileparts(mfilename('fullpath')));
-            p = fullfile(root, 'task', 'RRST_2-0', 'config');
-            addpath(p);
-            tc.addTeardown(@() rmpath(p));
+            p = fullfile(root, 'task', 'RRST_2-0', {'config', 'code'});
+            addpath(p{:});
+            tc.addTeardown(@() rmpath(p{:}));
         end
     end
 
@@ -97,10 +97,41 @@ classdef TestTaskSupport < matlab.unittest.TestCase
             tc.verifyError(@() validateConfig(cfg), 'rrst:badConfig');
         end
 
+        % --- trial table (the CSV) ------------------------------------------
+        function trialTableKeepsOnlyPerTrialColumns(tc)
+            R = fictionalResults(6);
+            T = trialTable(R);
+            tc.verifyEqual(height(T), 6);
+            tc.verifyEqual(T.Properties.VariableNames, {'trialN', 'Stim', 'Resp', 'StimMoveT'});
+            tc.verifyEqual(T.Stim, R.Stim);
+        end
+
+        function trialTableIgnoresRatingsShapedLikeTrials(tc)
+            % 4 trials and one break: ExpRateTask is 4x1, like a trial column
+            R = fictionalResults(4);
+            R.ExpRateTask = [10; 0.5; 1; 1];
+            R.ExpRareEnd = [1; 2; 3; 4];
+            T = trialTable(R);
+            tc.verifyFalse(any(ismember({'ExpRateTask', 'ExpRareEnd'}, T.Properties.VariableNames)));
+        end
+
         function zurichConfigRefusesUntilDecided(tc)
             tc.verifyError(@() zurichConfig(), 'rrst:decisionsPending');
         end
     end
+end
+
+function R = fictionalResults(n)
+% FICTIONAL Results struct shaped like main.m's.
+R.trialN = (1:n)';
+R.Stim = linspace(10, 90, n)';
+R.Resp = mod((1:n)', 2);
+R.StimMoveT = repmat(0.5, n, 1);
+R.Calibrations = 2;
+R.SessionStartT = 123.4;
+R.ExpRateTask = [10 20; 0.5 0.6; 1 1; 1 2];
+R.ExpRareEnd = magic(4);
+R.stair = struct('PM', struct('xCurrent', 50));
 end
 
 function d = devicesDir()
