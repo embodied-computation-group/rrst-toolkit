@@ -17,3 +17,4 @@
 *.hex binary
 *.zip binary
 tests/fixtures/*.txt -text
+bench/captures/*.txt -text
