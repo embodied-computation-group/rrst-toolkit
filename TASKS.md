@@ -48,5 +48,8 @@ Scientific decisions for the scientist (see the decision sheet):
 - How close full scale may come to the max endstop.
 - The pause between breaths, given measured move times.
 - Whether to record pressure and flow.
-- Licence for Martin's code.
+- Licence for Martin's code. Asked by email on 2026-10-28, together with questions on
+  this unit's EEPROM state, anchors, the enabled flag after `c`, DTR, motor noise, move
+  timing and firmware versioning (`../context/message_to_Martin_DRAFT.md`). Awaiting
+  his reply.
 - Which MATLAB/Psychtoolbox versions the Zurich PC runs.
