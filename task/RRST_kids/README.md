@@ -1,0 +1,102 @@
+# RRST-Kids: "Milkshake Monster"
+
+A child-friendly variant of the RRST for children of about 4-5 years, on the same
+device and device layer as RRST 2.0. **PILOT: never run with a child.** Child-facing
+text is English only and must be translated (Swiss German / Danish) before use.
+
+## Story
+
+A purple monster drinks milkshake through a long straw (the mouthpiece). A cheeky
+mouse sometimes pinches the straw, so the slurp feels "squishy". Each trial is one
+slurp; the child says whether the mouse pinched. Every answer earns a star; ten stars
+finish a milkshake and earn a real sticker from the experimenter.
+
+## Why it differs from the adult task
+
+| | Adult RRST 2.0 | Kids |
+|---|---|---|
+| Judgement | 2 breaths, which was harder (2IFC) | 1 breath, yes/no ("did the mouse pinch?") |
+| Why | | A 4-year-old forgets breath 1 and shows interval bias, which a 2IFC Psi (guess fixed at 0.5) would misread. A yes/no bias is measurable with catch trials. |
+| Bias | none modelled | guess rate (false alarms) 0-0.5 in the posterior, marginalised |
+| Catch trials | none | 10 at level 0 (wedge just touching), never first, never two in a row |
+| Lapse | 0.02 | 0.10 |
+| Levels | 0-100 % | 0-85 % in 5 % steps, **hard cap 85 %** |
+| Start | Psi's choice | forced 70 % (just perceptible for an adult) |
+| Jumps | any | at most 15 % above the highest level so far |
+| Trials | 100 | 30 Psi + 10 catch; stops early when SE < 8 after 20 Psi trials |
+| Breath | 0.8 s inhale, no exhale cue | 1.2 s inhale (belly grows, milkshake drains), 1.8 s exhale (belly shrinks, bubbles) |
+| Answer | participant clicks | **experimenter clicks** what the child says or points at |
+| Feedback | none | practice only (the truth, every time); main trials: a star for every answer |
+
+The threshold is the Weibull alpha for p("yes"): a detection threshold with the
+child's yes-bias absorbed by the guess rate, not a bias-free sensitivity measure.
+
+## Run
+
+```matlab
+cd <repo>/task/RRST_kids
+addpath('config');
+
+% Try it without a device or a child: simulated device and child, small window, 5x faster
+cfg = kidsConfig(); cfg.device.mock = true; cfg.smallWindow = true;
+cfg.debug.simulateChild = [70 8 0.1 0.1];   % [threshold slope falseAlarm lapse]
+cfg.debug.timeScale = 0.2;
+runKidsRRST(cfg)
+
+% With the device (stim laptop: through the USB hub)
+cfg = kidsConfig(); cfg.device.port = "COM7";
+runKidsRRST(cfg)
+```
+
+**Experimenter keys:** Left arrow / `n` / left click = "easy" (no). Right arrow / `y` /
+right click = "squishy" (yes). `x` = bad breath (trial repeated later). Space = pause
+(wedge to 0) and continue. Esc = abort (wedge parked open, data saved as `Aborted_`).
+Space also moves on from the story, "ready" and break screens.
+
+**Session:** calibration with nobody on the tube (about 0.5 min) -> story -> 2 free
+slurps and 6 practice trials with feedback (80, 0, 80, 0, 75, 0; pass: 5 of 6 and both
+80s right; one retry, then the session ends as `PracticeFailed_`, which is itself an
+outcome) -> up to 40 main trials with a 45-s break every 10 -> sticker. About 10 s per
+trial, so about 15 minutes in all.
+
+**Saved** to `data/raw/` (never committed): `RRSTkids_<ID>_<date>.mat` with the result
+(every trial including repeats, practice, Psi posterior, bias flags, outcome), the
+configuration, and the device's full move log and transcript; and a `.csv` with one
+row per trial. Prefixes: `MOCK_`, `SIM_`, `Aborted_`, `Error_`, `PracticeFailed_`.
+
+## Safety
+
+- No level above `cfg.child.hardCap` is ever sent. `validateKidsConfig` rejects a cap
+  above 85 and any configured level (grid, prior, practice, rest, start) above the
+  cap; `kidsCheckLevel` checks every level again right before it goes to the device.
+- Calibration closes the wedge fully: do it before the child sits down (the script
+  asks for that).
+- Esc parks the wedge open; closing the port at the end disables the motor. The child
+  can always take the mouthpiece out.
+- The 85 % cap is a judgement from one adult (87.5 % was easy and not distressing).
+  Children breathe with less flow, so the same obstruction gives less pressure drop;
+  check 70-85 % on the flow rig and consider a lower cap for the first child.
+
+## Files
+
+- `runKidsRRST.m`: entry point (configuration, device, calibration prompt).
+- `config/kidsConfig.m`, `config/validateKidsConfig.m`.
+- `code/kidsProcedure.m`, `kidsNextLevel.m`, `kidsRecord.m`, `kidsRequeue.m`,
+  `kidsShouldStop.m`, `kidsSchedule.m`, `kidsFlags.m`, `kidsCheckLevel.m`: the
+  procedure, tested in `tests/TestKids.m` with a simulated child.
+- `code/kidsMain.m` (session), `kidsScene.m`, `kidsQuestion.m` (drawing, simple shapes
+  only), `kidsText.m`, `kidsSave.m`.
+- `simulateKids.m`: precision across simulated children, no screen or device.
+- Masking sound: the adult task's rain loop at volume 0.6; check the level for small
+  headphones by ear.
+
+## Not done or not checked
+
+- Never run with the real device or with a child; only the simulated device.
+- No cue sounds (ding, slurp): a second sound stream next to the rain needs
+  PsychPortAudio master/slave devices. Visual cues only.
+- Esc is checked during animations and answers, not while the wedge is moving.
+- Translations; the colours and drawings have not been seen by a child.
+- Design questions from the spec: the cap, what to report when a child's threshold
+  is above the cap (practice fails), and whether mouth pressure should be recorded
+  to flag weak slurps objectively.
