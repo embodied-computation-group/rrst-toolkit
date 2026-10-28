@@ -204,7 +204,14 @@ session so a fresh session can continue from the files.
   pypalamedes and makes questplus present 0 % first). 121 tests in total.
 - [ ] Run `tests/reference/makePsiReference.m` on the stim laptop (needs Palamedes) to
   add MATLAB Palamedes references; `python/tests/test_psi.py` picks them up.
-- [ ] Task config (TOML) and the PsychoPy task; mock run with Micah watching; device run.
+- [x] Merged main (Martin's answers): motion settings at every calibration, Git Commit,
+  `d` after a failed `c`, ported with the same tests (2026-10-28).
+- [x] Port choice by USB ID: `records.teensy_ports` keeps only VID 16C0 / PID 0483, so
+  "auto" works next to the stim laptop's LTE modem. Not done in MATLAB.
+- [x] Task config: `python/configs/pilot.toml`, `rrst.config` (unknown keys are an
+  error). The alpha grid starts at 100/71 (pilot grid without 0): PROVISIONAL, open.
+  Masking: the rain loop at volume 0.2, PROVISIONAL. 167 tests.
+- [ ] PsychoPy task; mock run with Micah watching; device run.
 - Found while porting: `getPMFbasedTrials` (MATLAB) inverts the PF with guess rate 0,
   not 0.5, so the "75 %" metacognition trials are easier than intended (only matters
   when metacogTrials > 0).
