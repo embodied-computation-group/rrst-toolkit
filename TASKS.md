@@ -109,6 +109,14 @@ session so a fresh session can continue from the files.
   - [ ] Not covered by the stubbed run: real clicks and key presses, Esc, how the
     text size looks on this screen. Esc does not abort while the "which breath"
     mouse prompt is up (inherited from RRS_3-0). A short manual check is still due.
+  - [x] First run with the device, 2026-10-28 12:57: 10-trial Psi pilot, mouse,
+    COM7 via hub. Device side clean (calibration 23 steps from the record, 32/32
+    moves confirmed, parked open). Record and transcript in
+    `bench/sessions/pilot__device_2E4441D76D5F2996__2026-10-28_1257/`.
+  - [ ] Fix: a held mouse button answers both the breath question and the
+    confidence scale (trial 3, RT 0.00 s / 0.01 s). Wait for release before
+    polling in `getResponse` and before `slideScale`'s loop.
+  - [ ] Check: confidence 0 on 5 of 9 trials. Tester's choice, or slider start?
   - [x] Device not detected on the stim laptop, 2026-10-28. Plugged directly into
     either USB-A port of the X1 Carbon Gen 6, the unit produced no USB event at all
     (no VID_16C0 device, no unknown device, no Kernel-PnP event), with the cable
