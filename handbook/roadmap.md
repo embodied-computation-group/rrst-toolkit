@@ -48,16 +48,45 @@ The device sets a physical obstruction. What a participant actually experiences 
 their own inspiratory pressure and flow, which they control. The task's visual design
 tries to standardise breathing, but only measuring it can correct for it.
 
-1. [ ] **Pressure and flow sensors** in the breathing circuit, recorded on every
-       breath, as the methods paper recommends.
-2. [ ] **Pressure/flow calibration** of each device: resistance as a function of
+1. [x] **Flow sensor** in the breathing circuit, recorded on every breath with the task
+       markers and physiology over LSL ([Airflow sensor](shared/airflow-sensor.md),
+       [Recording](shared/recording.md); first 20-trial run 2026-10-28).
+2. [ ] **Pressure sensor** near the mouth, on the same SensorBridge and in the same
+       stream as flow, so every breath gives its actual resistance (pressure ÷ flow)
+       and work of breathing.
+3. [ ] **Pressure/flow calibration** of each device: resistance as a function of
        wedge position.
-3. [ ] **Staircasing on physiological variables**: the adaptive procedure targets and
+4. [ ] **Effort as a covariate.** Per trial, the load-minus-null difference in peak
+       flow, volume or early flow, entered in the psychometric fit or used to predict
+       errors near threshold. In the first 20-trial run, load breaths at 75 % or more
+       had lower peak flow on 10 of 12 trials. Below 75 % they were lower on only 3
+       of 8, and on three trials the load breath was the stronger one: spontaneous
+       effort changes the stimulus.
+5. [ ] **Flag mismatched breaths**: trials whose two breaths differ by more than a set
+       amount in volume or peak flow without the load, for exclusion or sensitivity
+       analyses.
+6. [ ] **Guided breathing**: live flow feedback against a target band, so both breaths
+       of a trial are matched. The flow stream is already live over LSL. Cost: it adds
+       a motor task and may change what participants perceive.
+7. [ ] **Staircasing on physiological variables**: the adaptive procedure targets and
        analyses measured resistance or pressure, and wedge position becomes the means
-       of delivering it.
+       of delivering it. Re-presenting trials with mismatched breaths is a simpler
+       first step.
 
 A tight, repeatable mechanical calibration is the baseline every later stage builds
 on.
+
+## Recording and analysis tools
+
+- [ ] **Standard figures for every recording**: session overview, breaths aligned on
+      the inhale cue (load vs null), staircase with each trial's null and load peak
+      flow, and a per-trial breath gallery; the wedge-level figure for bench runs.
+- [ ] **Measure the PLUX Bluetooth delay** against the task markers with a hardware
+      test, before any ECG-locked (cardiac phase) analysis.
+- [ ] **Put `plux-lsl` under version control** (Physio Recorder, stream programs,
+      quality checks, analysis scripts). It exists only on the stim laptop.
+- [ ] **Flow streamer watchdog**: fail with a clear message, instead of hanging, if
+      the SensorBridge's USB link stops responding.
 
 ## Site
 

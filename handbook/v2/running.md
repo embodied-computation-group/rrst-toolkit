@@ -60,7 +60,15 @@ serial port exists. Most PCs have more than one, so set the port by name (below)
 !!! example "The stim laptop"
     On the Zurich stim laptop the device is **COM7**, through a USB hub. Plugged
     directly into the laptop's own USB ports it doesn't appear at all. COM4 and COM5 are
-    the laptop's internal LTE modem, so `"auto"` can't be used there.
+    the laptop's internal LTE modem, so `"auto"` can't be used there. The
+    [airflow sensor](../shared/airflow-sensor.md)'s SensorBridge is COM10.
+
+### 3. Event markers
+
+The task sends an LSL marker for every event (stream `RRST`), opened at launch, so
+physiology and airflow recorded alongside can be cut into trials. This needs
+liblsl-Matlab; see [Recording physiology and airflow](../shared/recording.md). To run
+without it, set `cfg.markers.lsl = false`.
 
 ## Starting a session
 
