@@ -1,0 +1,512 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>RRST Session Protocol</title>
+<style>
+  :root{
+    --bg:#eef1ef;
+    --surface:#ffffff;
+    --surface-2:#e4e9e6;
+    --ink:#16211f;
+    --muted:#57655f;
+    --line:#c7d0cb;
+
+    --host:#3d4f9e;
+    --host-bg:#eceefb;
+    --device:#0c7c74;
+    --device-bg:#e4f3f0;
+    --manual:#9c6a12;
+    --manual-bg:#f6ecd8;
+    --new:#a3390f;
+    --new-bg:#fbe8de;
+
+    --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,monospace;
+    --sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#14181a;
+      --surface:#1c2225;
+      --surface-2:#242b2e;
+      --ink:#e8ece9;
+      --muted:#9aa8a2;
+      --line:#333d3f;
+
+      --host:#a8b2f2;
+      --host-bg:#242747;
+      --device:#6fd6ca;
+      --device-bg:#12332f;
+      --manual:#e3b869;
+      --manual-bg:#3a2e15;
+      --new:#f5a079;
+      --new-bg:#3a1d10;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#14181a;
+    --surface:#1c2225;
+    --surface-2:#242b2e;
+    --ink:#e8ece9;
+    --muted:#9aa8a2;
+    --line:#333d3f;
+
+    --host:#a8b2f2;
+    --host-bg:#242747;
+    --device:#6fd6ca;
+    --device-bg:#12332f;
+    --manual:#e3b869;
+    --manual-bg:#3a2e15;
+    --new:#f5a079;
+    --new-bg:#3a1d10;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{
+    max-width:920px;
+    margin:0 auto;
+    padding-inline:20px;
+    padding-block:40px 64px;
+  }
+
+  header.page{
+    margin-bottom:28px;
+  }
+  .kicker{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin:0 0 8px;
+  }
+  h1{
+    font-size:clamp(26px,4.2vw,36px);
+    line-height:1.12;
+    margin:0 0 10px;
+    letter-spacing:-0.015em;
+    text-wrap:balance;
+  }
+  .dek{
+    font-size:15px;
+    line-height:1.55;
+    color:var(--muted);
+    max-width:64ch;
+    margin:0;
+  }
+  .dek code, .step code{
+    font-family:var(--mono);
+    font-size:0.92em;
+    background:var(--surface-2);
+    padding:1px 5px;
+    border-radius:4px;
+  }
+  .dek a{ color: var(--host); }
+
+  .update-note{
+    margin-top:14px;
+    font-size:12.5px;
+    line-height:1.5;
+    color:var(--muted);
+    font-family:var(--mono);
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:10px 14px;
+  }
+
+  /* legend */
+  .legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px 18px;
+    margin:20px 0 36px;
+    padding:12px 14px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:10px;
+  }
+  .legend-item{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--muted);
+  }
+  .swatch{
+    width:10px;height:10px;border-radius:3px;flex:none;
+  }
+  .swatch.manual{background:var(--manual);}
+  .swatch.host{background:var(--host);}
+  .swatch.device{background:var(--device);}
+  .swatch.new{background:var(--new);}
+
+  /* spine */
+  .flow{
+    position:relative;
+    padding-left:34px;
+  }
+  .flow::before{
+    content:"";
+    position:absolute;
+    left:11px; top:6px; bottom:6px;
+    width:2px;
+    background:var(--line);
+  }
+
+  .phase{
+    position:relative;
+    margin-bottom:26px;
+  }
+  .phase:last-child{ margin-bottom:0; }
+
+  .phase-num{
+    position:absolute;
+    left:-34px; top:0;
+    width:24px; height:24px;
+    border-radius:50%;
+    background:var(--surface);
+    border:2px solid var(--line);
+    color:var(--muted);
+    font-family:var(--mono);
+    font-size:12px;
+    font-weight:600;
+    display:flex; align-items:center; justify-content:center;
+    z-index:1;
+  }
+
+  .phase-head{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:10px;
+  }
+  .phase-title{
+    font-size:17px;
+    font-weight:600;
+    letter-spacing:-0.01em;
+  }
+  .phase-meta{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--muted);
+    letter-spacing:.02em;
+  }
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:12px;
+    overflow:hidden;
+  }
+
+  .step{
+    display:grid;
+    grid-template-columns:96px 1fr;
+    gap:14px;
+    padding:12px 16px;
+    border-bottom:1px solid var(--line);
+    align-items:start;
+  }
+  .step:last-child{ border-bottom:none; }
+
+  .actor{
+    font-family:var(--mono);
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:.03em;
+    padding:3px 8px;
+    border-radius:20px;
+    display:inline-block;
+    white-space:nowrap;
+  }
+  .actor.manual{ color:var(--manual); background:var(--manual-bg); }
+  .actor.host{ color:var(--host); background:var(--host-bg); }
+  .actor.device{ color:var(--device); background:var(--device-bg); }
+
+  .step p{
+    margin:0;
+    font-size:13.5px;
+    line-height:1.55;
+  }
+  .step p.sub{
+    margin-top:4px;
+    color:var(--muted);
+    font-size:12.5px;
+  }
+  .tag-new{
+    display:inline-block;
+    font-family:var(--mono);
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    color:var(--new);
+    background:var(--new-bg);
+    padding:2px 7px;
+    border-radius:20px;
+    margin-left:6px;
+    vertical-align:1px;
+  }
+
+  /* loop wrapper */
+  .loop{
+    position:relative;
+    padding-top:4px;
+  }
+  .loop-tag{
+    position:absolute;
+    right:14px; top:-11px;
+    background:var(--device);
+    color:var(--surface);
+    font-family:var(--mono);
+    font-size:10.5px;
+    font-weight:700;
+    letter-spacing:.04em;
+    padding:3px 10px;
+    border-radius:20px;
+    text-transform:uppercase;
+  }
+  .loop-back{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:9px 16px;
+    background:var(--surface-2);
+    font-family:var(--mono);
+    font-size:11.5px;
+    color:var(--muted);
+  }
+  .loop-back svg{ flex:none; }
+
+  /* callout */
+  .callout{
+    margin-top:32px;
+    border:1px solid var(--line);
+    border-radius:12px;
+    background:var(--surface);
+    padding:18px 20px;
+  }
+  .callout h2{
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    font-family:var(--mono);
+    color:var(--muted);
+    margin:0 0 12px;
+    font-weight:600;
+  }
+  .callout ul{
+    margin:0;
+    padding:0;
+    list-style:none;
+    display:grid;
+    gap:10px;
+  }
+  .callout li{
+    display:grid;
+    grid-template-columns:20px 1fr;
+    gap:10px;
+    font-size:13.5px;
+    line-height:1.5;
+  }
+  .callout li .x{
+    font-family:var(--mono);
+    color:var(--manual);
+    font-weight:700;
+  }
+  .callout li .plus{
+    font-family:var(--mono);
+    color:var(--new);
+    font-weight:700;
+  }
+  .callout li b{ font-weight:600; }
+  .callout li span.src{
+    color:var(--muted);
+    font-family:var(--mono);
+    font-size:12px;
+  }
+
+  footer.src-note{
+    margin-top:28px;
+    font-size:11.5px;
+    color:var(--muted);
+    font-family:var(--mono);
+  }
+
+  @media (max-width:520px){
+    .step{ grid-template-columns:1fr; gap:6px; }
+    .flow{ padding-left:28px; }
+    .flow::before{ left:9px; }
+    .phase-num{ left:-28px; width:20px; height:20px; font-size:11px; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="page">
+    <p class="kicker">embodied-computation-group / RespiroceptionMethodsPaper</p>
+    <h1>How the RRST paradigm operates the device</h1>
+    <p class="dek">Traced from every serial call in the repo &mdash; <code>respDeviceHelpers_3-0/*.m</code>, <code>RRS_3-0/code/main.m</code>, and the <b>current</b> device firmware <code>RRST_Teensy_4_version_TMC2209.ino</code> (TMC2209 dual-endstop generation). Three actors: a person doing a one-time mechanical fit, the MATLAB task script, and the Teensy firmware driving the motor.</p>
+    <p class="update-note">Updated after the TMC2100&rarr;TMC2209 firmware rebuild: re-traced against the actual current firmware and the MATLAB helpers as they exist in this repo today (not the <code>Resp_valve_3-0.ino</code> file the original version of this document cited, which no longer exists in this checkout). Items marked <span class="tag-new">new</span> didn't exist on the firmware generation this document originally described - the task script needed zero changes to benefit from any of them.</p>
+  </header>
+
+  <div class="legend">
+    <div class="legend-item"><span class="swatch manual"></span>Experimenter &mdash; manual, physical</div>
+    <div class="legend-item"><span class="swatch host"></span>MATLAB host script</div>
+    <div class="legend-item"><span class="swatch device"></span>Teensy firmware / motor</div>
+    <div class="legend-item"><span class="swatch new"></span>New since the TMC2209 rebuild</div>
+  </div>
+
+  <div class="flow">
+
+    <div class="phase">
+      <div class="phase-num">0</div>
+      <div class="phase-head">
+        <div class="phase-title">Mechanical fit &mdash; once per physical device</div>
+        <div class="phase-meta">not scripted &middot; done by hand before any session exists</div>
+      </div>
+      <div class="card">
+        <div class="step">
+          <span class="actor manual">Experimenter</span>
+          <div>
+            <p>Turn the fine-tune screw on the back of the wedge to set the two physical endpoints: <b>min</b> = wedge just touching the tube (a slip of paper fits between them), <b>max</b> = barely possible to inhale. CCW retracts (fewer steps), CW advances (more steps).</p>
+            <p class="sub">This is the "moving the wedge forward to the tube" step &mdash; a hand adjustment, not a serial command. Unchanged by the firmware rebuild.</p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="actor manual">Experimenter</span>
+          <div>
+            <p>Read the resulting motor-step range off that specific unit and hard-code it into <code>scale2motorstep.m</code> &mdash; every device differs (e.g. Red 9,000&ndash;32,000, Black 9,000&ndash;31,000 steps).</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-num">1</div>
+      <div class="phase-head">
+        <div class="phase-title">Session start</div>
+        <div class="phase-meta">main.m &middot; fixed 65&nbsp;s wait screen</div>
+      </div>
+      <div class="card">
+        <div class="step">
+          <span class="actor host">MATLAB</span>
+          <div><p><code>setupResp()</code> opens the serial port (9600&nbsp;baud). Unchanged.</p></div>
+        </div>
+        <div class="step">
+          <span class="actor host">MATLAB</span>
+          <div>
+            <p><code>calibrateResp()</code> sends a single <code>'c'</code> byte. <code>main.m</code> then shows a welcome screen for a <b>fixed 65-second</b> countdown (<code>calibrationTime = 65</code>) before continuing - this is a MATLAB-side timer, not something the firmware acknowledges or reports back to.</p>
+            <p class="sub">Worth re-checking on this hardware generation: the current firmware now does a precise fast-approach-then-slow-reapproach homing pass on <i>both</i> endstops (see next step), which is strictly more work per calibration than a single-pass homing sequence. Whether 65&nbsp;s is still comfortable margin hasn't been timed here - it was never tied to real firmware timing even before.</p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="actor device">Firmware</span>
+          <div>
+            <p><code>cmd3_Calibrate</code> energizes the driver directly (<code>digitalWrite(EnablePin, LOW)</code>) - no <code>'e'</code> needed, same practical outcome as before. It homes to the min endstop, then finds the max endstop, latches <code>MaxPosition</code>, and is done - fully automatic, same as always.</p>
+            <p class="sub tag-new">New: each endstop is now found twice per calibration - a fast approach, then an automatic back-off and slow re-approach for a more repeatable trigger point - plus auto-correction and hit-counting if the switch misbehaves mid-seek. None of this is visible to the task script; it just takes however long it takes before the next <code>'c'</code>/<code>'a'</code> gets answered.</p>
+            <p class="sub tag-new">Minor quirk worth knowing: calibration energizes the driver but doesn't set the firmware's own "Stepper Enabled" status flag. Anyone watching Live Status or raw <code>'s'</code> output during a running session will see <b>"Stepper Enabled: NO"</b> even while the device is demonstrably calibrated and moving. Cosmetic only - it doesn't affect whether moves actually work.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-num">2</div>
+      <div class="phase-head">
+        <div class="phase-title">Trial loop</div>
+        <div class="phase-meta">repeats for every trial in the staircase</div>
+      </div>
+      <div class="card loop">
+        <span class="loop-tag">loop</span>
+        <div class="step">
+          <span class="actor host">MATLAB</span>
+          <div><p>Staircase picks the stimulus %-obstruction; the two intervals are assigned 0% (s&minus;) and that value (s+), order randomised.</p></div>
+        </div>
+        <div class="step">
+          <span class="actor host">MATLAB</span>
+          <div>
+            <p><code>moveResp()</code> to breath&nbsp;1's position &rarr; paced inhale cue &rarr; <code>moveResp()</code> to breath&nbsp;2's position (or <code>moveResp2NoLoad()</code> for the null/sham breath - same underlying <code>'a'</code>+value call, just targeting position 0) &rarr; paced inhale cue.</p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="actor device">Firmware</span>
+          <div><p class="tag-new">New: every <code>'a'</code> move now runs through endstop-hit auto-correction - an unexpected switch trigger mid-move is corrected automatically (up to 3 consecutive times) before the device would ever hard-disable. The task gets this reliability improvement with no script changes; it would only ever notice if the safety disable actually tripped.</p></div>
+        </div>
+        <div class="step">
+          <span class="actor host">MATLAB</span>
+          <div><p>2IFC + confidence response collected, then <code>moveResp2ITIpos()</code> sends the wedge to a jittered ~50%&plusmn;30% resting load between trials.</p></div>
+        </div>
+        <div class="step">
+          <span class="actor host">MATLAB</span>
+          <div>
+            <p>On an invalid or repeated trial, the script's recovery move is another <code>calibrateResp()</code> &mdash; a full re-home, not a disable/re-enable cycle.</p>
+            <p class="sub tag-new">This same recovery action now also happens to recover from the new endstop-hit safety disable and the new serial-disconnect safety disable below - the task didn't need to be taught about either failure mode to already handle them correctly.</p>
+          </div>
+        </div>
+        <div class="loop-back">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>
+          next trial &mdash; back to staircase pick
+        </div>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-num">3</div>
+      <div class="phase-head">
+        <div class="phase-title">Session end</div>
+        <div class="phase-meta">main.m / experimentEnd.m</div>
+      </div>
+      <div class="card">
+        <div class="step">
+          <span class="actor host">MATLAB</span>
+          <div>
+            <p>One final <code>calibrateResp()</code> re-home, then <code>fclose('all')</code> and window teardown.</p>
+            <p class="sub">Re-traced carefully: <code>fclose('all')</code> only closes raw file identifiers (<code>fopen</code> handles) - the <code>serialport</code> object <code>RD.respDevice</code> is a different kind of handle and is never explicitly closed anywhere in <code>main.m</code> or <code>experimentLauncher.m</code>. In practice the port stays open, held by that variable in the base workspace, until the <i>next</i> <code>experimentLauncher</code> run's own <code>clear all</code> releases it (or MATLAB itself closes). This was already true before the firmware rebuild - not a new finding, just confirmed against the actual current code rather than assumed.</p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="actor device">Firmware</span>
+          <div>
+            <p>No <code>'d'</code> (disable) is ever sent. As long as the port stays open (see above), the driver's enable pin stays low &mdash; the motor is left holding torque, powered, between subjects, same as always.</p>
+            <p class="sub tag-new">New: the moment the connection <i>does</i> eventually drop - workspace cleared, MATLAB closed, cable unplugged, a crash - the firmware now notices and auto-disables, invalidating calibration until a fresh <code>'c'</code>. The old firmware had no such check at all and would have stayed silently "enabled" (electrically) even against a dead connection. This is a pure safety-net addition: it doesn't change the normal between-subjects behavior above, only what happens once the connection genuinely goes away.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="callout">
+    <h2>What never happens, anywhere in the repo</h2>
+    <ul>
+      <li><span class="x">&times;</span><div><b>Disable after use.</b> <code>'d'</code> exists in the firmware menu but no <code>.m</code> file ever sends it &mdash; every <code>writeline</code> call in the repo is <code>'c'</code> or <code>'a'&lt;pos&gt;</code>. <span class="src">grep writeline: calibrateResp.m, moveResp.m only</span></div></li>
+      <li><span class="x">&times;</span><div><b>Per-session speed/acceleration tuning.</b> <code>'f'</code> and <code>'g'</code> exist for interactive CLI use; the task always runs on whatever's compiled into that firmware build (<code>ACCELERATION 10000</code>, <code>SPEED 16000</code> - unchanged by the rebuild). <span class="src">RRST_Teensy_4_version_TMC2209.ino</span></div></li>
+      <li><span class="x">&times;</span><div><b>Current/microstep/chopper-mode tuning.</b> The TMC2209 can now do all of this over UART (<code>'i'</code>/<code>'u'</code>/<code>'p'</code>/<code>'t'</code>), unlike the old plain step/dir driver - but the task never sends any of them. It runs on whatever's compiled in (800&nbsp;mA run / 50% hold / 16 microsteps / SpreadCycle by default).</div></li>
+      <li><span class="x">&times;</span><div><b>The new dedicated Retract command.</b> <code>'y'</code> (<code>cmd22_Retract</code>) jumps straight to the calibrated First-Contact position in one keystroke - added this session, but <code>moveResp2ITIpos</code>/<code>moveResp2NoLoad</code> still compute and send their own <code>'a'</code>+value instead of using it. Available, not adopted.</div></li>
+    </ul>
+  </div>
+
+  <div class="callout">
+    <h2>Gained for free since the TMC2209 rebuild</h2>
+    <ul>
+      <li><span class="plus">+</span><div><b>Mid-move endstop-hit auto-correction.</b> An unexpected switch trigger during any <code>'a'</code> move self-corrects, up to 3 consecutive times, before a hard safety disable. Previously any unexpected hit was just... whatever the old firmware did with it.</div></li>
+      <li><span class="plus">+</span><div><b>Serial-disconnect safety-disable.</b> A dropped connection now auto-disables the driver and invalidates calibration instead of silently staying energized against nothing. The task's existing recalibrate-to-recover pattern already handles this correctly with no changes.</div></li>
+      <li><span class="plus">+</span><div><b>Lifetime usage stats, persisted in EEPROM.</b> Every session now silently accumulates into this specific device's lifetime run time, distance traveled, and endstop hit counts - readable later via <code>'s'</code> or the Control Panel app's Live Status, independent of anything the task script does.</div></li>
+      <li><span class="plus">+</span><div><b>A live heat-sink temperature reading</b>, if this particular physical unit happens to have the optional DS18B20 sensor installed - auto-detected at boot, no task-side change needed either way.</div></li>
+    </ul>
+  </div>
+
+  <footer class="src-note">Sources: task/respDeviceHelpers_3-0/{setupResp,calibrateResp,moveResp,moveResp2NoLoad,moveResp2ITIpos,scale2motorstep}.m &middot; task/RRS_3-0/code/main.m, experimentLauncher.m &middot; RRST_Teensy_4_version_TMC2209/RRST_Teensy_4_version_TMC2209.ino</footer>
+
+</div>
+
+</body></html>
