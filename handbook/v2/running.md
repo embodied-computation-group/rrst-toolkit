@@ -20,7 +20,7 @@ its [bench check](bench-check.md).
 
 | | Version | Notes |
 |---|---|---|
-| MATLAB | R2024b (tested on the stim laptop) | R2019b or later is needed for `serialport`. The QC figure needs R2024a or later (`hex2rgb`). |
+| MATLAB | R2024b (tested on the stim laptop) | R2019b or later is needed for `serialport`. The QC figure (`bench/qcSession.m`) also needs Palamedes on the path. |
 | Psychtoolbox | 3.0.19 (3.0.19.16 on the stim laptop) | Pinned: 3.0.20 and later need a paid licence key on Windows. Don't run `UpdatePsychtoolbox`. |
 | GStreamer | MSVC build (1.28.8 on the stim laptop) | Needed by Psychtoolbox on Windows. |
 | Palamedes | 1.11.13 | |
