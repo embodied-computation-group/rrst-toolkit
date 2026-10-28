@@ -71,6 +71,27 @@ session so a fresh session can continue from the files.
 
 ## Next
 
+- Zurich design (Micah, 2026-10-28): 30 participants, within-subject placebo vs low vs
+  moderate THC. RRST gets 30 minutes in total, including tutorial and breaks. At about
+  24 s per trial with confidence (20-trial pilot), that leaves roughly 45-50 Psi trials,
+  half the paper's 100, so the prior and the procedure matter more.
+- Timing for THC (Micah, 2026-10-28, from the pilots): the task feels a little too fast;
+  each breath should be about 0.5 s longer (`cfg.timing.inhale` is 0.8 s). Add exhale
+  feedback to the expanding circle (it only paces the inhale now). Both change the
+  trial length and so the trial budget above.
+- Empirical prior (Courtin, Hierarchical-Interoception, doi 10.1101/2025.08.27.672360):
+  log(alpha) ~ N(2.57, 0.105) on the old 0-17 mm axis, log(beta) ~ N(2.05, 0.85),
+  lambda 0.03. The slope part transfers (Weibull slope is scale-free); the threshold
+  location does not map onto this device's anchored percent axis. Concern: a tight
+  prior railroads real participants, more so across drug conditions. Simulating bias vs
+  prior width before any decision. Their updated `loadParams.m` would not run as
+  written (`PM.priorAlphas` for `stair.PM.priorAlphas`, `10^` for `10.^`).
+- Try QUEST aimed at about 70 % correct, to feel what a harder target is like. The
+  current "quest" procedure (PAL_AMRF) places trials at the fitted threshold (about 80 %
+  correct for a 2AFC Weibull), so it needs a target quantile, not just the switch.
+- Roadmap: drop the fixed stimulus grid. The device resolves single steps (1600 steps
+  per mm), so the procedure could place any level, not 2.5 % steps (e.g. a continuous
+  QUEST/Psi variant, or a grid fine enough not to matter).
 - Pilot idea (Micah, 2026-10-28): resistance rises very non-linearly as the tube
   closes. Most of the travel is imperceptible, and the useful range is the last 3-4 mm.
   Instead of a uniform mm grid, give Psi a non-uniform stimulus grid (Palamedes accepts
