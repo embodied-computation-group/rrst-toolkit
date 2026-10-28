@@ -34,7 +34,7 @@ University, and are included under GPL-3.0 by decision of the PI (Micah Allen,
 
 | Source path | Destination | Notes |
 |---|---|---|
-| `task/RRS_3-0/` | `task/RRS_3-0/` | base for the Zurich task |
+| `task/RRS_3-0/` | `task/RRS_3-0/` | base for the 2.0 task |
 | `task/helpers/` | `task/helpers/` | `expandingRing60.avi` (25 MB) **not imported**: only the commented-out movie stimulus (`showExpandingRing.m`) uses it; the task uses `showExpandingRingGenerated.m`. Get it from the source commit if needed. |
 | `task/respDeviceHelpers_3-0/` | `task/respDeviceHelpers_3-0/` | reference only; replaced by `device/+rrst` |
 | `LICENSE` | `LICENSE` | |

@@ -1,10 +1,11 @@
-# Project: RRST Zurich
+# Project: RRST Toolkit 2.0
 
 ## Question
-- Run the RRST on the new Teensy 4.0 + TMC2209 devices so that every requested obstruction level is delivered, confirmed by the firmware, and logged.
+- General-purpose RRST toolkit: run the task on any calibrated Teensy 4.0 + TMC2209 device so that every requested obstruction level is delivered, confirmed by the firmware, and logged.
+- Keep the toolkit study-agnostic. Study-specific settings (grid, priors, timing) are configuration, not code changes. Zurich is the first deployment.
 
 ## Scientific context
-- Methods source: `../context/RRST_methods_paper.md` (Nikolova et al., 2022), plus the integration review `../context/RRST_integration_review_2026-10-28.md`.
+- Methods source: `docs/methods_paper_notes.md` (Nikolova et al., 2022), plus the integration review `docs/integration_review_2026-10-28.md`.
 - Stimulus anchors are physical and per device: 0 = wedge just touching the tube, full scale = barely possible to inhale. They are measured at the bench, never derived or guessed in code.
 - Open scientific decisions are listed in `TASKS.md` under "Open questions". Do not resolve them in code; leave a visible `{{PLACEHOLDER}}` instead.
 - Do not change expected test values to make code pass.

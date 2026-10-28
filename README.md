@@ -1,6 +1,12 @@
-# RRST Zurich
+# RRST Toolkit 2.0
 
-Integration of the Respiratory Resistance Sensitivity Task (RRST) for the Zurich study.
+A general-purpose respiroception toolkit built around the Respiratory Resistance
+Sensitivity Task (RRST): task code, a confirmed and logged device layer, firmware, and
+the device Control Panel for the Teensy 4.0 + TMC2209 RRST devices. The first deployment
+is a study in Zurich. The toolkit itself is study-agnostic; study-specific choices
+(stimulus grid, priors, timing) belong in each study's configuration and
+preregistration.
+
 It combines two sources:
 
 - the MATLAB/Psychtoolbox task from
@@ -13,14 +19,14 @@ It combines two sources:
 - **Device layer** (`device/+rrst`): written. It is tested against a simulated device,
   not yet against hardware.
 - **Task, firmware and Control Panel:** imported unmodified from their sources.
-- **Next:** the Zurich task (RRS_4-0) built on the device layer, and per-device
+- **Next:** the 2.0 task built on the device layer (from RRS_3-0), and per-device
   calibration records (see `TASKS.md`).
 
 ## Question
 
-Can the RRST run on the new Teensy 4.0 + TMC2209 devices so that each requested
-obstruction level is delivered, confirmed and logged, with stimulus anchors measured on
-each physical device?
+Provide an RRST that runs on any calibrated Teensy 4.0 + TMC2209 device and delivers,
+confirms and logs every requested obstruction level, with stimulus anchors measured on
+each physical device. Studies configure it; they don't fork it.
 
 ## Environment
 
@@ -44,13 +50,13 @@ hardware is required.
 | Path | Contents |
 |---|---|
 | `device/+rrst/` | Device layer: obstruction-to-step mapping, firmware reply parsers, `Device` class, `MockPort` simulator, `openPort` for real hardware |
-| `task/` | `RRS_3-0` (base for the Zurich task, unmodified so far), shared `helpers/`, and the old 3-0 and 4-0 device helpers kept for reference |
+| `task/` | `RRS_3-0` (base for the 2.0 task, unmodified so far), shared `helpers/`, and the old 3-0 and 4-0 device helpers kept for reference |
 | `firmware/` | Teensy 4.0 + TMC2209 firmware source |
 | `control_panel/` | Martin's Python Control Panel app, with the bundled `.hex` and flasher |
 | `hardware/` | Eagle schematic and the TMC2209 modification checklist |
 | `bench/` | Hardware bench scripts (`readStatus.m` sends only `s`) |
 | `tests/` | `matlab.unittest` tests; `tests/fixtures/` holds firmware transcripts |
-| `docs/` | Protocol notes and the decisions log |
+| `docs/` | Methods-paper notes, integration review (2026-10-28), Control Panel manual, firmware session-protocol notes |
 | `data/` | `raw/` and `processed/` are for study data (never in Git, denied to the agent); `generated/` is for fictional data |
 
 ## Provenance and credits

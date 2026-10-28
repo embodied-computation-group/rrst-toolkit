@@ -18,8 +18,8 @@ session so a fresh session can continue from the files.
 
 ## Next
 
-- Import the task (RRS_3-0 as the base) at the recorded commit. Then build RRS_4-0 on
-  `rrst.Device`, with these fixes:
+- Build the 2.0 task from the imported RRS_3-0 on `rrst.Device`, with study settings
+  moved into a configuration file and these fixes:
   - check every move;
   - fix the ITI rest position;
   - fix the `resetResp` call in the tutorial;
@@ -31,6 +31,8 @@ session so a fresh session can continue from the files.
 - Hardware bench checklist and pre-study acceptance checklist in `docs/`.
 
 ## Decisions
+
+- 2026-10-28: Renamed from rrst-zurich to **rrst-toolkit** (RRST Toolkit 2.0): a general-purpose toolkit, with Zurich as its first deployment.
 
 - 2026-10-28: Project scaffolded from the lab-book conventions, adapted to MATLAB (no uv, no Python analysis).
 - 2026-10-28: Replies are framed on the firmware prompt `Valve>`, because every command handler ends with `giveCmdPrompt()`. Unsolicited lines found before a command are logged, not discarded.
@@ -52,4 +54,4 @@ Scientific decisions for the scientist (see the decision sheet):
   this unit's EEPROM state, anchors, the enabled flag after `c`, DTR, motor noise, move
   timing and firmware versioning (`../context/message_to_Martin_DRAFT.md`). Awaiting
   his reply.
-- Which MATLAB/Psychtoolbox versions the Zurich PC runs.
+- Which MATLAB/Psychtoolbox versions to support. The first deployment is the Zurich stimulus PC.
