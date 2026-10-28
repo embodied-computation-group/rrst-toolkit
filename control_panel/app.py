@@ -18,13 +18,14 @@ from tooltip import Tooltip
 # derived automatically: the codename is only knowable by actually
 # running the firmware and asking it (its 's' status output), not by
 # inspecting the compiled .hex.
-BUNDLED_FIRMWARE_VERSION = "Patient-Regulator (Oct  7 2026 08:45:06)"
+BUNDLED_FIRMWARE_VERSION = "Precise-Piston (Oct 28 2026 12:07:57)"
 
 STATUS_START_MARKER = "--- SYSTEM STATUS ---"
 STATUS_END_MARKER = "---"
 
 STATUS_FIELDS = [
     ("Software Version", "Firmware Version", "The connected device's firmware build identifier (an adjective-noun codename) and build timestamp. Useful for confirming which build is actually running, e.g. after a flash."),
+    ("Git Commit", "Git Commit", "The git commit hash the running firmware was built from, with \"-dirty\" appended if the build included uncommitted changes. \"unknown\" means it was not built with build_firmware.sh. Unlike the codename, this ties the device to an exact version of the source."),
     ("Stepper Enabled", "Enabled", "Whether the stepper driver output stage is currently energized (sends holding torque and responds to moves). Disabled by 'd', a driver fault, a lost serial connection, or repeated unexpected endstop hits."),
     ("Current Position", "Position", "The stepper's currently tracked position in steps. Not trustworthy until calibrated."),
     ("Max Range Limit", "Max Range", "The calibrated maximum position in steps - the far endstop's location, found during the last successful calibration this session."),
@@ -373,6 +374,14 @@ class ControlPanelApp:
         e.grid(row=6, column=1, sticky="w", padx=4, pady=2)
         self._action_widgets.append(e)
         Tooltip(e, "Max allowed difference (steps) between two repeated calibrations at the same setting to still count as reliable.")
+
+        ttk.Label(inputs, text="Test move stops short of max (steps):").grid(row=7, column=0, sticky="w", padx=4, pady=2)
+        self.sweep_far_margin_var = tk.StringVar(value=str(SWEEP_TEST_MARGIN_STEPS))
+        e = ttk.Entry(inputs, textvariable=self.sweep_far_margin_var, width=8)
+        e.grid(row=7, column=1, sticky="w", padx=4, pady=2)
+        self._action_widgets.append(e)
+        Tooltip(e, "How far short of the calibrated max endstop the test move stops (steps). The tube's resistance is highest just before it closes, so lower this to test your real full-scale point, e.g. 2900 to end near step 38000 on a unit that calibrates to about 40900. The near-min end keeps its fixed 3 mm margin.")
+        self.sweep_far_margin_var.trace_add("write", self._update_required_accel_label)
 
         button_row = ttk.Frame(frame)
         button_row.pack(fill="x", pady=4)
@@ -737,7 +746,11 @@ class ControlPanelApp:
         if self._live_max_range is None or not self._live_calibrated:
             self.sweep_required_accel_label.configure(text="(connect + calibrate to compute)")
             return
-        usable_distance = self._live_max_range - 2 * SWEEP_TEST_MARGIN_STEPS
+        try:
+            far_margin = int(self.sweep_far_margin_var.get())
+        except (ValueError, tk.TclError):
+            far_margin = SWEEP_TEST_MARGIN_STEPS
+        usable_distance = self._live_max_range - SWEEP_TEST_MARGIN_STEPS - far_margin
         if usable_distance <= 0:
             self.sweep_required_accel_label.configure(text="(calibrated range too short for the sweep test)")
             return
@@ -755,7 +768,9 @@ class ControlPanelApp:
     def _schedule_auto_refresh(self):
         if not self.link.is_connected():
             return
-        if not self.sweep.is_running():
+        # Skip while a move is in flight: the firmware answers nothing until it
+        # finishes, so a queued 's' would only delay the user's next command.
+        if not self.sweep.is_running() and not self.link.is_busy():
             try:
                 self._suppress_next_echo = True
                 self.link.write_line("s")
@@ -789,6 +804,9 @@ class ControlPanelApp:
                 int(self.sweep_accel_fixed_speed_var.get()),
             )
             tolerance = int(self.sweep_tolerance_var.get())
+            far_margin = int(self.sweep_far_margin_var.get())
+            if far_margin < 0:
+                raise ValueError("distance short of max must not be negative")
             if speed_range[2] <= 0 or accel_range[2] <= 0:
                 raise ValueError("speed/accel step must be greater than 0")
         except ValueError as exc:
@@ -809,7 +827,7 @@ class ControlPanelApp:
 
         self._set_sweep_running_state(True)
         self._append_log(f"Starting sweep: {len(currents)} current(s) x {len(modes)} mode(s)")
-        self.sweep.start(currents, modes, speed_range, accel_range, tolerance)
+        self.sweep.start(currents, modes, speed_range, accel_range, tolerance, far_margin)
 
     def _on_sweep_abort_clicked(self):
         self.sweep.abort()

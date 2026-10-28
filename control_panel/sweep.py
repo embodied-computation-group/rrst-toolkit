@@ -47,7 +47,7 @@ FIRMWARE_HOMING_SLOW_SPEED = 1000
 
 # Sweep-specific safety margin for the round-trip test move's near-endstop
 # targets - deliberately much smaller than the calibration-only
-# RetractDistanceMm (15mm default / 24000 steps). That margin is sized for
+# RetractDistanceMm (16mm default / 25600 steps). That margin is sized for
 # calibration's own purposes, not for leaving enough travel for a stress
 # test: on a short-travel device it can consume most or all of the usable
 # range between the two endstops, starving the test move of distance to
@@ -286,6 +286,7 @@ class SweepTest:
         self._pending_wait = None
         self._wait_deadline = None
         self._running = False
+        self._far_margin_steps = SWEEP_TEST_MARGIN_STEPS
         self._abort_reason = ""
         self._completed_steps = 0
         self._total_steps = 0
@@ -293,10 +294,14 @@ class SweepTest:
     def is_running(self):
         return self._running
 
-    def start(self, currents, modes, speed_range, accel_range, tolerance_steps=DEFAULT_TOLERANCE_STEPS):
+    def start(self, currents, modes, speed_range, accel_range, tolerance_steps=DEFAULT_TOLERANCE_STEPS,
+              far_margin_steps=SWEEP_TEST_MARGIN_STEPS):
         """currents: list[int] mA. modes: list[str], each "spread" or
         "stealth". speed_range: (start, end, step, fixed_acceleration).
-        accel_range: (start, end, step, fixed_speed)."""
+        accel_range: (start, end, step, fixed_speed). far_margin_steps: how
+        far short of the max endstop the test move stops - lower it to test
+        deeper into the tube's high-load region near full closure."""
+        self._far_margin_steps = far_margin_steps
         self._running = True
         self._abort_reason = ""
         self._completed_steps = 0
@@ -374,7 +379,7 @@ class SweepTest:
                     # distance for how fast a candidate speed can ever
                     # actually be reached.
                     near_min_target = SWEEP_TEST_MARGIN_STEPS
-                    near_max_target = baseline_position - SWEEP_TEST_MARGIN_STEPS
+                    near_max_target = baseline_position - self._far_margin_steps
                     usable_distance = near_max_target - near_min_target
                     if usable_distance <= 0:
                         combo_result.note = "travel too short for sweep test margins"

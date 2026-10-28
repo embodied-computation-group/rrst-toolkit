@@ -18,7 +18,7 @@ function closeResp(respDevice)
 % one job, and it must not be skipped just because the device stopped
 % answering on the way out.
 
-if ~isa(respDevice, 'serialport')
+if ~isSerialportHandle(respDevice)
     disp('closeResp: no valid serial connection to close.');
     return
 end

@@ -187,3 +187,54 @@ def test_list_teensy_ports_empty_when_none_connected(monkeypatch):
     monkeypatch.setattr(serial.tools.list_ports, "comports", lambda: [])
 
     assert list_teensy_ports() == []
+
+
+def _connected_link():
+    fakes = []
+
+    def factory(port, baudrate, timeout=1, write_timeout=1):
+        f = FakeSerial(port, baudrate, timeout, write_timeout)
+        fakes.append(f)
+        return f
+
+    link = SerialLink(port_factory=factory)
+    link.connect("FAKE")
+    return link, fakes[0]
+
+
+def test_blocking_command_marks_link_busy_until_completion_line():
+    link, fake = _connected_link()
+    try:
+        assert not link.is_busy()
+        link.write_line("y")
+        assert link.is_busy()
+        fake.feed_line("Retracting to First-Contact position: 16468")
+        assert link.incoming.get(timeout=1) == "Retracting to First-Contact position: 16468"
+        assert link.is_busy()
+        fake.feed_line("Move complete.")
+        assert link.incoming.get(timeout=1) == "Move complete."
+        assert not link.is_busy()
+    finally:
+        link.disconnect()
+
+
+def test_error_reply_also_clears_busy():
+    link, fake = _connected_link()
+    try:
+        link.write_line("c")
+        assert link.is_busy()
+        fake.feed_line("ERROR: Min endstop not found - calibration aborted.")
+        link.incoming.get(timeout=1)
+        assert not link.is_busy()
+    finally:
+        link.disconnect()
+
+
+def test_non_blocking_commands_do_not_mark_busy():
+    link, _ = _connected_link()
+    try:
+        for cmd in ("s", "x", "f", "g", "t", "v"):
+            link.write_line(cmd)
+            assert not link.is_busy()
+    finally:
+        link.disconnect()

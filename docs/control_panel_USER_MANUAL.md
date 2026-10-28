@@ -105,7 +105,8 @@ keep the window compact.
 | Field | Meaning |
 |---|---|
 | Firmware Version | The connected device's firmware build codename and timestamp — confirm which build is actually running, e.g. after a flash. |
-| Enabled | Whether the driver is energized. Disabled by `'d'`, a driver fault, a lost serial connection, or repeated unexpected endstop hits. Quirk: **Calibrate** energizes the driver directly without updating this flag, so it can read "NO" right after a successful calibration even though the device is demonstrably moving. Cosmetic only — it doesn't affect whether moves work. |
+| Git Commit | The git commit the running firmware was built from, with `-dirty` added if the build included uncommitted changes, or `unknown` if it wasn't built with `build_firmware.sh`. Log this with experiment data to record exactly which firmware ran. |
+| Enabled | Whether the driver is energized. Disabled by `'d'`, a driver fault, a lost serial connection, or repeated unexpected endstop hits. |
 | Position | Currently tracked position in steps. Not trustworthy until calibrated. |
 | Max Range | The calibrated maximum position (the far endstop's location) from the last successful calibration this session. |
 | Calibrated | Whether the device has been calibrated since it was last enabled. |
@@ -157,6 +158,12 @@ matrix of run currents × chopper modes you specify.
 - **Repeatability tolerance (steps)** — the max allowed position drift
   between a test move and a trusted baseline for a step to still count
   as passing.
+- **Test move stops short of max (steps)** — how far short of the
+  calibrated max endstop the far end of the test move stops (default
+  4800, i.e. 3 mm). With a tube fitted, resistance is highest just before
+  it closes, so lower this to test your real full-scale point — e.g. 2900
+  to end near step 38000 on a unit that calibrates to about 40900. The
+  near-min end always keeps its fixed 3 mm margin.
 
 **Running it:** click **Run Sweep**. For each current × mode combo, the
 sweep runs one baseline calibration, then increments speed (then

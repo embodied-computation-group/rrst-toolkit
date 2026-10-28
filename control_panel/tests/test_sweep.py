@@ -60,8 +60,8 @@ class Harness:
     def _on_finished(self, aborted, reason):
         self.finished = (aborted, reason)
 
-    def start(self, currents, modes, speed_range, accel_range, tolerance_steps=20):
-        self.sweep.start(currents, modes, speed_range, accel_range, tolerance_steps)
+    def start(self, currents, modes, speed_range, accel_range, tolerance_steps=20, **kwargs):
+        self.sweep.start(currents, modes, speed_range, accel_range, tolerance_steps, **kwargs)
 
     def feed(self, line):
         self.sweep.feed_line(line)
@@ -1011,3 +1011,24 @@ def test_step_result_fires_on_fail_verify():
     drive_one_passing_step(h, "g", 5000, "f", 1000)
     drive_combo_completion(h)
     assert h.finished == (False, "")
+
+
+def test_far_margin_steps_sets_how_far_short_of_max_the_test_move_stops():
+    h = Harness()
+    h.start(
+        currents=[800],
+        modes=["spread"],
+        speed_range=(1000, 1000, 1000, 5000),
+        accel_range=(5000, 5000, 1000, 1000),
+        far_margin_steps=2900,
+    )
+    h.reply_current(800)
+    h.reply_mode("spread")
+    drive_baseline(h, position=BASELINE_POSITION, first_contact=1)
+
+    h.reply_speed(1000)
+    h.reply_accel(5000)
+    # the near-min end keeps its fixed margin; only the far end moves
+    assert h.sent[-2:] == ["a", str(SWEEP_TEST_MARGIN_STEPS)]
+    h.reply_move_ok()
+    assert h.sent[-2:] == ["a", str(BASELINE_POSITION - 2900)]
