@@ -227,6 +227,9 @@ try
             % Count down the ISI from the confirmed move
             ISIstart = GetSecs;
             rrstMarker(sprintf('trial_%d_interval%d_ready', thisTrial, thisAlt), ISIstart);
+            if vars.stimIsHere   % level in the recording itself, so figures need no task file
+                rrstMarker(sprintf('trial_%d_level_%g', thisTrial, thisTrialStim), ISIstart);
+            end
             while (GetSecs - ISIstart) <= vars.ISI
                 tRemaining = round(vars.ISI - (GetSecs - ISIstart));
                 counterText = strcat(instructionPrepare2Breathe, num2str(tRemaining), ' sec.');
@@ -292,6 +295,8 @@ try
         % Get accuracy: correct if the response names the breath with the load
         if vars.RespLR == 0 || vars.RespLR == 1
             Resp = double((vars.RespLR + 1) == vars.wheresTheSignal(thisTrial));
+            outcome = ["wrong" "correct"];
+            rrstMarker(sprintf('trial_%d_%s', thisTrial, outcome(Resp + 1)), vars.EndRT);
         else
             Resp = NaN;
         end

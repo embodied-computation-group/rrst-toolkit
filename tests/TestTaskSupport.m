@@ -191,9 +191,16 @@ classdef TestTaskSupport < matlab.unittest.TestCase
             tc.verifyError(@() validateConfig(cfg), 'rrst:badConfig');
         end
 
+        function requireRecorderMustBeLogical(tc)
+            cfg = pilotConfig();
+            cfg.markers.requireRecorder = 1;
+            tc.verifyError(@() validateConfig(cfg), 'rrst:badConfig');
+        end
+
         function markerIsANoOpUntilOpened(tc)
             rrstMarker('close');
             rrstMarker('trial_1_interval1_onset_load', 12.3);   % no outlet: no error, no LSL needed
+            tc.verifyFalse(rrstMarker('recorded'));
         end
 
         function missingLiblslIsAClearError(tc)

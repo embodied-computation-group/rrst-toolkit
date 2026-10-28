@@ -63,6 +63,7 @@ unverified**. A replacement must have:
 | POWERbreathe filtered mouthpiece | Partly verified | A single-use POWERbreathe bacteria filter is in stock at Oxycare (EU), €1.79 ([oxycare.eu](https://oxycare.eu/en/powerbreathe-bacteria-filter-blue-trendvent-physio-pulsar), checked 2026-10-28). Not confirmed to be the TrySafe/anti-viral mouthpiece used in the studies |
 | Hans Rudolph 1410 T-valve | Unverified | The manufacturer's two-way valve page doesn't list series 1410. `TODO(parts)`: contact Hans Rudolph |
 | Fan | Unverified | The parts list says 30×30 mm, but its link is a 40×40 mm fan. `TODO(parts)`: measure the shell |
+| Sensirion SFM3019-240 flow sensor and SEK-SensorBridge (optional, [airflow sensor](shared/airflow-sensor.md)) | Unverified | Current Sensirion products ([SFM3019](https://sensirion.com/products/catalog/SFM3019), [SEK-SensorBridge](https://sensirion.com/products/catalog/SEK-SensorBridge)); price and stock not checked. Niia Nikolova reports buying the SFM3019-240 cheaply on Amazon. `TODO(parts)`: Amazon listing and price; sensor cable and tube adapters |
 | Silicone tube, power supply, barrel socket, NCP1117, XM1584, TVS/Schottky diodes, capacitors | Unverified | Generic or widely stocked parts, not yet checked |
 
 ## Reports from other labs

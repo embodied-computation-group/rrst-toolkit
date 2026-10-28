@@ -43,9 +43,11 @@ with an `Aborted_` prefix.
 ## Event markers (LSL)
 
 With `cfg.markers.lsl = true` (the pilot default) the task opens a Lab Streaming
-Layer marker stream named `RRST` at launch, before the participant prompts. Start
-RRST first, then the recorder (LabRecorder or the Physio Recorder app), so the
-stream is online when recording starts. Each marker carries the event's own time:
+Layer marker stream named `RRST` at launch, before the participant prompts. A recorder must
+start after the stream exists: the Physio Recorder's RRST preset starts recording by
+itself when the stream appears. With `cfg.markers.requireRecorder = true` (default),
+RRST waits before calibration until a recorder receives the markers, and prints
+NOTHING IS RECORDING meanwhile. Each marker carries the event's own time:
 
 | Marker | Event |
 |---|---|
@@ -54,7 +56,9 @@ stream is online when recording starts. Each marker carries the event's own time
 | `session_start` | participant pressed space to begin |
 | `trial_<n>_interval<k>_ready` | wedge move confirmed; ISI countdown starts (k = 1, 2) |
 | `trial_<n>_interval<k>_onset_load` / `_onset_null` | inhale cue: the expanding ring appears |
+| `trial_<n>_level_<x>` | load level of the trial (at the load interval's `_ready`) |
 | `trial_<n>_response` / `trial_<n>_noresponse` | answer, or none in time (the trial is repeated with the same n) |
+| `trial_<n>_correct` / `trial_<n>_wrong` | whether the answer named the load breath |
 | `trial_<n>_confidence` | confidence rating confirmed |
 | `trial_<n>_iti` | ITI starts, wedge goes to rest |
 | `break_start`, `break_end` | break |

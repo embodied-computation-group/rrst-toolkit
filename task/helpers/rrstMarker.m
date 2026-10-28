@@ -1,10 +1,11 @@
-function rrstMarker(label, tEvent)
+function tf = rrstMarker(label, tEvent)
 %RRSTMARKER Send a task event to the "RRST" Lab Streaming Layer marker stream.
 %   rrstMarker('open', liblslDir)   create the outlet and push "RRST_ready"
 %   rrstMarker(label)               push label stamped now
 %   rrstMarker(label, tEvent)       push label stamped at tEvent, a GetSecs time
 %                                   (e.g. the onset returned by Screen('Flip'))
 %   rrstMarker('close')             destroy the outlet
+%   tf = rrstMarker('recorded')     true when a recorder (any LSL inlet) is connected
 %
 %   Until 'open' is called every push is a no-op, so the task runs without LSL
 %   (cfg.markers.lsl = false) and in tests. A recorder (LabRecorder, the Physio
@@ -14,7 +15,10 @@ function rrstMarker(label, tEvent)
 
 persistent lib outlet
 
+tf = false;
 switch label
+    case 'recorded'
+        tf = ~isempty(outlet) && outlet.have_consumers();
     case 'open'
         if ~isempty(outlet)
             return
@@ -41,6 +45,6 @@ switch label
         if nargin < 2
             tEvent = now;
         end
-        outlet.push_sample({char(label)},tEvent + (lsl_local_clock(lib) - now));
+        outlet.push_sample({char(label)}, tEvent + (lsl_local_clock(lib) - now));
 end
 end

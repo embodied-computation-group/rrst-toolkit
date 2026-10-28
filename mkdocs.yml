@@ -50,6 +50,8 @@ nav:
       - Programming: legacy/programming.md
   - Lab setup (all versions):
       - Breathing circuit: shared/breathing-circuit.md
+      - Airflow sensor (optional): shared/airflow-sensor.md
+      - Recording physiology and airflow: shared/recording.md
       - Room and masking: shared/room-and-masking.md
       - Running the task: shared/running-the-task.md
       - Hygiene: shared/hygiene.md
