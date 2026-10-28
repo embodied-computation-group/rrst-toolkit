@@ -9,9 +9,12 @@ It combines two sources:
 - the Teensy 4.0 + TMC2209 firmware, Control Panel app and device helpers by Martin
   Snejbjerg Jensen (CFIN).
 
-**Status:** work in progress. Only the device layer (`device/+rrst`) exists so far. It is
-tested against a simulated device, not yet against hardware. The task itself, the
-firmware snapshot and the per-device calibration records come next (see `TASKS.md`).
+**Status:** work in progress.
+- **Device layer** (`device/+rrst`): written. It is tested against a simulated device,
+  not yet against hardware.
+- **Task, firmware and Control Panel:** imported unmodified from their sources.
+- **Next:** the Zurich task (RRS_4-0) built on the device layer, and per-device
+  calibration records (see `TASKS.md`).
 
 ## Question
 
@@ -41,20 +44,28 @@ hardware is required.
 | Path | Contents |
 |---|---|
 | `device/+rrst/` | Device layer: obstruction-to-step mapping, firmware reply parsers, `Device` class, `MockPort` simulator, `openPort` for real hardware |
+| `task/` | `RRS_3-0` (base for the Zurich task, unmodified so far), shared `helpers/`, and the old 3-0 and 4-0 device helpers kept for reference |
+| `firmware/` | Teensy 4.0 + TMC2209 firmware source |
+| `control_panel/` | Martin's Python Control Panel app, with the bundled `.hex` and flasher |
+| `hardware/` | Eagle schematic and the TMC2209 modification checklist |
+| `bench/` | Hardware bench scripts (`readStatus.m` sends only `s`) |
 | `tests/` | `matlab.unittest` tests; `tests/fixtures/` holds firmware transcripts |
 | `docs/` | Protocol notes and the decisions log |
 | `data/` | `raw/` and `processed/` are for study data (never in Git, denied to the agent); `generated/` is for fictional data |
 
-## Provenance
+## Provenance and credits
 
-| Source | Repository | Commit |
-|---|---|---|
-| Task, helpers | embodied-computation-group/RespiroceptionMethodsPaper | `a0330917e57cb5e6a8706bd86eac751eb6863698` |
-| Firmware, Control Panel, 4-0 helpers | Msnejbjerg/RRST (private) | `c298eedcc77eb046d0b9fae253f2a3d6346d8bb0` |
+- **Task:** Niia Nikolova and the Embodied Computation Group,
+  RespiroceptionMethodsPaper at `a0330917`. Cite Nikolova et al. (2022).
+- **Firmware, Control Panel and device design:** Martin Snejbjerg Jensen, CFIN, Aarhus
+  University, from Msnejbjerg/RRST at `c298eed`.
+- **Integration and device layer (`device/+rrst`):** this repository.
 
-Nothing has been imported from either repository yet. The firmware reply strings used by
-the parsers and the simulator were transcribed from
-`RRST_Teensy_4_version_TMC2209.ino` at the commit above.
+The files were imported verbatim at those commits. Later changes are separate commits.
+`PROVENANCE.md` lists every imported path, the files not imported, the third-party
+licences and the firmware SHA-256 sums.
 
-**Licence:** {{LICENCE}}. The original task is GPL-3.0. Martin's repository has no
-licence file yet, so his code cannot be imported until he grants one.
+## Licence
+
+GPL-3.0 (`LICENSE`). Bundled third-party components keep their own licences (MIT for
+TeensyStep4 and SerialMenuCmd; GPL-3.0 for teensy_loader_cli). See `PROVENANCE.md`.
