@@ -1,0 +1,29 @@
+[project]
+name = "rrst"
+version = "0.1.0"
+description = "RRST Toolkit 2.0, Python port: device layer, Psi staircase and the PsychoPy task"
+readme = "README.md"
+license = "GPL-3.0-only"
+# PsychoPy 2026.2 needs < 3.13, and its Windows dependency pywinhook has wheels only up to 3.11.
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "numpy>=1.26",
+    "pyserial>=3.5",
+    "questplus==2023.1",
+]
+
+[project.optional-dependencies]
+task = ["psychopy==2026.2.5"]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/rrst"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
