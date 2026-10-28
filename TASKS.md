@@ -130,6 +130,19 @@ session so a fresh session can continue from the files.
     loud and still harsh when turned down; brown is much easier to sit through.
     Pilot setting now brown at 0.2. Volume is relative to the system volume, which
     is not recorded yet. Not yet checked whether brown masks the motor whine.
+  - [x] Third pilot, 2026-10-28 13:29: 10 Psi trials, prior 50-100 %, brown noise
+    0.2, no tutorial. Device clean (no `f`/`g`/`t`/`v`; settings 16000 / 10000 /
+    SpreadCycle / 795 mA / 50 % hold / 16 microsteps; MaxPosition 41266, 32/32
+    moves). 10/10 valid, shortest RT 0.42 s (mouse fix holds). First trial 72.5 %,
+    threshold 76.2 %. `bench/sessions/pilot__device_2E4441D76D5F2996__2026-10-28_1329/`.
+  - [ ] Masking noise: brown had to be loud ("a bit eye watering") and the motor was
+    still faintly audible next to the device. Try a blend of colours that sounds
+    like rain (the RRS_3-0 rain recording masked well); measure the motor's
+    spectrum first so the blend covers it.
+  - [x] Fixed: stray backslash on the calibration screen (`\ Please wait`, from
+    RRS_3-0).
+  - [x] `bench/qcSession.m`: QC figure for a saved session (staircase with
+    correct/incorrect and the Psi estimate, confidence, move times).
   - [x] Device not detected on the stim laptop, 2026-10-28. Plugged directly into
     either USB-A port of the X1 Carbon Gen 6, the unit produced no USB event at all
     (no VID_16C0 device, no unknown device, no Kernel-PnP event), with the cable

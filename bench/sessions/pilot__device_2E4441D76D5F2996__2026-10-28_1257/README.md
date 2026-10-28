@@ -14,6 +14,7 @@ Files (the `.mat` stays in `data/raw/`, which is not versioned):
 - `trials.csv`: the task's per-trial CSV, unchanged.
 - `moves.csv`, `calibrations.csv`: `vars.device.moves` and `.calibrations`.
 - `transcript.log`: the full serial transcript (`vars.device.transcript`).
+- `qc.png`: QC figure (`bench/qcSession.m`).
 
 ## Device: everything confirmed
 
