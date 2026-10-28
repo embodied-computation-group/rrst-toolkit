@@ -88,6 +88,20 @@ session so a fresh session can continue from the files.
   that probably explains why the paper's stimulus levels are whole numbers.
 - [ ] **First run on the stim laptop**: `cfg.device.mock = true` first, then the
   device. Not yet run under Psychtoolbox/Palamedes anywhere.
+  - [x] Stim laptop toolboxes, 2026-10-28: MATLAB R2024b Update 10
+    (24.2.0.3361896), Psychtoolbox 3.0.19 (Manual Install, build Jul 31 2024),
+    Palamedes 1.11.13 at `C:\toolbox\Palamedes`. Tests: 74/74 pass on R2024b.
+  - [x] Non-interactive smoke test (no device, no clicks), 2026-10-28: pilot Psi
+    setup and 100 simulated updates (levels stay on the grid, simulated threshold 60
+    recovered as 58.3), metacog list, quest setup/update, mock Stimulator, the small
+    window with main.m's colour handling (background 0.537, white text, Danish
+    characters render), the expanding ring, GetMouse (3 buttons), PsychPortAudio
+    open/fill/close. Windowed mode fails the sync test (DWM compositor) and runs on
+    because of `SkipSyncTests=1`.
+  - [x] Fixed: experience-rating slideScale outputs were in the wrong order
+    (inherited from RRS_3-0).
+  - [ ] Interactive mock run (Micah clicks through): needs the MATLAB desktop,
+    because `runRRST` asks for subject ID and language with `input`.
 - Per-device calibration records (`devices/<device_id>.json`).
 - Firmware snapshot: hex, SHA-256, source commit, library versions.
 - Hardware bench checklist and pre-study acceptance checklist in `docs/`.
