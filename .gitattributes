@@ -20,6 +20,7 @@ tests/fixtures/*.txt -text
 bench/captures/*.txt -text
 *.exe binary
 *.avi binary
+*.wav binary
 *.HEIC binary
 *.stl binary
 control_panel/firmware/teensy_loader_cli binary
