@@ -81,9 +81,9 @@ session so a fresh session can continue from the files.
     for a session number, files are `RRST_<ID>_s<session>_<proc>_<date>`, only a
     completed file of the same ID+session blocks a run, and no save ever overwrites
     (`_2`, `_3`). Psychtoolbox stand-ins for helper tests: `tests/ptbstubs`.
-  - Branch `docs-running-2-0`: handbook page `handbook/v2/running.md` (how to run the 2.0
-    task). Not merged; review and merge. mkdocs isn't installed on the stim laptop, so
-    the strict build hasn't run.
+  - Handbook page `handbook/v2/running.md` (how to run the 2.0 task), merged into
+    `main` 2026-10-28. mkdocs isn't installed on the stim laptop, so the strict build
+    hasn't run; links were checked by hand.
   - Branch `kids-variant`: RRST-Kids ("Milkshake Monster"), parked. Tried once by a
     4.5-year-old; trials are now experimenter-started with 3 slurps. Not for children
     yet (see `handbook/v2/kids.md` open questions).
