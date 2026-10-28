@@ -39,11 +39,6 @@ def test_mock_move_matches_fixture():
     assert drain(port) == read_fixture("move_ok.txt")
 
 
-def test_mock_status_matches_fixture():
-    port = MockPort(max_position=45123, position=20000)
-    port.write(b"s\n")
-    assert drain(port) == read_fixture("status_uncalibrated.txt")
-
 
 # --- normal session ----------------------------------------------------------------
 

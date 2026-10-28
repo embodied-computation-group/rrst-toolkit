@@ -1,0 +1,184 @@
+"""Simulated RRST firmware behind a pyserial-like interface. Port of rrst.MockPort.
+
+Implements the parts of serial.Serial that Device uses: write, read, in_waiting,
+reset_input_buffer and the dtr attribute. Each reply is written byte for byte from the
+format strings in RRST_Teensy_4_version_TMC2209.ino (Msnejbjerg/RRST c298eed),
+including its mixed CRLF/LF line endings and the trailing "Valve>" prompt. Replies are
+available as soon as the command is written: there is no motion time.
+
+Fault injection (the fault attribute):
+  "calibrateMinMissing"  'c' fails: min endstop not found
+  "moveWarning"          'a' succeeds after one auto-corrected endstop hit
+  "moveSafetyDisable"    'a' fails: three unexpected hits, driver disabled
+  "silent"               no reply to anything (tests timeouts)
+dtr = False simulates a host that never asserts DTR: the firmware's
+CheckSerialConnection() then aborts the seek or move. That reply text is inferred from
+the source, not captured from hardware.
+chunk_size limits how many bytes one read() returns, as a real port may.
+"""
+
+PROMPT = "\r\nValve>"
+
+
+class MockPort:
+    def __init__(self, max_position=45000, saved_max_position=-1, position=20000,
+                 device_id="0123456789ABCDEF",
+                 software_version="Patient-Regulator (Oct  7 2026 08:45:06)",
+                 retract_steps=24000, retract_mm=15, speed=16000, acceleration=10000,
+                 dtr=True, fault="", chunk_size=None):
+        self.max_position = max_position
+        self.saved_max_position = saved_max_position   # -1: nothing saved in EEPROM yet
+        self.position = position
+        self.device_id = device_id
+        self.software_version = software_version
+        self.retract_steps = retract_steps
+        self.retract_mm = retract_mm
+        self.speed = speed
+        self.acceleration = acceleration
+        self.dtr = dtr
+        self.fault = fault
+        self.chunk_size = chunk_size
+        self.calibrated = False
+        self.enabled = False                           # firmware StepperStatus flag
+        self.written = []                              # every line the host wrote, in order
+        self._out = b""
+        self._in = b""
+        self._awaiting_target = False
+
+    # --- pyserial interface ---------------------------------------------------------
+
+    @property
+    def in_waiting(self):
+        return len(self._out)
+
+    def write(self, data):
+        self._in += data
+        while b"\n" in self._in:
+            line, self._in = self._in.split(b"\n", 1)
+            self._handle(line.decode().rstrip("\r"))
+        return len(data)
+
+    def read(self, size=1):
+        n = min(size, len(self._out))
+        if self.chunk_size:
+            n = min(n, self.chunk_size)
+        data, self._out = self._out[:n], self._out[n:]
+        return data
+
+    def reset_input_buffer(self):
+        self._out = b""
+
+    def close(self):
+        pass
+
+    def queue_unsolicited(self, text):
+        """Output the firmware sends on its own, e.g. a driver-fault message."""
+        self._emit(text)
+
+    # --- simulated firmware -----------------------------------------------------------
+
+    def _emit(self, text):
+        self._out += text.encode("utf-8")
+
+    def _handle(self, line):
+        self.written.append(line)
+        if self.fault == "silent":
+            return
+        if self._awaiting_target:
+            self._awaiting_target = False
+            self._finish_move(float(line))
+            return
+        if line == "c":
+            self._calibrate()
+        elif line == "e":
+            self.enabled = True
+            self._emit("\nStepper enabled in normal mode\n\r\n" + PROMPT)
+        elif line == "d":
+            self.enabled = False
+            self.calibrated = False
+            self._emit("\nStepper disabled. Position tracking is no longer trustworthy - "
+                       "recalibrate ('c') before moving.\n\r\n" + PROMPT)
+        elif line == "s":
+            self._status()
+        elif line == "a":
+            self._emit("\nEnter absolute target position (steps):\r\n")
+            self._awaiting_target = True
+
+    def _connection_lost(self):
+        return ("\nSerial connection lost - stepper disabled. Reconnect and use 'e' "
+                "to re-enable (recalibrate 'c' before moving).\r\n")
+
+    def _calibrate(self):
+        self.calibrated = False
+        out = "\nStarting calibration...\r\n"
+        if not self.dtr:
+            out += self._connection_lost() + "ERROR: Min endstop not found - calibration aborted.\r\n"
+            self.enabled = False
+        elif self.fault == "calibrateMinMissing":
+            out += "ERROR: Min endstop not found - calibration aborted.\r\n"
+        else:
+            out += "Min Endstop found. Position set to 0.\r\n"
+            out += f"Max Endstop found. Max Position: {self.max_position}"
+            if self.saved_max_position >= 0:
+                out += (f" (previous saved: {self.saved_max_position}, "
+                        f"diff: {self.max_position - self.saved_max_position:+d})")
+            else:
+                out += " (no previous saved value to compare)"
+            out += "\r\n"
+            out += (f"First-contact position (retract {self.retract_mm:.3f} mm): "
+                    f"{self.max_position - self.retract_steps}\n")
+            out += "\r\n"
+            self.saved_max_position = self.max_position
+            self.position = self.max_position
+            self.calibrated = True
+        self._emit(out + PROMPT)
+
+    def _finish_move(self, target):
+        warn = f"WARNING: Unexpected MAX endstop hit! Position auto-corrected to {self.max_position}.\n"
+        resume = "Resuming toward original target...\r\n"
+        if not self.calibrated:
+            out = "Error: Must calibrate ('c') before moving.\r\n"
+        elif not 0 <= target <= self.max_position:
+            out = "Error: Target out of calibrated bounds!\r\n"
+        else:
+            out = f"Moving to absolute position: {int(target)}\n"
+            if not self.dtr:
+                # MoveAbsWithEndstopGuard returns early when CheckSerialConnection fails.
+                self.enabled = False
+                self.calibrated = False
+                self._emit(out + self._connection_lost() + PROMPT)
+                return
+            if self.fault == "moveWarning":
+                out += warn + resume + "Move complete.\r\n"
+                self.position = int(target)
+            elif self.fault == "moveSafetyDisable":
+                out += (warn + resume + warn + resume + warn
+                        + "ERROR: Repeated unexpected endstop hits - stepper disabled. "
+                          "Investigate before re-enabling (e).\r\n")
+                self.enabled = False
+            else:
+                out += "Move complete.\r\n"
+                self.position = int(target)
+        self._emit(out + PROMPT)
+
+    def _status(self):
+        yn = ("NO", "YES")
+        out = ("\n--- SYSTEM STATUS ---\r\n"
+               f"Software Version: {self.software_version}\n"
+               f"Device ID:        {self.device_id}\n"
+               f"Stepper Enabled:  {yn[self.enabled]}\n"
+               f"Current Position: {self.position} steps\n")
+        if self.calibrated:
+            out += f"Max Range Limit:  {self.max_position} steps\n"
+        else:
+            out += f"Max Range Limit:  {self.max_position} steps (stale - not calibrated)\n"
+        out += (f"Calibrated:       {yn[self.calibrated]}\n"
+                f"Retract Distance: {self.retract_steps} steps ({self.retract_mm:.3f} mm)\n")
+        if self.calibrated:
+            out += f"First-Contact:    {self.max_position - self.retract_steps} steps\n"
+        else:
+            out += "First-Contact:    unavailable (not calibrated)\r\n"
+        out += (f"Current Speed:    {self.speed} steps/s\n"
+                f"Acceleration:     {self.acceleration} steps/s²\n"
+                "---\r\n\r\n")
+        self._emit(out + PROMPT)
