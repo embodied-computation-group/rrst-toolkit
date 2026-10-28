@@ -1,0 +1,6 @@
+WARNING: TMC2209 UART link is down - this setting may not have reached the driver
+
+Chopper mode set to StealthChop (near-silent, reduced high-speed torque)
+
+
+Valve>

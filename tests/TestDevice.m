@@ -18,6 +18,27 @@ classdef TestDevice < matlab.unittest.TestCase
             tc.verifyEqual(read(port, port.NumBytesAvailable, 'char'), readFixture('move_ok.txt'));
         end
 
+        function mockSpeedMatchesFixture(tc)
+            port = rrst.MockPort();
+            writeline(port, 'f');
+            writeline(port, '12000');
+            tc.verifyEqual(read(port, port.NumBytesAvailable, 'char'), readFixture('speed_set.txt'));
+        end
+
+        function mockAccelerationMatchesFixture(tc)
+            port = rrst.MockPort();
+            writeline(port, 'g');
+            writeline(port, '20000');
+            tc.verifyEqual(read(port, port.NumBytesAvailable, 'char'), readFixture('acceleration_set.txt'));
+        end
+
+        function mockChopperToggleMatchesFixture(tc)
+            port = rrst.MockPort('ChopperMode', "SpreadCycle");
+            writeline(port, 't');
+            tc.verifyEqual(read(port, port.NumBytesAvailable, 'char'), ...
+                readFixture('chopper_toggle_to_stealthchop.txt'));
+        end
+
         % --- normal session --------------------------------------------------
         function calibrateEnableMove(tc)
             port = rrst.MockPort('MaxPosition', 45123);
@@ -79,6 +100,16 @@ classdef TestDevice < matlab.unittest.TestCase
             tc.verifyTrue(isnan(dev.MaxPosition));
         end
 
+        function calibrationFailureDisablesTheDriver(tc)
+            % A failed 'c' leaves the driver energised; the toolkit sends 'd' before raising.
+            port = rrst.MockPort('MaxPosition', 45123, 'Fault', "calibrateMinMissing");
+            dev = rrst.Device(port);
+            tc.verifyError(@() dev.calibrate(), 'rrst:calibrationFailed');
+            tc.verifyEqual(port.Written, ["c"; "d"]);
+            tc.verifyFalse(port.Enabled);
+            tc.verifyFalse(dev.Enabled);
+        end
+
         function calibrationWithoutDtrRaisesWithHint(tc)
             port = rrst.MockPort('MaxPosition', 45123, 'DtrAsserted', false);
             dev = rrst.Device(port);
@@ -125,6 +156,61 @@ classdef TestDevice < matlab.unittest.TestCase
             t0 = tic;
             tc.verifyError(@() dev.moveTo(32500, 0.3), 'rrst:timeout');
             tc.verifyLessThan(toc(t0), 2);
+        end
+
+        % --- motion settings (speed, acceleration, chopper mode) ----------------
+        function applyMotionSendsOnlyWhatDiffersAndNeverSaves(tc)
+            port = rrst.MockPort('Speed', 16000, 'Acceleration', 10000, 'ChopperMode', "SpreadCycle");
+            dev = rrst.Device(port);
+            st = dev.applyMotion(struct('speed', 16000, 'acceleration', 20000, 'chopperMode', "StealthChop"));
+            tc.verifyEqual(port.Written, ["s"; "g"; "20000"; "t"; "s"]);   % no 'f', no 'v'
+            tc.verifyEqual([port.Speed port.Acceleration], [16000 20000]);
+            tc.verifyEqual(port.ChopperMode, "StealthChop");
+            tc.verifyEqual(st.acceleration, 20000);
+            tc.verifyEqual(st.chopperMode, "StealthChop");
+        end
+
+        function applyMotionAlreadyMatchingOnlyReadsStatus(tc)
+            port = rrst.MockPort('Speed', 16000, 'Acceleration', 10000, 'ChopperMode', "SpreadCycle");
+            dev = rrst.Device(port);
+            dev.applyMotion(struct('speed', 16000, 'acceleration', 10000, 'chopperMode', "SpreadCycle"));
+            tc.verifyEqual(port.Written, "s");
+        end
+
+        function applyMotionSetsSpeed(tc)
+            port = rrst.MockPort('Speed', 16000);
+            dev = rrst.Device(port);
+            dev.applyMotion(struct('speed', 12000, 'acceleration', 10000, 'chopperMode', "SpreadCycle"));
+            tc.verifyEqual(port.Written, ["s"; "f"; "12000"; "s"]);
+            tc.verifyEqual(port.Speed, 12000);
+        end
+
+        function invalidMotionSendsNothing(tc)
+            port = rrst.MockPort();
+            dev = rrst.Device(port);
+            ok = struct('speed', 16000, 'acceleration', 10000, 'chopperMode', "SpreadCycle");
+            bad = {setfield(ok, 'speed', 0), setfield(ok, 'acceleration', 1.5), ...
+                   setfield(ok, 'chopperMode', "Silent"), rmfield(ok, 'speed')};
+            for k = 1:numel(bad)
+                tc.verifyError(@() dev.applyMotion(bad{k}), 'rrst:badSetting');
+            end
+            tc.verifyEmpty(port.Written);
+        end
+
+        function unconfirmedSettingRaises(tc)
+            port = rrst.MockPort('Speed', 16000, 'Fault', "settingIgnored");
+            dev = rrst.Device(port);
+            tc.verifyError(@() dev.applyMotion( ...
+                struct('speed', 12000, 'acceleration', 10000, 'chopperMode', "SpreadCycle")), ...
+                'rrst:settingFailed');
+        end
+
+        function chopperToggleWithDriverLinkDownRaises(tc)
+            port = rrst.MockPort('ChopperMode', "SpreadCycle", 'Fault', "uartDown");
+            dev = rrst.Device(port);
+            tc.verifyError(@() dev.applyMotion( ...
+                struct('speed', 16000, 'acceleration', 10000, 'chopperMode', "StealthChop")), ...
+                'rrst:settingFailed');
         end
 
         % --- unsolicited output ----------------------------------------------

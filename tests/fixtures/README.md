@@ -28,3 +28,14 @@ At the first bench session, capture real replies and save them next to these fil
 | `status_uncalibrated__fw_Vigilant-Piston__2026-10-28.txt` | `s`. **Captured from device** (first 2.0 unit, firmware "Vigilant-Piston (Oct  1 2026 11:30:50)", which predates the device ID line) on 2026-10-28, uncalibrated after power-up. Starts with the firmware's echo of `s` |
 | `status_uncalibrated__device_2E4441D76D5F2996__2026-10-28.txt` | `s`. **Captured from device** 2E4441D76D5F2996 (the same unit) on 2026-10-28, right after flashing Patient-Regulator; uncalibrated |
 | `calibrate_ok__device_2E4441D76D5F2996__2026-10-28.txt`, `enable__device_2E4441D76D5F2996__2026-10-28.txt` | `c` then `e`. **Captured from device** 2E4441D76D5F2996 on 2026-10-28 by `bench/calibrateAndCapture.m`, no tube fitted |
+
+**Added 2026-10-28, constructed from source** at Msnejbjerg/RRST `8720abc` (the `f`, `g`
+and `t` handlers are identical at `c298eed`, so these also hold for Patient-Regulator):
+
+| File | Command sent |
+|---|---|
+| `status_calibrated__fw_Precise-Piston.txt` | `s` on Precise-Piston: adds the `Git Commit:` line; retract 16 mm (25600). Built from `status_calibrated.txt` by changing those lines; fictional values (run current 994, StealthChop) |
+| `speed_set.txt` | `f`, then `12000` |
+| `acceleration_set.txt` | `g`, then `20000` |
+| `chopper_toggle_to_stealthchop.txt` | `t` from SpreadCycle |
+| `chopper_toggle_uart_down.txt` | `t` when `driver.test_connection()` fails: the WARNING line, then the usual reply |

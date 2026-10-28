@@ -26,6 +26,31 @@ classdef TestStimulator < matlab.unittest.TestCase
             tc.verifyTrue(tc.Port.Enabled);          % 'e' sent after 'c'
         end
 
+        function calibrationWithoutMotionLeavesSettingsAlone(tc)
+            tc.Stim.calibrate();
+            tc.verifyEqual(tc.Port.Written, ["s"; "c"; "e"]);
+        end
+
+        function calibrationAppliesMotionBeforeC(tc)
+            port = rrst.MockPort('MaxPosition', 45000, 'ChopperMode', "SpreadCycle");
+            rec = rrst.loadDeviceRecord("0123456789ABCDEF", devicesDir());
+            motion = struct('speed', 16000, 'acceleration', 20000, 'chopperMode', "StealthChop");
+            s = rrst.Stimulator(rrst.Device(port), rec, 'Motion', motion);
+            s.calibrate();
+            tc.verifyEqual(port.Written, ["s"; "g"; "20000"; "t"; "s"; "c"; "e"]);
+            sm = s.summary();
+            tc.verifyEqual(sm.motion, motion);
+            tc.verifyEqual(sm.deviceStatus.chopperMode, "StealthChop");
+        end
+
+        function summaryRecordsFirmwareIdentity(tc)
+            tc.Port.GitCommit = "aa8dd72";
+            tc.Stim.calibrate();
+            sm = tc.Stim.summary();
+            tc.verifyEqual(sm.deviceStatus.gitCommit, "aa8dd72");
+            tc.verifyEqual(sm.deviceStatus.softwareVersion, tc.Port.SoftwareVersion);
+        end
+
         function percentLevelsMapLinearly(tc)
             tc.Stim.calibrate();
             tc.verifyEqual(tc.Stim.levelToSteps(0), 19400);

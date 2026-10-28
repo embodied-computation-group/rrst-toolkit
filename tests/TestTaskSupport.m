@@ -91,6 +91,29 @@ classdef TestTaskSupport < matlab.unittest.TestCase
             tc.verifyError(@() validateConfig(cfg), 'rrst:badConfig');
         end
 
+        function pilotConfigSetsMotion(tc)
+            cfg = pilotConfig();
+            tc.verifyTrue(all(isfield(cfg.device.motion, {'speed', 'acceleration', 'chopperMode'})));
+        end
+
+        function stealthChopAbove16000IsRejected(tc)
+            % Martin, 2026-10-28: StealthChop lost steps at peak speeds of 20000 and above.
+            cfg = pilotConfig();
+            cfg.device.motion = struct('speed', 20000, 'acceleration', 10000, 'chopperMode', "StealthChop");
+            tc.verifyError(@() validateConfig(cfg), 'rrst:badConfig');
+            cfg.device.motion.chopperMode = "SpreadCycle";
+            validateConfig(cfg);   % SpreadCycle passed up to 32000
+        end
+
+        function badMotionIsRejected(tc)
+            cfg = pilotConfig();
+            cfg.device.motion.chopperMode = "Silent";
+            tc.verifyError(@() validateConfig(cfg), 'rrst:badConfig');
+            cfg = pilotConfig();
+            cfg.device.motion.acceleration = 0;
+            tc.verifyError(@() validateConfig(cfg), 'rrst:badConfig');
+        end
+
         function unportedProcedureIsRejected(tc)
             cfg = pilotConfig();
             cfg.procedure = "ndown";
