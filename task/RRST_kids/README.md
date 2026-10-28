@@ -89,6 +89,7 @@ row per trial. Prefixes: `MOCK_`, `SIM_`, `Aborted_`, `Error_`, `PracticeFailed_
 - `code/kidsMain.m` (session), `kidsScene.m`, `kidsQuestion.m` (drawing, simple shapes
   only), `kidsText.m`, `kidsSave.m`.
 - `simulateKids.m`: precision across simulated children, no screen or device.
+- `qcKids.m`: QC figure for one saved session.
 - Masking sound: the adult task's rain loop at volume 0.6; check the level for small
   headphones by ear.
 
@@ -119,10 +120,10 @@ ever exceeded the cap. Two problems:
 
 ## Not done or not checked
 
-- Never run with the real device or with a child; only the simulated device.
+- Never run with a child; one adult run on the real device.
 - No cue sounds (ding, slurp): a second sound stream next to the rain needs
   PsychPortAudio master/slave devices. Visual cues only.
-- Esc is checked during animations and answers, not while the wedge is moving.
+- Esc is checked during animations, answers and rests, not while the wedge is moving.
 - Translations; the colours and drawings have not been seen by a child.
 - Design questions from the spec: the cap, what to report when a child's threshold
   is above the cap (practice fails), and whether mouth pressure should be recorded
