@@ -112,7 +112,8 @@ In short:
 
 1. Plug in the RRST device, the SensorBridge and the PLUX hub. Sensors on the
    participant.
-2. Open the Physio Recorder, fill in Participant and Session, pick **RRST**, click
+2. Open the Physio Recorder, fill in Participant and Session, pick **RRST**, check
+   the **Devices** boxes (below), click
    **Check signals**. ECG, respiration and flow should go green; ask for a test breath
    through the mouthpiece. The status line shows the hub's battery; below 20 % it
    turns red.
@@ -126,6 +127,18 @@ In short:
 5. When the task ends, click **Stop recording** and check the **Last recording** panel
    (PASS / CHECK).
 
+### Without PLUX or without the flow sensor
+
+Each device is optional. In the Physio Recorder, the **Devices** row has a box for
+"PLUX hub (ECG, breathing belt)" and one for "Flow sensor (RRST)". The choice is
+remembered on that PC (`plux-lsl\devices.json`) and can only be changed while
+disconnected. A device that is unticked is not started, not waited for and not
+expected in the summary. RRST records with both devices, either one, or markers only.
+The timed resting recordings need the hub.
+
+Without any recorder, run RRST with `cfg.markers.requireRecorder = false` (markers
+are still sent) or `cfg.markers.lsl = false` (no LSL at all).
+
 ## Analysis
 
 From the `plux-lsl` folder:
@@ -134,6 +147,13 @@ From the `plux-lsl` folder:
 .venv\Scripts\python.exe check_xdf.py <file>.xdf
 .venv\Scripts\python.exe epoch.py <file>.xdf --stream Flow --events "interval\d_onset_" --pre 1 --post 3 --groups load null
 ```
+
+After **Stop**, the Physio Recorder also makes the standard figures (`rrst_figures.py`)
+in a `<recording>_figures` folder next to the file; **Open figures** shows them.
+They are a session overview, every breath aligned on its inhale cue (load vs null),
+the staircase with each trial's null and load peak flow and volume, and a gallery of
+each trial's two breaths. For a wedge-level bench recording it makes the bench figure.
+Without the flow sensor, only the belt figures are made.
 
 `check_xdf.py` gives the PASS/CHECK summary. For RRST it also checks the markers:
 there must be two onsets per trial (response or no response) and an end marker.
