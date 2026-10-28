@@ -42,7 +42,7 @@ try
     end
 
     % Story
-    show(scr, struct('mouseX', 0.5, 'text', txt.story), progress);
+    show(scr, struct('mouseX', 0.9, 'text', txt.story), progress);
     if waitGo(), finish("aborted"); return; end
 
     % Practice
@@ -74,7 +74,7 @@ try
     end
 
     % Main trials
-    show(scr, struct('mouseX', 0.5, 'text', txt.ready), progress);
+    show(scr, struct('mouseX', 0.9, 'text', txt.ready), progress);
     if waitGo(), finish("aborted"); return; end
     nAnswered = 0;
     while ~kidsShouldStop(kp, cfg)
@@ -89,10 +89,10 @@ try
                 kp = kidsRecord(kp, level, tr.response, info);
                 nAnswered = nAnswered + 1;
                 progress.stars = progress.stars + 1;
-                reward(progress);
+                if reward(progress) == "abort", finish("aborted"); return; end
                 if progress.stars == 10
                     progress.cupsDone = progress.cupsDone + 1;
-                    dance(progress);
+                    if dance(progress) == "abort", finish("aborted"); return; end
                     progress.stars = 0;
                 end
                 if mod(nAnswered, cfg.timing.pauseEvery) == 0 && ~kidsShouldStop(kp, cfg)
@@ -206,20 +206,22 @@ end
         waitRelease();
     end
 
-    function reward(prog)
-        animate(cfg.timing.reward, @(p) struct('cup', 0, 'wiggle', 15 * sin(p * 4 * pi), 'text', txt.star), prog);
+    function status = reward(prog)
+        status = animate(cfg.timing.reward, @(p) struct('cup', 0, 'wiggle', 15 * sin(p * 4 * pi), 'text', txt.star), prog);
     end
 
-    function dance(prog)
-        animate(cfg.timing.dance, @(p) struct('cup', 0, 'wiggle', 40 * sin(p * 8 * pi), 'belly', 0.5 + 0.5 * sin(p * 6 * pi), 'text', txt.cupDone), prog);
+    function status = dance(prog)
+        status = animate(cfg.timing.dance, @(p) struct('cup', 0, 'wiggle', 40 * sin(p * 8 * pi), 'belly', 0.5 + 0.5 * sin(p * 6 * pi), 'text', txt.cupDone), prog);
     end
 
     function aborted = rest(prog)
         tStart = GetSecs;
         while GetSecs - tStart < cfg.timing.pause * ts
             show(scr, struct('cup', 1, 'straw', false, 'text', sprintf(txt.rest, ceil(cfg.timing.pause * ts - (GetSecs - tStart)))), prog);
+            [down, ~, code] = KbCheck;
+            if down && any(code(keys.abort)), aborted = true; return; end
         end
-        show(scr, struct('mouseX', 0.5, 'text', txt.ready), prog);
+        show(scr, struct('mouseX', 0.9, 'text', txt.ready), prog);
         aborted = waitGo();
     end
 
