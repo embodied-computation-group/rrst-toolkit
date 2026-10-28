@@ -120,6 +120,16 @@ session so a fresh session can continue from the files.
     (held-then-released, held throughout, clean press, no press): the old helpers
     accept the held button, the new ones do not. Not yet clicked through for real.
   - [ ] Check: confidence 0 on 5 of 9 trials. Tester's choice, or slider start?
+  - [x] Second pilot (tutorial on, Psi prior 50-100 %), 2026-10-28 13:22, aborted
+    in the tutorial because no sound played: noise is off in pilotConfig. Device
+    side: calibration 41257 (39 from the record), only `s`, `c`, `e` before the
+    moves, so no `f`/`g`/`t` (unit settings unchanged since the morning). Esc
+    parked at 1600 and closing the port disabled the motor (`s` afterwards:
+    Stepper Enabled NO, position 1600, calibration cleared).
+  - [x] Masking noise by ear (headphones, USB audio): pink at 0.5 was painfully
+    loud and still harsh when turned down; brown is much easier to sit through.
+    Pilot setting now brown at 0.2. Volume is relative to the system volume, which
+    is not recorded yet. Not yet checked whether brown masks the motor whine.
   - [x] Device not detected on the stim laptop, 2026-10-28. Plugged directly into
     either USB-A port of the X1 Carbon Gen 6, the unit produced no USB event at all
     (no VID_16C0 device, no unknown device, no Kernel-PnP event), with the cable

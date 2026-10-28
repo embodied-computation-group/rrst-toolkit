@@ -77,8 +77,8 @@ cfg.timing.experienceQuestion = 10;
 
 % --- Masking noise -------------------------------------------------------
 cfg.noise.enabled = false;               % generated in code; no wav file
-cfg.noise.colour = "pink";
-cfg.noise.volume = 0.5;
+cfg.noise.colour = "brown";              % pilot 2026-10-28: pink was harsh, brown much easier to sit through
+cfg.noise.volume = 0.2;                  % pilot 2026-10-28 (0.5 was painfully loud); depends on system volume
 cfg.noise.fs = 44100;
 cfg.noise.durS = 30;                     % looped
 
