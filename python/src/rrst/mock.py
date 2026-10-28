@@ -18,6 +18,10 @@ dtr = False simulates a host that never asserts DTR: the firmware's
 CheckSerialConnection() then aborts the seek or move. That reply text is inferred from
 the source, not captured from hardware.
 chunk_size limits how many bytes one read() returns, as a real port may.
+stray_prompt_after_move=True: like Patient-Regulator on the stim laptop (2026-10-28),
+every move is followed by one extra empty prompt. It is sent with the host's next
+command, and that command's reply only follows on a later read: the race seen when a
+move is sent within milliseconds of the previous one.
 """
 
 PROMPT = "\r\nValve>"
@@ -29,7 +33,7 @@ class MockPort:
                  software_version="Patient-Regulator (Oct  7 2026 08:45:06)",
                  retract_steps=24000, retract_mm=15, speed=16000, acceleration=10000,
                  run_current=800, chopper_mode="SpreadCycle", git_commit="",
-                 dtr=True, fault="", chunk_size=None):
+                 dtr=True, fault="", chunk_size=None, stray_prompt_after_move=False):
         self.max_position = max_position
         self.saved_max_position = saved_max_position   # -1: nothing saved in EEPROM yet
         self.position = position
@@ -45,6 +49,10 @@ class MockPort:
         self.dtr = dtr
         self.fault = fault
         self.chunk_size = chunk_size
+        self.stray_prompt_after_move = stray_prompt_after_move
+        self._stray_pending = False                    # a stray prompt goes out with the next write
+        self._deferring = False                        # output held back until the stray has been read
+        self._delayed = b""
         self.calibrated = False
         self.enabled = False                           # firmware StepperStatus flag
         self.written = []                              # every line the host wrote, in order
@@ -56,6 +64,8 @@ class MockPort:
 
     @property
     def in_waiting(self):
+        if not self._out and self._deferring:
+            self._out, self._delayed, self._deferring = self._delayed, b"", False
         return len(self._out)
 
     def write(self, data):
@@ -85,10 +95,17 @@ class MockPort:
     # --- simulated firmware -----------------------------------------------------------
 
     def _emit(self, text):
-        self._out += text.encode("utf-8")
+        if self._deferring:
+            self._delayed += text.encode("utf-8")
+        else:
+            self._out += text.encode("utf-8")
 
     def _handle(self, line):
         self.written.append(line)
+        if self._stray_pending:
+            self._stray_pending = False
+            self._out += PROMPT.encode()
+            self._deferring = True
         if self.fault == "silent":
             return
         if self._awaiting:
@@ -206,6 +223,7 @@ class MockPort:
                 out += "Move complete.\r\n"
                 self.position = int(target)
         self._emit(out + PROMPT)
+        self._stray_pending = self.stray_prompt_after_move
 
     def _status(self):
         yn = ("NO", "YES")

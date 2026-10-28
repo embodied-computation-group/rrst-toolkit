@@ -245,3 +245,18 @@ def test_chopper_toggle_with_driver_link_down_raises():
     port = MockPort(chopper_mode="SpreadCycle", fault="uartDown")
     with pytest.raises(errors.SettingFailed):
         Device(port).apply_motion({**MOTION, "chopperMode": "StealthChop"})
+
+
+def test_stray_prompt_is_not_taken_as_the_next_reply():
+    # Port of TestDevice.strayPromptIsNotTakenAsTheNextReply. Pilot 2026-10-28 14:00: a
+    # move sent 9 ms after the previous one read the previous move's extra empty prompt
+    # as its reply and failed; the park that followed then read the leftover reply.
+    port = MockPort(max_position=45123, stray_prompt_after_move=True)
+    dev = Device(port)
+    dev.calibrate()
+    dev.move_to(33108)
+    mv = dev.move_to(15604)                  # sent at once, before the stray is read
+    assert mv.ok and mv.target == 15604
+    mv = dev.move_to(1600)
+    assert mv.ok and mv.target == 1600
+    assert any(e["direction"] == "unsolicited" for e in dev.transcript)
