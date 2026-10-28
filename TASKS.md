@@ -211,7 +211,17 @@ session so a fresh session can continue from the files.
 - [x] Task config: `python/configs/pilot.toml`, `rrst.config` (unknown keys are an
   error). The alpha grid starts at 100/71 (pilot grid without 0): PROVISIONAL, open.
   Masking: the rain loop at volume 0.2, PROVISIONAL. 167 tests.
-- [ ] PsychoPy task; mock run with Micah watching; device run.
+- [x] PsychoPy task (`rrst.task`: session logic, texts EN/DA, PsychoPy screens, launcher
+  `python -m rrst.task.run`), 2026-10-28. 190 tests; session logic tested with a scripted
+  UI and the mock device, mutation-checked. Unattended smoke run of the real screens
+  (mock, small window, auto-answered): complete, CSV/JSON as expected. Masking plays on a
+  named output (`noise.speaker`, `--list-audio`): PsychoPy otherwise takes the first
+  output it finds, which may not be the headphones.
+- [ ] Mock run with Micah clicking through (real mouse, slider, Esc, text size, sound).
+- [ ] Device run with Micah present.
+- [ ] Not ported yet: tutorial, metacognition trials, quest procedure.
+- Found while porting, applies to MATLAB `main.m` too: an invalid response on the last
+  trial ends the session without repeating it (Psi then has num_trials - 1 updates).
 - Found while porting: `getPMFbasedTrials` (MATLAB) inverts the PF with guess rate 0,
   not 0.5, so the "75 %" metacognition trials are easier than intended (only matters
   when metacogTrials > 0).
