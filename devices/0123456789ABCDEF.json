@@ -1,0 +1,19 @@
+{
+  "deviceId": "0123456789ABCDEF",
+  "description": "FICTIONAL: the simulated device rrst.MockPort. Used by the tests and by the task's mock mode. Not a real unit.",
+  "firmware": "Patient-Regulator (Oct  7 2026 08:45:06)",
+  "anchors": {
+    "measured": "fictional",
+    "provisional": true,
+    "provisionalReason": "Fictional record for the simulated device.",
+    "calibrationCondition": "tube in",
+    "maxPositionAtMeasurement": 45000,
+    "zeroOffset": 25600,
+    "fullOffset": 800,
+    "zeroStepAtMeasurement": 19400,
+    "fullStepAtMeasurement": 44200,
+    "zeroCriterion": "fictional",
+    "fullCriterion": "fictional",
+    "method": "Offsets copied from device 2E4441D76D5F2996 so that the mock behaves like the first real unit."
+  }
+}
