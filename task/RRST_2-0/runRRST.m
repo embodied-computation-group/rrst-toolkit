@@ -94,6 +94,10 @@ end
 fprintf('Scale: 0-%g %s (zero = wedge touching the tube, max = barely possible to inhale)\n', ...
     stim.ScaleMax, stim.Unit);
 
+if cfg.markers.lsl && cfg.markers.requireRecorder
+    waitForRecorder();
+end
+
 input(sprintf(['\nCalibration runs with the tube %s, as in the device record.\n' ...
     'The wedge will close fully, then open. Press Enter when ready...'], ...
     erase(string(rec.anchors.calibrationCondition), "tube ")));

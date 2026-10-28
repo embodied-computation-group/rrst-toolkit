@@ -90,6 +90,7 @@ cfg.noise.durS = 30;                     % generated noise only; looped
 % LSL marker stream "RRST" (trial and interval onsets) for recording with
 % physiology and airflow. Opened at launch: start RRST before the recorder.
 cfg.markers.lsl = true;
+cfg.markers.requireRecorder = true;      % wait before calibration until a recorder receives the markers
 cfg.markers.liblslDir = "C:\toolbox\liblsl-Matlab";
 
 % --- Output --------------------------------------------------------------

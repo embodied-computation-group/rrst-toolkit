@@ -68,4 +68,7 @@ end
 if ~isfield(cfg, 'markers') || ~isfield(cfg.markers, 'lsl') || ~islogical(cfg.markers.lsl)
     bad('markers.lsl must be true or false.');
 end
+if ~isfield(cfg.markers, 'requireRecorder') || ~islogical(cfg.markers.requireRecorder)
+    bad('markers.requireRecorder must be true or false.');
+end
 end
