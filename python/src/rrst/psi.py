@@ -122,7 +122,7 @@ class PsiStaircase:
                 "priorBetaRange": self.log10_beta_range.tolist(),
                 "priorGammaRange": self.gamma_range.tolist(),
                 "priorLambdaRange": self.lambda_range.tolist(), "numTrials": self.num_trials,
-                "x": self.x, "response": self.response, "xNext": self.x_current,
+                "x": self.x, "response": self.response, "xNext": self.x_current, "stop": self.stop,
                 "threshold": self.threshold, "slope": self.slope, "guess": self.guess,
                 "lapse": self.lapse, "seThreshold": self.se_threshold, "seSlope": self.se_slope,
                 "seGuess": self.se_guess, "seLapse": self.se_lapse}

@@ -108,6 +108,8 @@ def validate(cfg):
         _bad(f'procedure "{cfg["procedure"]}" is not ported to Python (use "psi").')
     if cfg["metacog_trials"] != 0:
         _bad("metacognition trials are not ported to Python (metacog_trials must be 0).")
+    if cfg["run_tutorial"]:
+        _bad("the tutorial is not ported to Python yet (run_tutorial must be false).")
     if cfg["input_device"] not in ("mouse", "keyboard"):
         _bad(f'input_device must be "mouse" or "keyboard" (got "{cfg["input_device"]}").')
 

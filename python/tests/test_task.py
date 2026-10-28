@@ -164,6 +164,8 @@ def test_each_breath_moves_first_then_counts_down(devices_dir, tmp_path):
             assert "a" in sent, f"no move before the countdown at t={e['t']}"
         if e["kind"] in ("countdown", "breath"):
             last = e["written"]
+    isi = [e for e in ui.events if e["kind"] == "countdown" and e["seconds"] == cfg["timing"]["isi"]]
+    assert len(isi) == 4                                        # one per breath, 2 trials
 
 
 def test_signal_breath_gets_the_psi_level_and_the_other_breath_zero(devices_dir, tmp_path):
