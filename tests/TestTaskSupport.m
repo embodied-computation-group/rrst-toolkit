@@ -72,7 +72,41 @@ classdef TestTaskSupport < matlab.unittest.TestCase
             tc.verifyLessThan(abs(x(end) - x(1)), 4 * std(diff(x)));
         end
 
+        function rainLoopLoadsAsStereo48k(tc)
+            [x, fs] = rrst.loadMaskingSound(rainLoopFile());
+            tc.verifyEqual(fs, 48000);
+            tc.verifySize(x, [30 * 48000 2]);
+            tc.verifyLessThanOrEqual(max(abs(x(:))), 1);
+            tc.verifyGreaterThan(min(std(x)), 0.01);
+        end
+
+        function rainLoopLoopsWithoutAJump(tc)
+            % Played as a loop: the step from the last sample back to the first
+            % must be as small as an ordinary sample-to-sample step.
+            x = rrst.loadMaskingSound(rainLoopFile());
+            for ch = 1:2
+                tc.verifyLessThan(abs(x(end, ch) - x(1, ch)), 4 * std(diff(x(:, ch))));
+            end
+        end
+
+        function missingSoundFileIsAnError(tc)
+            tc.verifyError(@() rrst.loadMaskingSound(fullfile(tempdir, 'no_such_sound.wav')), ...
+                'rrst:badNoise');
+        end
+
         % --- task configuration ---------------------------------------------
+        function pilotConfigUsesTheRainLoop(tc)
+            cfg = pilotConfig();
+            tc.verifyTrue(isfile(cfg.noise.file));
+            tc.verifyEqual(string(cfg.noise.file), string(rainLoopFile()));
+        end
+
+        function missingNoiseFileIsRejected(tc)
+            cfg = pilotConfig();
+            cfg.noise.file = fullfile(tempdir, 'no_such_sound.wav');
+            tc.verifyError(@() validateConfig(cfg), 'rrst:badConfig');
+        end
+
         function pilotConfigIsValid(tc)
             cfg = pilotConfig();
             validateConfig(cfg);
@@ -159,6 +193,11 @@ end
 
 function d = devicesDir()
     d = fullfile(fileparts(fileparts(mfilename('fullpath'))), 'devices');
+end
+
+function f = rainLoopFile()
+    f = fullfile(fileparts(fileparts(mfilename('fullpath'))), 'task', 'helpers', 'audio', ...
+        'rain_loop_30s.wav');
 end
 
 function r = bandPowerRatio(x, fs)
