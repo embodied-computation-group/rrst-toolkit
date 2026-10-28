@@ -66,6 +66,12 @@ Not imported: `legacy/` (the Teensy 3.1 single-endstop firmware for another stud
 `docs/superpowers/` (design history; read it in the source repo at the commit above),
 `IMG_0624.HEIC`. Martin's root `README.md` (its new build section is covered by `firmware/build_firmware.sh`).
 
+### Freesound 650541 (masking sound)
+- spyre Operator Rain 2 Filtered by eryps -- https://freesound.org/s/650541/ -- License: Creative Commons 0
+- `task/helpers/audio/rain_loop_30s.wav` is a 30-s loop cut from it by
+  `task/helpers/audio/make_rain_loop.py` (2026-10-28). The original is not stored here.
+  Hashes and checks are in `task/helpers/audio/README.md`.
+
 ## Firmware binaries (SHA-256)
 
 | File | SHA-256 | Build |
