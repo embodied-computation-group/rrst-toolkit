@@ -5,7 +5,9 @@ import pytest
 
 from rrst import errors
 from rrst.noise import masking_noise
-from rrst.records import choose_port, load_device_record
+from types import SimpleNamespace
+
+from rrst.records import choose_port, load_device_record, teensy_ports
 
 
 # --- device records ------------------------------------------------------------------
@@ -41,6 +43,24 @@ def test_explicit_port_must_exist():
 
 def test_auto_picks_the_only_port():
     assert choose_port("auto", ["COM4"]) == "COM4"
+
+
+def port_info(device, vid, pid):
+    # Shaped like serial.tools.list_ports_common.ListPortInfo (only what teensy_ports reads).
+    return SimpleNamespace(device=device, vid=vid, pid=pid)
+
+
+def test_teensy_ports_skip_other_serial_devices():
+    # The stim laptop, 2026-10-28: COM4/COM5 are the LTE modem (VID 8087), COM7 the
+    # Teensy through a hub (VID 16C0, PID 0483 = PJRC USB serial).
+    ports = [port_info("COM4", 0x8087, 0x0ACA), port_info("COM5", 0x8087, 0x0ACA),
+             port_info("COM7", 0x16C0, 0x0483), port_info("COM9", None, None)]
+    assert teensy_ports(ports) == ["COM7"]
+    assert choose_port("auto", teensy_ports(ports)) == "COM7"
+
+
+def test_teensy_ports_can_be_empty():
+    assert teensy_ports([port_info("COM4", 0x8087, 0x0ACA)]) == []
 
 
 def test_auto_refuses_to_guess_between_ports():
