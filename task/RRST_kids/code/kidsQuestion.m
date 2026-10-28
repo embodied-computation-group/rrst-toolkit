@@ -36,7 +36,7 @@ Screen('FrameOval', w, [1 1 1], [x - 0.12 * r, y + 0.05 * r, x + 0.12 * r, y + 0
 DrawFormattedText(w, text.squishy, 'center', y + 1.5 * r, c.text, [], [], [], [], [], [x - 0.15 * W, 0, x + 0.15 * W, H]);
 
 % Pointer and answer feedback
-if hover == "", return; end
+if ~ismember(hover, ["no" "yes"]), return; end   % "" or "none" (pointer in the middle strip)
 xs = struct('no', 0.27 * W, 'yes', 0.73 * W);
 x = xs.(hover);
 ring = [x - 1.6 * r, y - 2.1 * r, x + 1.6 * r, y + 2.1 * r];
