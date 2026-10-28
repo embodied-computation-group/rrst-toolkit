@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./data/raw/**)",
+      "Read(./data/processed/**)",
+      "Read(**/*.dcm)",
+      "Read(**/*.nii)",
+      "Read(**/*.nii.gz)",
+      "Read(**/participant_key*)",
+      "Read(**/consent/**)",
+      "Read(**/screening/**)",
+      "Read(**/recruitment/**)",
+      "Read(**/*identifiable*)",
+      "Read(**/*_PII*)",
+      "Read(./.env)",
+      "Read(./.env.*)"
+    ]
+  }
+}

@@ -1,0 +1,18 @@
+# Normalise line endings so collaborators on Windows, macOS and Linux see the same files.
+* text=auto eol=lf
+
+# Binary outputs and data formats: never normalise.
+*.png binary
+*.pdf binary
+*.nii binary
+*.nii.gz binary
+*.dcm binary
+*.edf binary
+*.fif binary
+*.mat binary
+*.h5 binary
+*.nc binary
+*.pkl binary
+*.parquet binary
+*.hex binary
+*.zip binary

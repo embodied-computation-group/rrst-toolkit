@@ -1,0 +1,83 @@
+# Research project .gitignore (lab-book conventions)
+
+# --- Data: never in Git ---
+data/raw/*
+data/processed/*
+data/generated/*
+*.nii
+*.nii.gz
+*.dcm
+*.edf
+*.bdf
+*.fif
+*.nc
+*.h5
+*.mat
+*.pkl
+*.parquet
+
+# Keep the directory structure so a fresh clone has somewhere to put things.
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/generated/.gitkeep
+# The labelled fictional practice file is small, hand-checked and safe to version.
+!data/generated/README.md
+!data/generated/FICTIONAL_*.csv
+
+# --- Anything identifiable, belt and braces ---
+*participant_key*
+*consent*
+*identifiable*
+*_PII*
+screening/
+recruitment/
+
+# --- Results and logs: regenerate them, do not version them ---
+results/
+scratch/
+logs/
+.snakemake/
+
+# --- Environments ---
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+build/
+dist/
+wheels/
+*.egg-info
+.ipynb_checkpoints/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# uv.lock IS committed. Do not add it here.
+
+# --- Editor / OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+
+# --- Secrets ---
+.env
+.env.*
+*.pem
+*.key
+credentials.json
+token.json
+
+# --- Claude Code ---
+# CLAUDE.md and .claude/settings.json ARE committed: they are lab knowledge.
+# Local settings and session state are not.
+.claude/settings.local.json
+.claude/history/
+
+# --- MATLAB ---
+*.asv
+*.mex*
+slprj/
+codegen/
