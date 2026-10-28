@@ -48,8 +48,10 @@ cfg = kidsConfig(); cfg.device.port = "COM7";
 runKidsRRST(cfg)
 ```
 
-**Experimenter keys:** Left arrow / `n` / left click = "easy" (no). Right arrow / `y` /
-right click = "squishy" (yes). `x` = bad breath (trial repeated later). Space = pause
+**Experimenter:** click the face the child chose (any button; the pointer shows only on
+the answer screen, a white ring marks the face under it, and clicks in the middle strip are
+ignored), or Left arrow / `n` = "easy" (no), Right arrow / `y` = "squishy" (yes). The chosen
+face lights up for half a second so you can see what was recorded. `x` = bad breath (trial repeated later). Space = pause
 (wedge to 0) and continue. Esc = abort (wedge parked open, data saved as `Aborted_`).
 Space also moves on from the story, "ready" and break screens.
 

@@ -8,8 +8,8 @@ function result = kidsMain(cfg, stim, vars)
 %   in, the belly grows (inhale) and shrinks with bubbles (exhale), then the
 %   experimenter clicks the child's answer.
 %
-%   Experimenter keys: Left/n/left click = easy (no), Right/y/right click =
-%   squishy (yes), x = bad breath (trial repeated later), Space = pause (wedge to
+%   Experimenter: click the face the child chose, or Left/n = easy (no),
+%   Right/y = squishy (yes); the chosen face lights up for 0.5 s, x = bad breath (trial repeated later), Space = pause (wedge to
 %   0), Esc = abort (wedge parked open, data saved as Aborted_).
 %
 %   cfg.debug.simulateChild = [alpha beta gamma lambda] answers by itself (testing);
@@ -177,22 +177,32 @@ end
         if ~isempty(sim)
             pauseFor(0.4);
             if rand(rs) < PAL_Weibull(sim, level), answer = "yes"; else, answer = "no"; end
+            kidsQuestion(scr, txt, answer, true); Screen('Flip', scr.win);
             rt = GetSecs - tStart; return
         end
         waitRelease();
+        ShowCursor('Hand', scr.screenID);
         answer = "none";
         while GetSecs - tStart < cfg.timing.response * ts
             [down, ~, code] = KbCheck;
-            [~, ~, buttons] = GetMouse;
+            [mx, ~, buttons] = GetMouse(scr.win);
+            side = kidsClickAnswer(mx, scr.winRect(3));
             if down && any(code(keys.abort)), answer = "abort";
-            elseif (down && any(code(keys.yes))) || (numel(buttons) >= 3 && buttons(3)), answer = "yes";
-            elseif (down && any(code(keys.no))) || buttons(1), answer = "no";
+            elseif down && any(code(keys.yes)), answer = "yes";
+            elseif down && any(code(keys.no)), answer = "no";
+            elseif any(buttons), answer = side;         % "none" in the middle strip: keep waiting
             elseif down && any(code(keys.bad)), answer = "bad";
             elseif down && any(code(keys.pause)), answer = "pause";
             end
             if answer ~= "none", break; end
+            kidsQuestion(scr, txt, side); Screen('Flip', scr.win);
         end
         rt = GetSecs - tStart;
+        HideCursor(scr.screenID);
+        if ismember(answer, ["yes" "no"])                 % show what was registered
+            kidsQuestion(scr, txt, answer, true); Screen('Flip', scr.win);
+            WaitSecs(0.5);
+        end
         waitRelease();
     end
 

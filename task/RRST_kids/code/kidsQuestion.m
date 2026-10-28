@@ -1,7 +1,12 @@
-function kidsQuestion(scr, text)
+function kidsQuestion(scr, text, hover, chosen)
 %KIDSQUESTION Draw the answer screen (no Flip): "easy" on the left, "squishy" on the right.
-%   The experimenter clicks the child's answer: left button / LeftArrow / n = easy,
-%   right button / RightArrow / y = squishy.
+%   kidsQuestion(scr, text)                  plain
+%   kidsQuestion(scr, text, "no"|"yes")      white ring round the face under the pointer
+%   kidsQuestion(scr, text, answer, true)    the answer given: thick ring, other face faded
+%   The experimenter clicks the face the child chose (kidsClickAnswer) or presses
+%   LeftArrow / n = easy, RightArrow / y = squishy.
+if nargin < 3, hover = ""; end
+if nargin < 4, chosen = false; end
 w = scr.win; W = scr.winRect(3); H = scr.winRect(4); c = scr.colours;
 Screen('FillRect', w, c.background);
 DrawFormattedText(w, text.question, 'center', 0.12 * H, c.text);
@@ -29,6 +34,19 @@ for side = [-1 1]                                           % squeezed "> <" eye
 end
 Screen('FrameOval', w, [1 1 1], [x - 0.12 * r, y + 0.05 * r, x + 0.12 * r, y + 0.3 * r], 5);
 DrawFormattedText(w, text.squishy, 'center', y + 1.5 * r, c.text, [], [], [], [], [], [x - 0.15 * W, 0, x + 0.15 * W, H]);
+
+% Pointer and answer feedback
+if hover == "", return; end
+xs = struct('no', 0.27 * W, 'yes', 0.73 * W);
+x = xs.(hover);
+ring = [x - 1.6 * r, y - 2.1 * r, x + 1.6 * r, y + 2.1 * r];
+if chosen
+    other = xs.(setdiff(["no" "yes"], hover));
+    Screen('FillRect', w, [c.background 0.7], [other - 0.2 * W, 0.15 * H, other + 0.2 * W, H]);   % fade the other face
+    Screen('FrameRect', w, [1 1 1], ring, 14);
+else
+    Screen('FrameRect', w, [1 1 1], ring, 5);
+end
 end
 
 function smile(w, x, y, r)
