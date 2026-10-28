@@ -109,6 +109,14 @@ session so a fresh session can continue from the files.
   - [ ] Not covered by the stubbed run: real clicks and key presses, Esc, how the
     text size looks on this screen. Esc does not abort while the "which breath"
     mouse prompt is up (inherited from RRS_3-0). A short manual check is still due.
+  - [ ] Device not detected on the stim laptop, 2026-10-28. Same unit enumerated fine
+    on the home desktop minutes earlier (VID_16C0&PID_0483, `s` OK, max 41296). On
+    the laptop (right-side USB-A, direct, two cables tried) Windows shows no
+    VID_16C0 device, not even as previously connected, and no failed or unknown
+    USB device. COM4/COM5 are the laptop's own Intel parts (VID_8087&PID_0ACA),
+    not the Teensy. The missing connect sound means nothing (notifications are off).
+    Next: reboot; then test the port with a mouse/stick, the desktop cable directly,
+    and the left-side USB-A port. Nothing has been sent to the device.
 - Per-device calibration records (`devices/<device_id>.json`).
 - Firmware snapshot: hex, SHA-256, source commit, library versions.
 - Hardware bench checklist and pre-study acceptance checklist in `docs/`.
