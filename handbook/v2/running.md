@@ -99,9 +99,13 @@ Mock data files start with `MOCK_`, so they can't be mistaken for real data.
 The task asks two questions in the command window:
 
 1. **Subject ID**, a number (saved padded to 4 digits, e.g. `0001`). Press Enter
-   without a number for the test ID `9999`. If a completed session for that ID already
-   exists in the output folder, the task stops; use a different ID.
-2. **Language**: `e` (English) or `d` (Danish).
+   without a number for the test ID `9999`.
+2. **Session number**: 1, 2, 3, ... Each participant can have any number of
+   sessions, and the session goes into the file name. If this session of this ID was
+   already **completed**, the task stops: check the ID and session number. An aborted
+   or failed session can be run again with the same number. With the test ID, Enter
+   gives session 1.
+3. **Language**: `e` (English) or `d` (Danish).
 
 It then connects to the device and prints the device ID, firmware version and current
 motion settings. It loads the device record and checks every configured stimulus level
@@ -222,13 +226,13 @@ needs checking by ear at the device.
 Data are saved in `cfg.output.dir`, by default `data/raw/` in the repository. That
 folder is never committed to Git. Each session writes two files:
 
-- `RRST_<ID>_<procedure>_<yyyy-mm-dd_HHMM>.mat`: `Results`, `stair`, `vars`, `scr`,
+- `RRST_<ID>_s<session>_<procedure>_<yyyy-mm-dd_HHMM>.mat`: `Results`, `stair`, `vars`, `scr`,
   `keys`. `vars.cfg` is the configuration used. `vars.device` holds the device record,
   every calibration, every move with its level, steps and duration, and the full serial
   transcript.
 - the same name with `.csv`: one row per trial.
 
-For example `RRST_0001_psi_2026-10-28_1409.mat`. Prefixes:
+For example `RRST_0001_s2_psi_2026-11-09_0912.mat` (participant 1, session 2). Prefixes:
 
 | Prefix | Meaning |
 |---|---|
@@ -237,8 +241,10 @@ For example `RRST_0001_psi_2026-10-28_1409.mat`. Prefixes:
 | `Aborted_` | Esc was pressed |
 | `Error_` | The task stopped with an error |
 
-Prefixes combine, e.g. `Aborted_MOCK_RRST_9999_...`. The duplicate-ID check only looks
-for completed files, so you can rerun an ID after an aborted or failed run.
+Prefixes combine, e.g. `Aborted_MOCK_RRST_9999_s1_...`. **No file is ever
+overwritten:** if a name is already taken (two runs saved in the same minute), the new
+file gets `_2`, `_3`. Only a completed file blocks a session number from being run
+again; aborted and failed runs keep their files.
 
 ## QC figure
 
@@ -247,7 +253,7 @@ the repository root, with Palamedes on the path:
 
 ```matlab
 addpath('bench')
-qcSession("data/raw/RRST_0001_psi_2026-10-28_1409.mat")
+qcSession("data/raw/RRST_0001_s2_psi_2026-11-09_0912.mat")
 ```
 
 It writes `<file name>_qc.png` next to the `.mat` file (or pass a second argument with
