@@ -180,6 +180,21 @@ classdef TestReplyParsing < matlab.unittest.TestCase
             tc.verifyEqual(st.runCurrent, 795);
         end
 
+        function statusReportsGitCommit(tc)
+            % Precise-Piston (Msnejbjerg/RRST 766809f on) prints "Git Commit:" after the version.
+            st = rrst.parseStatus(rrst.splitReply(readFixture('status_calibrated__fw_Precise-Piston.txt')));
+            tc.verifyEqual(st.softwareVersion, "Precise-Piston (Oct 28 2026 12:07:57)");
+            tc.verifyEqual(st.gitCommit, "aa8dd72");
+            tc.verifyEqual(st.retractSteps, 25600);
+            tc.verifyEqual(st.firstContact, 19523);
+            tc.verifyEqual(st.chopperMode, "StealthChop");
+        end
+
+        function statusWithoutGitCommitLineGivesEmpty(tc)
+            st = rrst.parseStatus(rrst.splitReply(readFixture('status_calibrated.txt')));
+            tc.verifyEqual(st.gitCommit, "");
+        end
+
         function statusWithoutHeaderIsAnError(tc)
             tc.verifyError(@() rrst.parseStatus(["Move complete."]), 'rrst:badStatus');
         end

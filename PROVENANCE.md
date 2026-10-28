@@ -44,15 +44,19 @@ University, and are included under GPL-3.0 by decision of the PI (Micah Allen,
 
 ### Msnejbjerg/RRST (firmware, Control Panel, 4-0 helpers)
 - Repository: https://github.com/Msnejbjerg/RRST (private)
-- Commit: `c298eedcc77eb046d0b9fae253f2a3d6346d8bb0`
+- Commit: `c298eedcc77eb046d0b9fae253f2a3d6346d8bb0` (first import), updated to
+  `8720abce198c3a587358664a4159fc307e2683f9` (2026-10-28, with Martin's reply to our
+  questions: `context/sources/Martin_reply_2026-10-28.pdf`)
 - Author: Martin Snejbjerg Jensen, CFIN, Aarhus University.
-- Imported as a snapshot, without history.
+- Imported as a snapshot, without history. Each update is one commit with no content
+  changes; `git -C <Msnejbjerg/RRST> diff <old> <new> -- <paths>` shows what changed.
 
 | Source path | Destination | Notes |
 |---|---|---|
 | `RRST_Teensy_4_version_TMC2209/` | `firmware/RRST_Teensy_4_version_TMC2209/` | firmware source |
 | `RRST_Control_Panel/` | `control_panel/` | Python app, tests and bundled firmware |
 | `task/respDeviceHelpers_4-0/` | `task/respDeviceHelpers_4-0/` | reference only; replaced by `device/+rrst` |
+| `build_firmware.sh` | `firmware/build_firmware.sh` | added at 8720abc; stamps the git commit into the build. Reference only: its paths are Martin's layout (`RRST_Control_Panel/`), not this repo's |
 | `USER_MANUAL.md` | `docs/control_panel_USER_MANUAL.md` | |
 | `docs/rrst-session-protocol.html` | `docs/rrst-session-protocol.html` | Some claims ("zero task changes needed", the enabled flag being "cosmetic", the ITI at "50 % ± 30 %") are contradicted by the 2026-10-28 integration review |
 | `RRST_eagle_schematics.sch` | `hardware/` | |
@@ -60,12 +64,13 @@ University, and are included under GPL-3.0 by decision of the PI (Micah Allen,
 
 Not imported: `legacy/` (the Teensy 3.1 single-endstop firmware for another study),
 `docs/superpowers/` (design history; read it in the source repo at the commit above),
-`IMG_0624.HEIC`.
+`IMG_0624.HEIC`. Martin's root `README.md` (its new build section is covered by `firmware/build_firmware.sh`).
 
 ## Firmware binaries (SHA-256)
 
 | File | SHA-256 | Build |
 |---|---|---|
-| `control_panel/firmware/RRST_Teensy_4_version_TMC2209.hex` | `dcd17a6ce066fbed42259f09890a6be8f3fa7240d878d355a2f887e36f6e2e2b` | "Patient-Regulator (Oct  7 2026 08:45:06)", per `BUNDLED_FIRMWARE_VERSION` in `app.py`. Martin's source commit `13abac7` (2026-10-07 08:45:26) is the last firmware-source change before this build. The hex timestamp is 20 s earlier than that commit, so it was probably built from the working tree just before committing. Not independently rebuilt. |
+| `control_panel/firmware/RRST_Teensy_4_version_TMC2209.hex` | `39edf48c20a65df3bcd4ba4f2c663cf9268dee12505aff01ced9c63e28415d3b` | "Precise-Piston (Oct 28 2026 12:07:57)", per `BUNDLED_FIRMWARE_VERSION` in `app.py`; Martin's commit `d447c06` says it was built from `aa8dd72` with `build_firmware.sh`. Checked here: the hex contains the string `aa8dd72` (the `Git Commit:` stamp) and the `Git Commit:` status line. Not independently rebuilt. Martin flashed this build onto his unit; **unit 2E4441D76D5F2996 still runs Patient-Regulator** (flashed 2026-10-28, see TASKS.md). |
+| (previous bundled hex, until 8720abc) | `dcd17a6ce066fbed42259f09890a6be8f3fa7240d878d355a2f887e36f6e2e2b` | "Patient-Regulator (Oct  7 2026 08:45:06)", per `BUNDLED_FIRMWARE_VERSION` in `app.py`. Martin's source commit `13abac7` (2026-10-07 08:45:26) is the last firmware-source change before this build. The hex timestamp is 20 s earlier than that commit, so it was probably built from the working tree just before committing. Not independently rebuilt. |
 | `control_panel/firmware/teensy_loader_cli.exe` | `9c3cff875c08994fd5cd31eee96a0a066148bd6e59164541387689c49e009756` | Windows build of PJRC v2.3 |
 | `control_panel/firmware/teensy_loader_cli` | `edbd52fc415eac5303373d3c2b9652d29dd0a52f37a43b2a3337dd4bd7fcd4fb` | macOS build |

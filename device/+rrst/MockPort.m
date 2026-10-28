@@ -5,7 +5,8 @@ classdef MockPort < handle
     %   Implements the parts of MATLAB's serialport that rrst.Device uses:
     %   writeline, read(port, n, 'char'), NumBytesAvailable, flush, setDTR,
     %   configureTerminator. Each reply is written byte for byte from the format
-    %   strings in RRST_Teensy_4_version_TMC2209.ino (Msnejbjerg/RRST c298eed),
+    %   strings in RRST_Teensy_4_version_TMC2209.ino (Msnejbjerg/RRST c298eed; 'f', 'g',
+    %   't' and the Git Commit status line from 8720abc),
     %   including its mixed CRLF/LF line endings and the trailing "Valve>" prompt.
     %   Replies are available as soon as the command is written: there is no motion
     %   time.
@@ -15,6 +16,8 @@ classdef MockPort < handle
     %     "moveWarning"          'a' succeeds after one auto-corrected endstop hit
     %     "moveSafetyDisable"    'a' fails: three unexpected hits, driver disabled
     %     "silent"               no reply to anything (tests timeouts)
+    %     "settingIgnored"       'f'/'g' prompt, but the value is not accepted
+    %     "uartDown"             't' warns that the TMC2209 UART link is down
     %   DtrAsserted = false simulates a host that never asserts DTR. On real
     %   firmware, CheckSerialConnection() then aborts the endstop seek. The reply
     %   text for that case is inferred from the source, not captured from hardware.
@@ -30,6 +33,9 @@ classdef MockPort < handle
         RetractMm = 15
         Speed = 16000
         Acceleration = 10000
+        RunCurrent = 800
+        ChopperMode = "SpreadCycle"
+        GitCommit = ""                 % "": firmware before the Git Commit line
         DeviceId = "0123456789ABCDEF"
         SoftwareVersion = "Patient-Regulator (Oct  7 2026 08:45:06)"
         Fault = ""
@@ -46,7 +52,7 @@ classdef MockPort < handle
 
     properties (Access = private)
         OutBuffer = ''
-        AwaitingMoveTarget = false
+        Awaiting = ""                  % command whose value line comes next: a, f or g
     end
 
     properties (Constant, Access = private)
@@ -70,9 +76,14 @@ classdef MockPort < handle
             if obj.Fault == "silent"
                 return
             end
-            if obj.AwaitingMoveTarget
-                obj.AwaitingMoveTarget = false;
-                obj.finishMove(str2double(txt));
+            if obj.Awaiting ~= ""
+                cmd = obj.Awaiting;
+                obj.Awaiting = "";
+                if cmd == "a"
+                    obj.finishMove(str2double(txt));
+                else
+                    obj.finishSetting(cmd, str2double(txt));
+                end
                 return
             end
             switch char(txt)
@@ -80,9 +91,17 @@ classdef MockPort < handle
                 case 'e', obj.enable();
                 case 'd', obj.disable();
                 case 's', obj.status();
+                case 't', obj.toggleChopper();
                 case 'a'
                     obj.emit(sprintf('\nEnter absolute target position (steps):\r\n'));
-                    obj.AwaitingMoveTarget = true;
+                    obj.Awaiting = "a";
+                case 'f'
+                    obj.emit(sprintf('\nCurrent speed is %d. Enter new max speed: \n', obj.Speed));
+                    obj.Awaiting = "f";
+                case 'g'
+                    obj.emit(sprintf('\nCurrent acceleration is %d. Enter new acceleration: \n', ...
+                        obj.Acceleration));
+                    obj.Awaiting = "g";
             end
         end
 
@@ -156,6 +175,39 @@ classdef MockPort < handle
                 'recalibrate (''c'') before moving.\n\r\n']), obj.PROMPT]);
         end
 
+        function finishSetting(obj, cmd, value)
+            % cmd9_Speed / cmd10_Acceleration: parseInt, accepted only if > 0.
+            out = '';
+            if obj.Fault ~= "settingIgnored" && value > 0
+                if cmd == "f"
+                    obj.Speed = value;
+                    out = sprintf('Speed set to %d\n\n', value);
+                else
+                    obj.Acceleration = value;
+                    out = sprintf('Acceleration set to %d\n\n', value);
+                end
+            end
+            obj.emit([out, obj.PROMPT]);
+        end
+
+        function toggleChopper(obj)
+            out = '';
+            if obj.Fault == "uartDown"
+                out = sprintf(['WARNING: TMC2209 UART link is down - this setting may not have ' ...
+                    'reached the driver\r\n']);
+            end
+            if obj.ChopperMode == "SpreadCycle"
+                obj.ChopperMode = "StealthChop";
+                out = [out, sprintf(['\nChopper mode set to StealthChop (near-silent, reduced ' ...
+                    'high-speed torque)\n\r\n'])];
+            else
+                obj.ChopperMode = "SpreadCycle";
+                out = [out, sprintf(['\nChopper mode set to SpreadCycle (louder, full torque/speed ' ...
+                    'headroom)\n\r\n'])];
+            end
+            obj.emit([out, obj.PROMPT]);
+        end
+
         function finishMove(obj, target)
             warnLine = sprintf(['WARNING: Unexpected MAX endstop hit! Position auto-corrected ' ...
                 'to %d.\n'], obj.MaxPosition);
@@ -195,8 +247,11 @@ classdef MockPort < handle
         function status(obj)
             yn = {'NO', 'YES'};
             out = [sprintf('\n--- SYSTEM STATUS ---\r\n'), ...
-                sprintf('Software Version: %s\n', obj.SoftwareVersion), ...
-                sprintf('Device ID:        %s\n', obj.DeviceId), ...
+                sprintf('Software Version: %s\n', obj.SoftwareVersion)];
+            if obj.GitCommit ~= ""
+                out = [out, sprintf('Git Commit:       %s\n', obj.GitCommit)];
+            end
+            out = [out, sprintf('Device ID:        %s\n', obj.DeviceId), ...
                 sprintf('Stepper Enabled:  %s\n', yn{obj.Enabled + 1}), ...
                 sprintf('Current Position: %d steps\n', obj.Position)];
             if obj.Calibrated
@@ -213,6 +268,10 @@ classdef MockPort < handle
             end
             out = [out, sprintf('Current Speed:    %d steps/s\n', obj.Speed), ...
                 sprintf('Acceleration:     %d steps/s%s\n', obj.Acceleration, char(178)), ...
+                sprintf('Run Current:      %d mA\n', obj.RunCurrent), ...
+                sprintf('Hold Current:     50%%\n'), ...
+                sprintf('Microsteps:       16\n'), ...
+                sprintf('Chopper Mode:     %s\n', obj.ChopperMode), ...
                 sprintf('---\r\n\r\n')];
             obj.emit([out, obj.PROMPT]);
         end

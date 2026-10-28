@@ -40,4 +40,5 @@
 
 ## Known issues
 - Serial replies end in CRLF, and the prompt `Valve>` has no line terminator. Frame replies on the prompt, not on line endings.
-- `c` energises the driver but does not set the firmware's enabled flag, so driver-fault monitoring stays off until `e` is sent.
+- Before Precise-Piston (Msnejbjerg/RRST 7dc58a0), `c` energises the driver but does not set the firmware's enabled flag, so driver-fault monitoring stays off until `e` is sent. Unit 2E4441D76D5F2996 runs Patient-Regulator, so `e` after `c` is still needed.
+- The firmware loads saved tuning (speed, acceleration, chopper mode, current) from EEPROM at boot, and Martin's sweep tests leave their last values. The task sets `cfg.device.motion` at every calibration; never send `v` from task code.

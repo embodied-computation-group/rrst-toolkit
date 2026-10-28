@@ -13,6 +13,11 @@ cfg.label = "PILOT";
 cfg.device.mock = false;                 % true: simulated device, no hardware needed
 cfg.device.port = "auto";                % "auto" only if exactly one serial port exists
 cfg.device.recalibrateAtBreaks = true;   % as in RRS_3-0; about 25 s inside the break
+% Set and checked at every calibration, never trusted from the device's EEPROM
+% (Martin, 2026-10-28). PROVISIONAL, {{MOTION}} is undecided: these are what unit
+% 2E4441D76D5F2996 already runs (SpreadCycle, 16000/10000; a 24000-step move takes
+% about 3.1 s), so piloting behaves as before. StealthChop must stay <= 16000 steps/s.
+cfg.device.motion = struct('speed', 16000, 'acceleration', 10000, 'chopperMode', "SpreadCycle");
 
 % --- Stimulus axis -------------------------------------------------------
 % "percent": 0 = wedge just touching the tube, 100 = barely possible to inhale,
@@ -72,8 +77,8 @@ cfg.timing.experienceQuestion = 10;
 
 % --- Masking noise -------------------------------------------------------
 cfg.noise.enabled = false;               % generated in code; no wav file
-cfg.noise.colour = "pink";
-cfg.noise.volume = 0.5;
+cfg.noise.colour = "brown";              % pilot 2026-10-28: pink was harsh, brown much easier to sit through
+cfg.noise.volume = 0.2;                  % pilot 2026-10-28 (0.5 was painfully loud); depends on system volume
 cfg.noise.fs = 44100;
 cfg.noise.durS = 30;                     % looped
 

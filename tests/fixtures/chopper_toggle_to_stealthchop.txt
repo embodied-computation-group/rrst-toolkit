@@ -1,0 +1,5 @@
+
+Chopper mode set to StealthChop (near-silent, reduced high-speed torque)
+
+
+Valve>

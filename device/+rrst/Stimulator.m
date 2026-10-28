@@ -1,7 +1,7 @@
 classdef Stimulator < handle
     %STIMULATOR Stimulus levels -> confirmed device moves, for the task.
     %   stim = rrst.Stimulator(dev, record, 'Unit', "percent", 'RestRange', [20 80])
-    %   stim.calibrate();          % 'c' + 'e', checked against the device record
+    %   stim.calibrate();          % motion settings, 'c' + 'e', checked against the record
     %   stim.present(level);       % move to a stimulus level
     %   stim.null();               % level 0: wedge just touching the tube
     %   level = stim.rest();       % random level in RestRange (between trials)
@@ -11,6 +11,11 @@ classdef Stimulator < handle
     %   (wedge travel past the zero anchor, StepsPerMm steps per mm). A level outside
     %   [0, ScaleMax] is an error, never clipped. Every move waits for the firmware's
     %   confirmation (rrst.Device.moveTo) and is logged with its duration.
+    %
+    %   'Motion', struct('speed', s, 'acceleration', a, 'chopperMode', m) makes every
+    %   calibrate() set and check these first (rrst.Device.applyMotion), so a session
+    %   never runs on whatever tuning the device loaded from EEPROM. Empty (default):
+    %   the device's settings are left alone and only logged.
     %
     %   Errors: rrst:levelOutOfRange (configured levels outside the scale),
     %   rrst:calibrationMismatch (MaxPosition far from the record: tube in/out?),
@@ -25,6 +30,8 @@ classdef Stimulator < handle
         ParkStep = 1600                % 1 mm from the min endstop: wedge well open
         CalibrationTolerance = 300     % steps; the tube in/out difference is about 1150
         ScaleMax
+        Motion = []
+        DeviceStatus = []              % 's' read at the last calibration, after Motion
         ZeroStep = NaN
         FullStep = NaN
         Calibrations = struct('t', {}, 'maxPosition', {}, 'zeroStep', {}, 'fullStep', {})
@@ -45,6 +52,7 @@ classdef Stimulator < handle
             p.addParameter('CalibrationTolerance', 300);
             p.addParameter('StepsPerMm', 1600);
             p.addParameter('Seed', 'shuffle');
+            p.addParameter('Motion', []);
             p.parse(varargin{:});
             obj.Device = device;
             obj.Record = record;
@@ -52,6 +60,7 @@ classdef Stimulator < handle
             obj.ParkStep = p.Results.ParkStep;
             obj.CalibrationTolerance = p.Results.CalibrationTolerance;
             obj.StepsPerMm = p.Results.StepsPerMm;
+            obj.Motion = p.Results.Motion;
             a = record.anchors;
             if obj.Unit == "percent"
                 obj.ScaleMax = 100;
@@ -76,12 +85,16 @@ classdef Stimulator < handle
         end
 
         function cal = calibrate(obj)
-            %CALIBRATE 'c' then 'e'; checks the device ID and MaxPosition against the record.
+            %CALIBRATE Motion settings, 'c' then 'e'; checks device ID and MaxPosition against the record.
             st = obj.Device.status();
             if st.deviceId ~= obj.Record.deviceId
                 error('rrst:wrongDevice', 'Connected device is %s, but the record is for %s.', ...
                     st.deviceId, obj.Record.deviceId);
             end
+            if ~isempty(obj.Motion)
+                st = obj.Device.applyMotion(obj.Motion, st);
+            end
+            obj.DeviceStatus = rmfield(st, 'fields');
             obj.ZeroStep = NaN;
             obj.FullStep = NaN;
             cal = obj.Device.calibrate();
@@ -135,7 +148,8 @@ classdef Stimulator < handle
             %SUMMARY Everything needed to audit the session, for saving with the data.
             s = struct('deviceId', obj.Record.deviceId, 'record', obj.Record, ...
                 'unit', obj.Unit, 'scaleMax', obj.ScaleMax, 'restRange', obj.RestRange, ...
-                'parkStep', obj.ParkStep, 'calibrations', obj.Calibrations, ...
+                'parkStep', obj.ParkStep, 'motion', obj.Motion, ...
+                'deviceStatus', obj.DeviceStatus, 'calibrations', obj.Calibrations, ...
                 'moves', obj.Log, 'transcript', obj.Device.Transcript);
         end
     end

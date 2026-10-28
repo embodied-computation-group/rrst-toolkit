@@ -9,6 +9,8 @@ classdef Device < handle
     %     rrst:outOfRange         target is not an integer in [0, MaxPosition]
     %     rrst:calibrationFailed  'c' reply did not confirm both endstops
     %     rrst:enableFailed       'e' reply did not confirm
+    %     rrst:badSetting         applyMotion given an invalid speed/acceleration/mode
+    %     rrst:settingFailed      firmware did not confirm a setting, or 's' disagrees
     %     rrst:moveFailed         firmware refused or aborted the move
     %     rrst:deviceFault        an unsolicited ERROR arrived before a command
     %     rrst:timeout            no complete reply within the timeout
@@ -55,6 +57,11 @@ classdef Device < handle
             cal = rrst.parseCalibrationReply(lines);
             obj.LastCalibration = cal;
             if ~cal.ok
+                % The firmware leaves the driver energised after a failed 'c'.
+                try
+                    obj.disable();
+                catch
+                end
                 msg = sprintf('Calibration failed: %s', cal.errorText);
                 if any(contains(lines, "Serial connection lost"))
                     msg = [msg, ' The firmware reported the serial link as closed: the host may ' ...
@@ -68,8 +75,9 @@ classdef Device < handle
         end
 
         function enable(obj)
-            % 'c' energises the driver but does not set the firmware's enabled
-            % flag, and driver-fault monitoring only runs while that flag is set.
+            % Before Precise-Piston (Msnejbjerg/RRST 7dc58a0), 'c' energises the driver
+            % but does not set the firmware's enabled flag, and driver-fault monitoring
+            % only runs while that flag is set. Harmless on later firmware.
             lines = obj.command("e", obj.DefaultTimeout);
             if ~any(startsWith(lines, "Stepper enabled"))
                 error('rrst:enableFailed', 'Enable not confirmed. Reply: %s', strjoin(lines, ' | '));
@@ -84,6 +92,60 @@ classdef Device < handle
             obj.Calibrated = false;
             obj.MaxPosition = NaN;
             obj.FirstContact = NaN;
+        end
+
+        function st = applyMotion(obj, motion, st)
+            %APPLYMOTION Set speed, acceleration and chopper mode, and check them with 's'.
+            %   motion has fields speed, acceleration (steps/s, steps/s^2, positive integers)
+            %   and chopperMode ("SpreadCycle" or "StealthChop"). Only values that differ
+            %   from the device's are sent ('f', 'g', 't'). Settings stay in RAM: 'v'
+            %   (save to EEPROM) is never sent. Returns the status read afterwards.
+            %   st (optional): a status just read, to save one 's'.
+            names = ["speed" "acceleration" "chopperMode"];
+            if ~isstruct(motion) || ~all(isfield(motion, names))
+                error('rrst:badSetting', 'motion needs the fields speed, acceleration and chopperMode.');
+            end
+            for name = ["speed" "acceleration"]
+                v = motion.(name);
+                if ~(isnumeric(v) && isscalar(v) && isfinite(v) && v == round(v) && v > 0)
+                    error('rrst:badSetting', '%s must be a positive integer; got %s.', name, mat2str(v));
+                end
+            end
+            if ~any(string(motion.chopperMode) == ["SpreadCycle" "StealthChop"])
+                error('rrst:badSetting', 'chopperMode must be "SpreadCycle" or "StealthChop"; got "%s".', ...
+                    string(motion.chopperMode));
+            end
+
+            if nargin < 3
+                st = obj.status();
+            end
+            changed = false;
+            if st.speed ~= motion.speed
+                obj.setValue("f", "Speed", motion.speed);
+                changed = true;
+            end
+            if st.acceleration ~= motion.acceleration
+                obj.setValue("g", "Acceleration", motion.acceleration);
+                changed = true;
+            end
+            if st.chopperMode ~= string(motion.chopperMode)
+                lines = obj.command("t", obj.DefaultTimeout);
+                if any(contains(lines, "UART link is down"))
+                    error('rrst:settingFailed', ['Chopper mode may not have reached the driver: ' ...
+                        'the TMC2209 UART link is down. Reply: %s'], strjoin(lines, ' | '));
+                end
+                changed = true;
+            end
+            if changed
+                st = obj.status();
+            end
+            if st.speed ~= motion.speed || st.acceleration ~= motion.acceleration || ...
+                    st.chopperMode ~= string(motion.chopperMode)
+                error('rrst:settingFailed', ...
+                    'Device reports %g steps/s, %g steps/s^2, %s; requested %d, %d, %s.', ...
+                    st.speed, st.acceleration, st.chopperMode, ...
+                    motion.speed, motion.acceleration, string(motion.chopperMode));
+            end
         end
 
         function mv = moveTo(obj, steps, timeoutS)
@@ -152,6 +214,15 @@ classdef Device < handle
     end
 
     methods (Access = private)
+        function setValue(obj, cmd, label, value)
+            % 'f' and 'g' prompt for a value; the firmware confirms "<label> set to <value>".
+            lines = obj.command([cmd; string(sprintf('%d', value))], obj.DefaultTimeout);
+            if ~any(lines == sprintf('%s set to %d', label, value))
+                error('rrst:settingFailed', '%s %d not confirmed. Reply: %s', ...
+                    label, value, strjoin(lines, ' | '));
+            end
+        end
+
         function checkUnsolicited(obj)
             n = obj.Port.NumBytesAvailable;
             if n == 0

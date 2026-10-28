@@ -58,6 +58,16 @@ Completion is a judgement about relevant evidence, not a count of ticked boxes.
       timeouts. Evidence: `TestDevice` (simulated port only).
 - [ ] Expected test values were reviewed and not changed merely to pass.
 
+- [x] Motion settings, Git Commit, disable after failed calibration (2026-10-28,
+      commit de8e1d3): 94/94 pass, MATLAB R2021a. Mutations, each reverted:
+      no `d` after failed `c` (caught by 1 test); ignoring the UART-down warning (1);
+      always sending `f` (3); no StealthChop speed limit (1); Git Commit not parsed (2);
+      motion not applied by the Stimulator (1). Removing only the `f`/`g`
+      confirmation check, or only the final `s` comparison, is **not** detected,
+      because each backs up the other; removing both is caught (1). After restore:
+      94/94. Fixtures for `f`, `g`, `t` and the new status line are constructed from
+      source (8720abc), not captured.
+
 ## Hardware-in-the-loop (needs the device)
 
 - [x] `s` status captured: firmware version and device ID recorded (2E4441D76D5F2996,

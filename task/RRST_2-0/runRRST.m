@@ -67,14 +67,17 @@ end
 closePort = onCleanup(@() delete(port));   % closing the port disables the motor
 dev = rrst.Device(port);
 st = dev.status();
-fprintf('Device %s, firmware %s\n', st.deviceId, st.softwareVersion);
+fprintf('Device %s, firmware %s, git commit %s\n', st.deviceId, st.softwareVersion, st.gitCommit);
+fprintf('Device settings before the session: %g steps/s, %g steps/s^2, %s (set to %d, %d, %s at calibration)\n', ...
+    st.speed, st.acceleration, st.chopperMode, ...
+    cfg.device.motion.speed, cfg.device.motion.acceleration, cfg.device.motion.chopperMode);
 
 rec = rrst.loadDeviceRecord(st.deviceId, cfg.devicesDir);
 if isfield(rec.anchors, 'provisional') && rec.anchors.provisional
     fprintf(2, 'Note: this device''s anchors are provisional: %s\n', rec.anchors.provisionalReason);
 end
 stim = rrst.Stimulator(dev, rec, 'Unit', cfg.stim.unit, 'RestRange', cfg.stim.restRange, ...
-    'CalibrationTolerance', cfg.stim.calibrationTolerance);
+    'CalibrationTolerance', cfg.stim.calibrationTolerance, 'Motion', cfg.device.motion);
 switch cfg.procedure
     case "psi",   stim.validateLevels(cfg.psi.stimRange);
     case "quest", stim.validateLevels([cfg.quest.xMin cfg.quest.xMax]);

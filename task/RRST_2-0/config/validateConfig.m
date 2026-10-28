@@ -6,6 +6,26 @@ function validateConfig(cfg)
 
 bad = @(msg, varargin) error('rrst:badConfig', ['Configuration: ' msg], varargin{:});
 
+m = cfg.device.motion;
+if ~all(isfield(m, {'speed', 'acceleration', 'chopperMode'}))
+    bad('device.motion needs speed, acceleration and chopperMode.');
+end
+if ~any(string(m.chopperMode) == ["SpreadCycle" "StealthChop"])
+    bad('device.motion.chopperMode must be "SpreadCycle" or "StealthChop" (got "%s").', ...
+        string(m.chopperMode));
+end
+for name = ["speed" "acceleration"]
+    v = m.(name);
+    if ~(isnumeric(v) && isscalar(v) && v == round(v) && v > 0)
+        bad('device.motion.%s must be a positive integer.', name);
+    end
+end
+if string(m.chopperMode) == "StealthChop" && m.speed > 16000
+    % Martin's reliability tests, 2026-10-28: StealthChop lost steps at peak speeds of
+    % 20000 steps/s (once in two runs) and 25000 and above (every run).
+    bad('StealthChop loses steps above about 16000 steps/s (got %d). Use SpreadCycle or slow down.', ...
+        m.speed);
+end
 if ~any(cfg.stim.unit == ["percent" "mm"])
     bad('stim.unit must be "percent" or "mm" (got "%s").', cfg.stim.unit);
 end

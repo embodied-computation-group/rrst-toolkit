@@ -138,7 +138,7 @@ if vars.language == 1
     end
     
     % Experiment text
-    vars.InstructionCalib   = 'WELCOME TO THE BREATH SENSITIVITY TASK! \n \n \n \n \n \ Please wait while the apparatus calibrates.\n \n You can continue in \n \n';
+    vars.InstructionCalib   = 'WELCOME TO THE BREATH SENSITIVITY TASK! \n \n \n \n \n Please wait while the apparatus calibrates.\n \n You can continue in \n \n';
     vars.InstructionStart       = 'The experiment will start now. Press ''SPACE'' to start.';
     vars.InstructionPrepare     = 'Breathe naturally...  \n \n Get ready to inhale in \n \n';
     vars.InstructionGetReady     = 'Get ready';
@@ -198,7 +198,7 @@ elseif vars.language == 2
     end
     
     % Experiment text
-    vars.InstructionCalib   = 'WELCOME TO THE BREATH SENSITIVITY TASK! \n \n \n \n \n \ Please wait while the apparatus calibrates.\n \n You can continue in \n \n';
+    vars.InstructionCalib   = 'WELCOME TO THE BREATH SENSITIVITY TASK! \n \n \n \n \n Please wait while the apparatus calibrates.\n \n You can continue in \n \n';
     vars.InstructionStart       = 'Eksperimentet starter nu. Tryk på MELLEMRUMSTASTEN';
     vars.InstructionPrepare     = 'Træk vejret naturligt… \n\n Gør dig klar til at ånde ind om \n \n';
     vars.InstructionGetReady    = 'Gør dig klar…';

@@ -4,11 +4,30 @@ GUI (or anything else) to poll without blocking."""
 
 import queue
 import threading
+import time
 
 import serial
 import serial.tools.list_ports
 
 DISCONNECTED_SENTINEL = object()
+
+# Commands whose reply only comes once the carriage has finished moving
+# (calibrate, home, safe-mode check, absolute move, retract, verify). The
+# firmware reads no further commands while one of these runs, so anything
+# sent meanwhile - e.g. the 1.5 s status auto-refresh - just queues up in
+# front of the user's next command.
+BLOCKING_COMMANDS = {"c", "h", "o", "a", "y", "k"}
+
+# A reply line containing one of these means the blocking command is over,
+# successfully or not.
+BLOCKING_DONE_MARKERS = (
+    "Move complete", "Homing completed", "Position verified", "Max Endstop found",
+    "Safe mode verified", "ERROR", "Error",
+)
+
+# Safety cap in case a completion line is never seen (e.g. a long calibrate
+# that fails in an unexpected way), so auto-refresh can't stay off forever.
+BLOCKING_MAX_S = 120
 
 
 def _is_likely_usb_device(port_name):
@@ -66,6 +85,7 @@ class SerialLink:
         self._reader_thread = None
         self._stop_reading = threading.Event()
         self.incoming = queue.Queue()
+        self._busy_until = 0.0
 
     def is_connected(self):
         return self._port is not None
@@ -87,9 +107,16 @@ class SerialLink:
         self._port = None
         self._reader_thread = None
 
+    def is_busy(self):
+        """True while a blocking command (a move) is still awaiting its
+        completion reply, so callers can avoid piling more requests behind it."""
+        return time.monotonic() < self._busy_until
+
     def write_line(self, text):
         if not self.is_connected():
             raise RuntimeError("not connected")
+        if text.strip() in BLOCKING_COMMANDS:
+            self._busy_until = time.monotonic() + BLOCKING_MAX_S
         try:
             self._port.write((text + "\n").encode())
         except Exception:
@@ -115,4 +142,6 @@ class SerialLink:
             except Exception:
                 continue
             if line:
+                if any(marker in line for marker in BLOCKING_DONE_MARKERS):
+                    self._busy_until = 0.0
                 self.incoming.put(line)

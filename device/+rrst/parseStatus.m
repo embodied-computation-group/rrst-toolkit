@@ -24,6 +24,7 @@ end
 st = struct();
 st.fields = raw;
 st.softwareVersion = getText(raw, 'SoftwareVersion');
+st.gitCommit = getText(raw, 'GitCommit');      % "" before Precise-Piston; "-dirty"/"unknown" possible
 st.deviceId = getText(raw, 'DeviceID');
 st.stepperEnabled = getText(raw, 'StepperEnabled') == "YES";
 st.calibrated = getText(raw, 'Calibrated') == "YES";
