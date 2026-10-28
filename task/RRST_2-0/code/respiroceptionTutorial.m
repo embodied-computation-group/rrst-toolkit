@@ -15,7 +15,6 @@ function respiroceptionTutorial(scr, keys, vars, stim, cfg)
 % Niia Nikolova 01/10/2020
 
 %% Set variables & instructions
-nTutorialTrials = 6;        % Number of tutorial trials to run (up to 6)
 
 % Instructions
 if vars.language == 1       % English
@@ -51,6 +50,7 @@ easyStim        = cfg.tutorial.easyStim;
 hardStim        = cfg.tutorial.hardStim;
 exampleStimuli  = cfg.tutorial.exampleStimuli;
 stimInAlt       = cfg.tutorial.stimInAlt;
+nTutorialTrials = numel(exampleStimuli);    % practice trials: one per configured level
 
 try
     
@@ -123,6 +123,7 @@ try
         %[scr, vars] = drawExpandingRing(scr, vars);
         %[scr, vars] = showExpandingRing(scr, vars);
         [scr, vars] = showExpandingRingGenerated(scr, vars);
+        if vars.abortFlag, return; end    % Esc: skip the rest of the tutorial
         
     end
     
@@ -135,6 +136,7 @@ try
     
     % Fetch the participant's response, via keyboard or mouse
     [vars] = getResponse(keys, scr, vars);
+    if vars.abortFlag, return; end
     
     % Move to No Load
     if vars.RRSTdevice == 1
@@ -220,6 +222,7 @@ try
         %[scr, vars] = drawExpandingRing(scr, vars);
         %[scr, vars] = showExpandingRing(scr, vars);
         [scr, vars] = showExpandingRingGenerated(scr, vars);
+        if vars.abortFlag, return; end    % Esc: skip the rest of the tutorial
         
     end
     
@@ -232,6 +235,7 @@ try
     
     % Fetch the participant's response, via keyboard or mouse
     [vars] = getResponse(keys, scr, vars);
+    if vars.abortFlag, return; end
     
     % Move to No Load
     if vars.RRSTdevice == 1
@@ -316,6 +320,7 @@ try
         %[scr, vars] = drawExpandingRing(scr, vars);
         %[scr, vars] = showExpandingRing(scr, vars);
         [scr, vars] = showExpandingRingGenerated(scr, vars);
+        if vars.abortFlag, return; end    % Esc: skip the rest of the tutorial
     end
     
     % Show response prompt screen
@@ -326,7 +331,8 @@ try
     [~, vars.StartRT] = Screen('Flip', scr.win);
     
     % Fetch the participant's response, via keyboard or mouse
-    [~] = getResponse(keys, scr, vars);
+    r = getResponse(keys, scr, vars);
+    if r.abortFlag, return; end
     
     % Move to No Load
     if vars.RRSTdevice == 1
@@ -336,7 +342,8 @@ try
     
     
     % Fetch the participant's confidence rating
-    [~] = getConfidence(keys, scr, vars);
+    r = getConfidence(keys, scr, vars);
+    if r.abortFlag, return; end
     pause(0.2);
     
     
@@ -402,6 +409,7 @@ try
             %[scr, vars] = drawExpandingRing(scr, vars);
             %[scr, vars] = showExpandingRing(scr, vars);
             [scr, vars] = showExpandingRingGenerated(scr, vars);
+            if vars.abortFlag, return; end    % Esc: skip the rest of the tutorial
         end
         
         % Show response prompt screen
@@ -412,7 +420,8 @@ try
         [~, vars.StartRT] = Screen('Flip', scr.win);
         
         % Fetch the participant's response, via keyboard or mouse
-        [~] = getResponse(keys, scr, vars);
+        r = getResponse(keys, scr, vars);
+        if r.abortFlag, return; end
         
         % Move to No Load
         if vars.RRSTdevice == 1
@@ -422,7 +431,8 @@ try
         
         
         % Fetch the participant's confidence rating
-        [~] = getConfidence(keys, scr, vars);
+        r = getConfidence(keys, scr, vars);
+        if r.abortFlag, return; end
         pause(0.2);
         
         % ITI

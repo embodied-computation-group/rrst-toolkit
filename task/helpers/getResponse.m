@@ -26,8 +26,8 @@ postResponseInt = 0.3;      %  pause for 300ms after response
 pluxDurationSec =  scr.pluxDur(2) / scr.hz;
 
 
-% loop until valid key is pressed or RespT is reached
-while ((GetSecs - vars.StartRT) <= vars.RespT)
+% loop until valid key is pressed or RespT is reached (at once if Esc was pressed earlier)
+while ((GetSecs - vars.StartRT) <= vars.RespT) && ~vars.abortFlag
     
     switch vars.InputDevice
         
@@ -63,6 +63,15 @@ while ((GetSecs - vars.StartRT) <= vars.RespT)
             while (~released || ~any(buttons)) && ((GetSecs - vars.StartRT) <= vars.RespT) % wait for press & response time
                 [~,~,buttons] = GetMouse; % L [1 0 0], R [0 0 1]
                 released = released || ~any(buttons);
+                [~, ~, keys.KeyCode] = KbCheck;   % Esc aborts here too
+                if keys.KeyCode(keys.Escape) == 1
+                    vars.abortFlag = 1;
+                    break
+                end
+            end
+            if vars.abortFlag
+                vars.EndRT = GetSecs;
+                break
             end
             if ~released, buttons(:) = 0; end   % held for the whole window: no response
 

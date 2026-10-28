@@ -124,7 +124,9 @@ switch vars.InputDevice
 
         vars.ConfOffset = GetSecs;
         % update results
-        if answer
+        if answer == -1             % Esc on the slider
+            vars.abortFlag = 1;
+        elseif answer
             vars.ConfResp = position;
             vars.ValidTrial(2) = 1;
         end

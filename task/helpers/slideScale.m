@@ -320,6 +320,13 @@ while answer == 0
         end
     end
     
+    % Esc: give up the rating (answer = -1) so the caller can abort the session
+    [~, ~, keyCode] = KbCheck;
+    if keyCode(KbName('ESCAPE')) == 1
+        answer = -1;
+        break
+    end
+
     % Abort if answer takes too long
     if secs - t0 > aborttime 
         break
