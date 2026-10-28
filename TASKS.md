@@ -16,7 +16,13 @@ session so a fresh session can continue from the files.
   - measure the physical 0 and full-scale anchors;
   - time real moves.
 
+- [ ] Device handbook (`handbook/`, MkDocs Material, branch `handbook`). Drafted
+      2026-10-28; open items are `TODO(<owner>)` tags (`grep -rn "TODO(" handbook/`).
+      Waiting on Martin's review, the parts survey, and photos of the 2.0 devices.
+
 ## Next
+
+- Generate the masking noise in Psychtoolbox (replacing the 60-min `32-Waterfall-60min.wav`).
 
 - Build the 2.0 task from the imported RRS_3-0 on `rrst.Device`, with study settings
   moved into a configuration file and these fixes:
