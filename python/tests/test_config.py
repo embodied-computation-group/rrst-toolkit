@@ -107,3 +107,10 @@ def test_generated_noise_needs_a_known_colour():
     validate(cfg)
     with pytest.raises(errors.BadConfig):
         validate(set_(cfg, "noise.colour", "purple"))
+
+
+def test_speaker_defaults_to_psychopy_choice_and_must_be_text():
+    cfg = pilot()
+    assert cfg["noise"]["speaker"] == ""
+    with pytest.raises(errors.BadConfig):
+        validate(set_(cfg, "noise.speaker", 3))
