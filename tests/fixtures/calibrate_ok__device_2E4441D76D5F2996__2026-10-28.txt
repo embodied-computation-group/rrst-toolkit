@@ -1,0 +1,8 @@
+c
+Starting calibration...
+Min Endstop found. Position set to 0.
+Max Endstop found. Max Position: 40079 (previous saved: 39963, diff: +116)
+First-contact position (retract 15.000 mm): 16079
+
+
+Valve>

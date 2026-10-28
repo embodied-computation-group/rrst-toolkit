@@ -28,8 +28,12 @@ session so a fresh session can continue from the files.
     with the bundled teensy_loader_cli 2.3 (`--mcu=TEENSY40 -w -v`, after a 134-baud
     reboot request), 2026-10-28. Device ID **2E4441D76D5F2996**. Saved settings and
     saved max (39963) survived; usage counters start at zero;
-  - check whether MATLAB `serialport` asserts DTR;
-  - calibrate and record `MaxPosition`;
+  - [x] DTR: `rrst.openPort` (MATLAB `serialport` + `setDTR(true)`) keeps the
+    firmware connected; calibration completed with no "Serial connection lost".
+  - [x] calibrated with `bench/calibrateAndCapture.m`, no tube, 2026-10-28:
+    MaxPosition **40079** (previous saved 39963, +116 steps = 0.07 mm), computed
+    first contact 16079, travel 25.0 mm at 1600 steps/mm, 25.6 s. The firmware
+    saves the new max to EEPROM on `c`. `x` diagnostics all OK. Replies are now fixtures;
   - capture real transcripts into `tests/fixtures/`;
   - measure the physical 0 and full-scale anchors;
   - time real moves.

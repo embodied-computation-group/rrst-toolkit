@@ -45,6 +45,24 @@ classdef TestReplyParsing < matlab.unittest.TestCase
             tc.verifyTrue(isnan(cal.previousSaved));
         end
 
+        function calibrationCapturedFromDevice(tc)
+            % Real reply from device 2E4441D76D5F2996, 2026-10-28 (no tube fitted).
+            [lines, complete] = rrst.splitReply(readFixture('calibrate_ok__device_2E4441D76D5F2996__2026-10-28.txt'));
+            tc.verifyTrue(complete);
+            cal = rrst.parseCalibrationReply(lines);
+            tc.verifyTrue(cal.ok);
+            tc.verifyEqual(cal.maxPosition, 40079);
+            tc.verifyEqual(cal.firstContact, 16079);
+            tc.verifyEqual(cal.previousSaved, 39963);
+            tc.verifyEqual(cal.retractMm, 15);
+        end
+
+        function enableCapturedFromDevice(tc)
+            [lines, complete] = rrst.splitReply(readFixture('enable__device_2E4441D76D5F2996__2026-10-28.txt'));
+            tc.verifyTrue(complete);
+            tc.verifyTrue(any(startsWith(lines, "Stepper enabled")));
+        end
+
         function calibrationFailures(tc)
             cal = rrst.parseCalibrationReply(rrst.splitReply(readFixture('calibrate_fail_min.txt')));
             tc.verifyFalse(cal.ok);
