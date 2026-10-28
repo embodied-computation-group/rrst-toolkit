@@ -2,6 +2,8 @@
 Port of tests/TestStimulator.m. Known answers use the fictional mock record
 (devices/0123456789ABCDEF.json): MaxPosition 45000, zeroOffset 25600, fullOffset 800
   -> zeroStep 19400, fullStep 44200, range 24800 steps = 15.5 mm."""
+import json
+
 import numpy as np
 import pytest
 
@@ -133,3 +135,30 @@ def test_summary_keeps_everything_needed_to_audit(devices_dir):
     assert len(sm["moves"]) == 1
     assert len(sm["calibrations"]) == 1
     assert sm["transcript"]
+
+
+def test_calibration_without_motion_leaves_settings_alone(devices_dir):
+    port, stim = make(devices_dir)
+    stim.calibrate()
+    assert port.written == ["s", "c", "e"]
+
+
+def test_calibration_applies_motion_before_c(devices_dir):
+    port = MockPort(max_position=45000, chopper_mode="SpreadCycle")
+    motion = {"speed": 16000, "acceleration": 20000, "chopperMode": "StealthChop"}
+    stim = Stimulator(Device(port), load_device_record(MOCK_ID, devices_dir), motion=motion, seed=1)
+    stim.calibrate()
+    assert port.written == ["s", "g", "20000", "t", "s", "c", "e"]
+    s = stim.summary()
+    assert s["motion"] == motion
+    assert s["deviceStatus"]["chopperMode"] == "StealthChop"
+
+
+def test_summary_records_firmware_identity(devices_dir):
+    port, stim = make(devices_dir)
+    port.git_commit = "aa8dd72"
+    stim.calibrate()
+    s = stim.summary()
+    assert s["deviceStatus"]["gitCommit"] == "aa8dd72"
+    assert s["deviceStatus"]["softwareVersion"] == port.software_version
+    json.dumps(s)

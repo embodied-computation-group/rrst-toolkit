@@ -211,3 +211,17 @@ def test_status_raw_bytes_capture_decodes_as_utf8():
     assert st.acceleration == 10000
     assert st.fields["SavedMaxPos"] == "41296 steps"
     assert st.fields["MinEndstop"] == "ok"
+
+
+def test_status_reports_git_commit():
+    # Precise-Piston (Msnejbjerg/RRST 766809f on) prints "Git Commit:" after the version.
+    st = parse_status(lines_of("status_calibrated__fw_Precise-Piston.txt"))
+    assert st.software_version == "Precise-Piston (Oct 28 2026 12:07:57)"
+    assert st.git_commit == "aa8dd72"
+    assert st.retract_steps == 25600
+    assert st.first_contact == 19523
+    assert st.chopper_mode == "StealthChop"
+
+
+def test_status_without_git_commit_line_gives_empty():
+    assert parse_status(lines_of("status_calibrated.txt")).git_commit == ""
