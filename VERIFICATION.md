@@ -5,9 +5,32 @@ Completion is a judgement about relevant evidence, not a count of ticked boxes.
 
 ## Scientific specification
 
-- [ ] Stimulus anchors (0 and full scale) are defined physically and measured per device.
+- [x] Stimulus anchors (0 and full scale) are defined physically and measured per device.
+      Evidence: `devices/2E4441D76D5F2996.json` (zero = wedge touches tube, full = barely
+      possible to inhale), log in `bench/sessions/`, 2026-10-28, measured by MG with
+      the uncut tube. **Provisional** until full scale is re-measured with the production tube.
 - [ ] Stimulus unit, range and staircase priors are decided and match the preregistration.
-- [ ] The implementation matches the intended method (task not yet imported).
+- [ ] The implementation matches the intended method. The 2.0 task
+      (`task/RRST_2-0/`) is ported, but has not yet run under Psychtoolbox and
+      Palamedes: first run due on the stim laptop (mock mode, then the device).
+
+## Calculation checks: task layer
+
+- [x] Level-to-step mapping, device record and calibration checks agree with
+      hand-worked values. Evidence: `TestStimulator` (mock record MaxPosition 45000,
+      offsets 25600/800: 0 % -> 19400, 50 % -> 31800, 100 % -> 44200, 1 mm = 1600 steps;
+      MaxPosition 1150 steps off the record -> `rrst:calibrationMismatch`).
+      `TestTaskSupport`: records, port choice, masking noise spectrum and loop seam,
+      config validation. 74/74 pass, MATLAB R2021a, 2026-10-28.
+- [x] A deliberately introduced plausible error is detected (2026-10-28):
+      1. Calibration tolerance disabled (`abs(d) > Inf`): caught by
+         `calibrationFarFromRecordIsAnError`.
+      2. "Pink" noise generated flat (white): caught by
+         `pinkNoiseHasMoreLowThanHighFrequencyPower`.
+      Both restored; 74/74 pass.
+- [x] `checkcode` on all 2.0 task and device files: one syntax error found and fixed
+      (`runRRST.m`); the remaining messages are style notes, mostly in code carried
+      over from RRS_3-0. Every helper the 2.0 task calls resolves on the path.
 
 ## Calculation checks: device layer
 
@@ -37,13 +60,18 @@ Completion is a judgement about relevant evidence, not a count of ticked boxes.
 
 ## Hardware-in-the-loop (needs the device)
 
-- [ ] `s` status captured: firmware version and device ID recorded.
-- [ ] MATLAB `serialport` and DTR: calibration succeeds when opened through `rrst.openPort`.
-- [ ] Transcripts captured from the device match the constructed fixtures (or the
-      fixtures are updated with real captures and the parsers still pass).
-- [ ] Measured move times across the range are recorded and compared with the pause
-      between breaths.
-- [ ] Physical anchors measured, recorded with initials and date.
+- [x] `s` status captured: firmware version and device ID recorded (2E4441D76D5F2996,
+      Patient-Regulator after flashing; fixtures `status_uncalibrated__*`).
+- [x] MATLAB `serialport` and DTR: calibration succeeds when opened through `rrst.openPort`
+      (bench/calibrateAndCapture.m, 2026-10-28).
+- [x] Transcripts captured from the device match the constructed fixtures (or the
+      fixtures are updated with real captures and the parsers still pass). Real
+      status, calibrate and enable replies are fixtures with tests.
+- [x] Measured move times across the range are recorded and compared with the pause
+      between breaths: 0.4 s (0.25 mm) to 4.1 s (full travel). The 2.0 task starts the
+      ISI countdown only after the move is confirmed, so the participant's pause is
+      never cut short.
+- [x] Physical anchors measured, recorded with initials and date (see above).
 - [ ] Constant-flow resistance curve (optional): see methods §8.
 
 ## Review and history

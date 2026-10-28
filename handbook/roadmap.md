@@ -32,12 +32,13 @@
       simulated device).
 - [x] Bench validation on hardware, with real firmware transcripts (first 2.0 unit,
       2026-10-28): calibration repeatable to about 0.02 mm, stimulus anchors measured.
-- [ ] The 2.0 task, built from `RRS_3-0` with:
-    - the known bugs fixed;
-    - study settings in a configuration file;
-    - per-device stimulus anchors;
-    - the wedge parked at no load at the end of a session.
-- [ ] **Generated masking noise** in Psychtoolbox, replacing the 60-minute recording.
+- [x] The 2.0 task (`task/RRST_2-0/`), built from `RRS_3-0` with the known bugs
+      fixed, settings in a configuration file, per-device stimulus anchors, the
+      wedge parked open at the end, and generated masking noise. First run on a stim
+      PC pending.
+- [ ] **Python version** with PsychoPy and PyPalamedes (`pypalamedes` on PyPI,
+      which includes the Psi method). Validate it against the MATLAB task: same
+      priors and responses must give the same stimulus choices and estimates.
 - [ ] Stimulus levels spaced by effect rather than by distance. Resistance rises
       steeply as the tube closes, so most of the wedge travel is imperceptible.
 

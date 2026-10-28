@@ -79,16 +79,15 @@ session so a fresh session can continue from the files.
   to use, not the grid itself. Changing the stimulus axis changes what a threshold
   means, so decide before Zurich data collection.
 
-- Generate the masking noise in Psychtoolbox (replacing the 60-min `32-Waterfall-60min.wav`).
 
-- Build the 2.0 task from the imported RRS_3-0 on `rrst.Device`, with study settings
-  moved into a configuration file and these fixes:
-  - check every move;
-  - fix the ITI rest position;
-  - fix the `resetResp` call in the tutorial;
-  - fix the `experimentEnd` argument order;
-  - fix `isfield('vars', ...)`;
-  - park the wedge at no load before disabling.
+- [x] 2.0 task built (`task/RRST_2-0/`, 2026-10-28): `rrst.Stimulator` on
+  `rrst.Device`, settings in `config/pilotConfig.m`, every move confirmed, ITI rest
+  fixed, `resetResp`/`experimentEnd`/`isfield` fixed, wedge parked open at the end,
+  masking noise generated in code. Also found and fixed: RRS_3-0 rounded every Psi
+  level to a whole number (`round(xCurrent)`), so its 0.49 mm grid was never used;
+  that probably explains why the paper's stimulus levels are whole numbers.
+- [ ] **First run on the stim laptop**: `cfg.device.mock = true` first, then the
+  device. Not yet run under Psychtoolbox/Palamedes anywhere.
 - Per-device calibration records (`devices/<device_id>.json`).
 - Firmware snapshot: hex, SHA-256, source commit, library versions.
 - Hardware bench checklist and pre-study acceptance checklist in `docs/`.
