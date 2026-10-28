@@ -83,9 +83,17 @@ session so a fresh session can continue from the files.
   log(alpha) ~ N(2.57, 0.105) on the old 0-17 mm axis, log(beta) ~ N(2.05, 0.85),
   lambda 0.03. The slope part transfers (Weibull slope is scale-free); the threshold
   location does not map onto this device's anchored percent axis. Concern: a tight
-  prior railroads real participants, more so across drug conditions. Simulating bias vs
-  prior width before any decision. Their updated `loadParams.m` would not run as
-  written (`PM.priorAlphas` for `stair.PM.priorAlphas`, `10^` for `10.^`).
+  prior railroads real participants, more so across drug conditions. Their updated
+  `loadParams.m` would not run as written (`PM.priorAlphas` for
+  `stair.PM.priorAlphas`, `10^` for `10.^`).
+  Simulation, 2026-10-28 (48 trials, 100 runs per cell, prior centred on 77 %, true
+  slope 6.5): bias (RMS) of the final threshold for true thresholds 55 / 65 / 77 / 87 / 95:
+  flat prior +0.4 (4.0) / -0.2 (4.7) / +0.2 (4.6) / +0.2 (4.0) / -3.2 (5.3);
+  published width +6.1 (6.6) / +3.2 (4.2) / +0.3 (3.2) / -2.0 (4.1) / -5.2 (6.5);
+  2x wider +2.1 (3.7) / +1.2 (4.3) / +0.2 (3.5) / 0.0 (4.2) / -2.9 (4.7);
+  3x wider +1.0 (3.1) / +0.4 (3.9) / +0.4 (3.9) / +0.4 (4.2) / -2.2 (4.4).
+  The published width railroads the tails by 5-6 %; 2-3x wider removes most of the
+  bias at no cost in error. Not decided.
 - Try QUEST aimed at about 70 % correct, to feel what a harder target is like. The
   current "quest" procedure (PAL_AMRF) places trials at the fitted threshold (about 80 %
   correct for a 2AFC Weibull), so it needs a target quantile, not just the switch.
