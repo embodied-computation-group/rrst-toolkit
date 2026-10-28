@@ -91,6 +91,7 @@ def set_(cfg, path, value):
     ("device.motion", {"speed": 16000, "acceleration": 10000, "chopperMode": "Silent"}),
     ("noise.file", REPO / "task" / "helpers" / "audio" / "missing.wav"),
     ("input_device", "joystick"),
+    ("run_tutorial", True),                                  # tutorial not ported to Python yet
 ])
 def test_configurations_that_cannot_run_are_rejected(path, value):
     with pytest.raises(errors.BadConfig):

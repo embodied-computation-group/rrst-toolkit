@@ -60,7 +60,7 @@ class ScriptedUI:
         self.t += 2 * pause + inhale
 
     def ask_breath(self, prompt, timeout):
-        self._event("ask_breath")
+        self._event("ask_breath", text=prompt)
         r = self.breaths.pop(0)
         if r == "esc":
             raise Aborted()
@@ -184,9 +184,11 @@ def test_rest_move_between_trials(devices_dir, tmp_path):
     res = run(cfg, stim, ui, noise, tmp_path)
     kinds = [m["kind"] for m in json.loads(open(res["json"]).read())["device"]["moves"]]
     # rest after the instructions, then per trial: two breaths and a rest; park at the end
-    assert kinds == ["rest", "stim", "null", "rest", "stim", "null", "rest", "park"] or \
-        kinds == ["rest", "null", "stim", "rest", "stim", "null", "rest", "park"] or \
-        kinds[0] == "rest" and kinds[-1] == "park" and kinds.count("rest") == 3
+    assert kinds[0] == "rest" and kinds[-1] == "park"
+    body = kinds[1:-1]
+    assert len(body) == 6
+    for k in range(0, 6, 3):
+        assert sorted(body[k:k + 2]) == ["null", "stim"] and body[k + 2] == "rest"
 
 
 def test_motion_settings_are_applied_before_calibration(devices_dir, tmp_path):
@@ -286,7 +288,8 @@ def test_device_error_saves_an_error_run_and_reraises(devices_dir, tmp_path):
     saved = sorted(tmp_path.glob("Error_*.json"))
     assert len(saved) == 1
     body = json.loads(saved[0].read_text(encoding="utf-8"))
-    assert body["status"] == "error" and "deviceFault" in body["error"] or "Driver fault" in body["error"]
+    assert body["status"] == "error"
+    assert "Driver fault" in body["error"]
 
 
 def test_existing_data_for_a_subject_is_not_overwritten(devices_dir, tmp_path):
@@ -302,5 +305,5 @@ def test_danish_texts_are_used(devices_dir, tmp_path):
     cfg = small_cfg(n=2)
     port, stim, ui, noise = setup(devices_dir, tmp_path, cfg, ["L", "L"])
     run_session(cfg, stim, ui, noise, subject=9999, language="d", seed=1, out_dir=tmp_path)
-    assert any("Hvilket åndedrag" in (e.get("text") or "") for e in ui.events
-               if e["kind"] == "show") or any(e["kind"] == "ask_breath" for e in ui.events)
+    prompts = [e["text"] for e in ui.events if e["kind"] == "ask_breath"]
+    assert prompts and all(p.startswith("Hvilket åndedrag") for p in prompts)
