@@ -25,3 +25,4 @@ At the first bench session, capture real replies and save them next to these fil
 | `move_connection_lost.txt` | `a` + value, `CheckSerialConnection()` fails mid-move (e.g. DTR not asserted): no `Move complete.` and no ERROR line |
 | `enable.txt`, `disable.txt` | `e`, `d` |
 | `status_calibrated.txt`, `status_uncalibrated.txt` | `s` |
+| `status_uncalibrated__fw_Vigilant-Piston__2026-10-28.txt` | `s`. **Captured from device** (first 2.0 unit, firmware "Vigilant-Piston (Oct  1 2026 11:30:50)", which predates the device ID line) on 2026-10-28, uncalibrated after power-up. Starts with the firmware's echo of `s` |

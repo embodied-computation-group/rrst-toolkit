@@ -7,9 +7,23 @@ session so a fresh session can continue from the files.
 
 - [x] Device layer (`device/+rrst`), built test-first against a simulated device.
       41/41 tests pass; mutation checks recorded in VERIFICATION.md (2026-10-28).
-- [ ] Bench step 1: `bench/readStatus.m` (sends only `s`).
+- [x] Bench step 1: `bench/readStatus.m` (sends only `s`), first 2.0 unit on COM3,
+      2026-10-28. Reply parsed; saved as a captured fixture (42/42 tests pass).
+      Findings:
+  - The firmware is **"Vigilant-Piston (Oct  1 2026 11:30:50)"**, older than the
+    bundled "Patient-Regulator (Oct  7)". It has no device ID line, no `y` retract,
+    no `k` verify and no usage statistics, and it was built from work that was
+    uncommitted on Oct 1 (closest commit dcd4274, Oct 2). The calibrate and move
+    reply strings match the fixtures.
+  - The max endstop reads **TRIGGERED** at power-up. The switches are wired
+    normally-closed (INPUT_PULLUP, HIGH = triggered), so either the carriage is
+    resting on the max endstop (wedge at full obstruction) or the max switch wire is
+    open. Inspect before calibrating.
+  - Saved max position from an earlier calibration: 39963 steps, so first contact is
+    about 15963 and the old hard-coded 12000-38000 range doesn't fit this unit.
+  - Run current reads 795 mA (800 requested; the TMC2209 rounds the current scale).
 - [ ] Bench session with the physical device (needs the user and the device):
-  - `s` status;
+  - decide whether to flash Patient-Regulator before calibrating;
   - check whether MATLAB `serialport` asserts DTR;
   - calibrate and record `MaxPosition`;
   - capture real transcripts into `tests/fixtures/`;

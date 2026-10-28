@@ -136,6 +136,22 @@ classdef TestReplyParsing < matlab.unittest.TestCase
             tc.verifyEqual(st.currentPosition, 20000);
         end
 
+        function statusCapturedFromVigilantPiston(tc)
+            % Real reply from the first 2.0 unit at the bench, 2026-10-28 (no device ID line).
+            st = rrst.parseStatus(rrst.splitReply(readFixture('status_uncalibrated__fw_Vigilant-Piston__2026-10-28.txt')));
+            tc.verifyEqual(st.softwareVersion, "Vigilant-Piston (Oct  1 2026 11:30:50)");
+            tc.verifyEqual(st.deviceId, "");
+            tc.verifyFalse(st.calibrated);
+            tc.verifyFalse(st.stepperEnabled);
+            tc.verifyEqual(st.currentPosition, 0);
+            tc.verifyTrue(isnan(st.maxPosition));
+            tc.verifyTrue(isnan(st.firstContact));
+            tc.verifyEqual(st.retractSteps, 24000);
+            tc.verifyEqual(st.acceleration, 10000);
+            tc.verifyEqual(st.runCurrent, 795);
+            tc.verifyEqual(st.chopperMode, "SpreadCycle");
+        end
+
         function statusWithoutHeaderIsAnError(tc)
             tc.verifyError(@() rrst.parseStatus(["Move complete."]), 'rrst:badStatus');
         end

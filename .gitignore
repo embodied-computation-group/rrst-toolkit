@@ -85,3 +85,6 @@ codegen/
 # --- Docs site ---
 site/
 .venv-docs/
+
+# Raw bench captures; curated ones are copied into tests/fixtures/
+bench/captures/
