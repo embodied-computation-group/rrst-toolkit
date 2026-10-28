@@ -71,6 +71,25 @@ session so a fresh session can continue from the files.
 
 ## Next
 
+- State at 2026-10-28 evening (before a clear). Focus is Zurich; next up: **PLUX
+  integration** (the task still has `vars.pluxSynch = 0` and old plux-square drawing in
+  the helpers; nothing new written yet).
+  - Done on `main` today: the window no longer greys out on key waits (GetMouse in
+    wait loops); Esc aborts from every screen of the adult task (not during
+    calibration); the tutorial runs one practice trial per `cfg.tutorial.exampleStimuli`
+    level (tested unattended on the mock device only); **multi-session**: runRRST asks
+    for a session number, files are `RRST_<ID>_s<session>_<proc>_<date>`, only a
+    completed file of the same ID+session blocks a run, and no save ever overwrites
+    (`_2`, `_3`). Psychtoolbox stand-ins for helper tests: `tests/ptbstubs`.
+  - Branch `docs-running-2-0`: handbook page `handbook/v2/running.md` (how to run the 2.0
+    task). Not merged; review and merge. mkdocs isn't installed on the stim laptop, so
+    the strict build hasn't run.
+  - Branch `kids-variant`: RRST-Kids ("Milkshake Monster"), parked. Tried once by a
+    4.5-year-old; trials are now experimenter-started with 3 slurps. Not for children
+    yet (see `handbook/v2/kids.md` open questions).
+  - Still open: `task/RRST_2-0/README.md` describes generated pink noise (the code loops
+    the rain file); session number is the visit number, not the dose (keeps the run
+    blind; confirm with Zurich).
 - Zurich design (Micah, 2026-10-28): 30 participants, within-subject placebo vs low vs
   moderate THC. RRST gets 30 minutes in total, including tutorial and breaks. At about
   24 s per trial with confidence (20-trial pilot), that leaves roughly 45-50 Psi trials,
