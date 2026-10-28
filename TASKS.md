@@ -100,8 +100,15 @@ session so a fresh session can continue from the files.
     because of `SkipSyncTests=1`.
   - [x] Fixed: experience-rating slideScale outputs were in the wrong order
     (inherited from RRS_3-0).
-  - [ ] Interactive mock run (Micah clicks through): needs the MATLAB desktop,
-    because `runRRST` asks for subject ID and language with `input`.
+  - [x] Unattended fullscreen mock run, 2026-10-28: `runRRST` with stubbed
+    `KbCheck`, `KbReleaseWait`, `GetMouse` and `input` (stubs kept outside the repo),
+    6 trials, one break. Found and fixed: endSession errored on every completed run
+    with noise off (PsychPortAudio never loaded), and no CSV was ever written
+    (struct2csv hid the error). After the fixes it completes: .mat plus an 18-column
+    per-trial CSV, 2 calibrations, 2560x1440 at TextSize 28.
+  - [ ] Not covered by the stubbed run: real clicks and key presses, Esc, how the
+    text size looks on this screen. Esc does not abort while the "which breath"
+    mouse prompt is up (inherited from RRS_3-0). A short manual check is still due.
 - Per-device calibration records (`devices/<device_id>.json`).
 - Firmware snapshot: hex, SHA-256, source commit, library versions.
 - Hardware bench checklist and pre-study acceptance checklist in `docs/`.
