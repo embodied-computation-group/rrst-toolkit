@@ -33,9 +33,9 @@ and leadscrew) · safety glasses · fume extractor · a Windows or Linux compute
 | Bearing | 608, 8×22×7 mm | 1 | — | TODO |
 | Linear bearings | LM6UU | 2 | — | TODO |
 | Steel rods | Ø6 × 140 mm | 2 | — | TODO |
-| Stepper motor | E3D Super Whopper | 1 | [E3D](https://e3d-online.com/products/motors) | **Reported discontinued** ([issue #1](https://github.com/embodied-computation-group/RespiroceptionMethodsPaper/issues/1)). See [replacements](../parts-sourcing.md#stepper-motor) |
+| Stepper motor | E3D Super Whopper | 1 | [E3D](https://e3d-online.com/products/motors) | **Reported unavailable** ([issue #1](https://github.com/embodied-computation-group/RespiroceptionMethodsPaper/issues/1)); unverified. See [replacements](../parts-sourcing.md#stepper-motor) |
 | Stepper damper | NEMA 17 | 1 | — | TODO |
-| Microswitch (endstops) | Omron DF2-5L | 2 | — | TODO |
+| Microswitch (endstops) | Omron "DF2-5L" (probably a typo for **D2F-5L**) | 2 | — | Unverified; see [Parts sourcing](../parts-sourcing.md#other-parts) |
 | Coupler | 5 → 8 mm, light-duty rigid | 1 | [3dnielsen](https://3dnielsen.dk/lmuu-glideleje/301-5-to-8mm-light-duty-rigid-coupler-1stk.html) | TODO |
 | Leadscrew + nut | TR8×2 (2 mm pitch, 8 mm), ~20 cm, cut to fit; **remember the nut** | 1 | [hobby-store](https://hobby-store.co.uk/lead-screw/lead-screw-tr8x2-500mm.html), [nut](https://hobby-store.co.uk/lead-screw-nuts/lead-screw-nut-tr8x2.html) | TODO |
 | Self-tapping screws | M2×10 | 2 | — | TODO |
@@ -49,7 +49,7 @@ and leadscrew) · safety glasses · fume extractor · a Windows or Linux compute
 | Step-down DC-DC | XM1584 (MP1584 module) | 1 | — | TODO |
 | Stepper driver | TMC2100 SilentStepStick. *Adjust its regulator to 0.8 V* | 1 | [Farnell 2822153](https://dk.farnell.com/trinamic/tmc-silentstepstick/stepper-driver-board-2-phase-motor/dp/2822153) | TODO. 2.0 uses a TMC2209 instead |
 | Heatsink | StepStick heatsink | 1 | [3deksperten](https://3deksperten.dk/heat-sink-for-a4988.html) | TODO |
-| Microcontroller | Teensy 3.1 | 1 | — | **Discontinued** (stated in the 2022 guide). 2.0 uses a Teensy 4.0 |
+| Microcontroller | Teensy 3.1 | 1 | — | **Discontinued** ([PJRC](https://www.pjrc.com/store/teensy31.html), checked 2026-10-28). 2.0 uses a Teensy 4.0 |
 | Pin headers, female | 8-pin ×2, 14-pin ×2, 5-pin ×1 | | — | TODO |
 | Pin headers, male | 8-pin ×2, 14-pin ×2, 5-pin ×1, 2-pin ×5, 1-pin ×1 | | — | TODO |
 | Jumper | 2.54 mm | 1 | — | TODO |

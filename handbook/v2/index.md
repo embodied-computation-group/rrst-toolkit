@@ -13,7 +13,7 @@
 | Microcontroller | Teensy 3.1/3.2 (discontinued) | **Teensy 4.0** |
 | Stepper driver | TMC2100 (current set by trimpot) | **TMC2209** (BigTreeTech v1.2), configured over UART |
 | Motor current | Fixed by the trimpot; the motor holds at full current between trials and runs hot | Run current, hold current (% of run), microstepping and chopper mode set in software and saved to EEPROM |
-| Stepper motor | E3D "Super Whopper" (no longer sold, see [GitHub issue #1](https://github.com/embodied-computation-group/RespiroceptionMethodsPaper/issues/1)) | Motech MT-1705HS200AE (rated 2.0 A) per the checklist. `TODO(Martin)`: confirm for all units |
+| Stepper motor | E3D "Super Whopper" (reported unavailable, see [GitHub issue #1](https://github.com/embodied-computation-group/RespiroceptionMethodsPaper/issues/1)) | Motech MT-1705HS200AE (rated 2.0 A) per the checklist. `TODO(Martin)`: confirm for all units |
 | Calibration | Homes to the min endstop, then finds the max endstop | The same, with a fast approach then a slow re-approach for a repeatable trigger point; reports `MaxPosition` and a computed first-contact position |
 | Safety | None | Driver-fault monitoring; auto-correction of unexpected endstop hits, then a safety disable; the driver switches off if the serial connection drops; soft limits on moves |
 | Supply protection | None | Bulk capacitor, series Schottky diode and TVS diode on the motor rail (bench modification) |

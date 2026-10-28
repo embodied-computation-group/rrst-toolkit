@@ -1,7 +1,7 @@
 # Parts sourcing
 
 Current availability of every part, and tested or proposed replacements for those no
-longer made. **Last checked: TODO.**
+longer made. **Partial survey: 2026-10-28.** Many supplier sites blocked automated checks, so most parts are still unverified.
 
 !!! warning "How to read this page"
     - **Available**: a current product page with price and stock was checked on the date
@@ -12,15 +12,19 @@ longer made. **Last checked: TODO.**
     - **Proposed**: a replacement that matches the specifications on paper but hasn't
       been built into a device yet.
 
-!!! todo "TODO(parts): availability survey in progress"
-    A parts availability survey is under way. Its results will be added here, with the
-    URL and date of every check.
+!!! todo "TODO(parts): finish the survey by hand"
+    The automated survey on 2026-10-28 couldn't open most supplier pages (e3d-online,
+    Mouser, Farnell, element14, Analog Devices, StepperOnline and TME blocked or timed
+    out). Every part not listed as Available or Discontinued below still needs a manual
+    check in a browser, with the URL and date recorded.
 
 ## Stepper motor
 
-The original **E3D Super Whopper** is reported as no longer available
-([GitHub issue #1](https://github.com/embodied-computation-group/RespiroceptionMethodsPaper/issues/1),
-September 2025). A replacement must have:
+The original **E3D Super Whopper** may no longer be available.
+[GitHub issue #1](https://github.com/embodied-computation-group/RespiroceptionMethodsPaper/issues/1)
+(September 2025) is titled "Stepper Motors no longer available", although its text says
+"stepper drives". E3D's site could not be checked (blocked), so **this status is
+unverified**. A replacement must have:
 
 - a NEMA 17 face and mounting holes;
 - a **5 mm shaft** (the coupler is 5 → 8 mm);
@@ -32,16 +36,34 @@ September 2025). A replacement must have:
 
 | Motor | Status | Notes |
 |---|---|---|
-| E3D Super Whopper | Reported discontinued | Original part |
-| Motech MT-1705HS200AE | In use on 2.0 units (per the engineer's checklist) | `TODO(parts)`: specifications, suppliers, fit in the legacy shell |
+| E3D Super Whopper | Unverified (reported unavailable) | Original part. Unconfirmed search results suggest it is a Motech MT-1705HS200A-family motor (60 mm body, 5 mm shaft, 2 A, 1.8°). `TODO(parts)`: confirm from a datasheet |
+| Motech MT-1705HS200AE | In use on 2.0 units (per the engineer's checklist) | Possibly the same motor family as the Super Whopper. `TODO(parts)`: datasheet, suppliers, fit in the legacy shell |
+| LDO 42STH60-2004AC | Proposed, unverified | 60 mm, 2 A class. `TODO(parts)`: confirm the specifications |
 | `TODO(parts)` | Proposed | |
+
+!!! note "Running a 2 A motor"
+    A 2.0 A-rated motor exceeds what the legacy TMC2100 (about 1.2 A RMS) can deliver at
+    full rating. On a TMC2209 the firmware default run current is 800 mA. Whether the
+    TMC2100 runs these motors reliably at reduced current hasn't been tested.
 
 ## Microcontroller and driver
 
 | Part | Status | Replacement |
 |---|---|---|
-| Teensy 3.1 | Discontinued | Teensy 4.0, with the 2.0 firmware |
-| TMC2100 SilentStepStick | `TODO(parts)` | BigTreeTech TMC2209 V1.2, with the [2.0 conversion](v2/electronics.md) |
+| Teensy 3.1 | **Discontinued**: PJRC lists it as replaced by the Teensy 3.2 ([pjrc.com](https://www.pjrc.com/store/teensy31.html), checked 2026-10-28) | Teensy 4.0, with the 2.0 firmware |
+| Teensy 4.0 | **Available**: in stock at SparkFun, DEV-15583, US$23.80 ([sparkfun.com](https://www.sparkfun.com/teensy-4-0.html), checked 2026-10-28). PJRC says SparkFun now makes Teensy boards | — |
+| TMC2100 SilentStepStick | Unverified | BigTreeTech TMC2209 V1.2, with the [2.0 conversion](v2/electronics.md) |
+| BigTreeTech TMC2209 | **Available**: Tinytronics (NL), €7.00, 100+ in stock ([tinytronics.nl](https://www.tinytronics.nl/nl/mechanica-en-actuatoren/motoraansturingen-en-drivers/stappen-motoraansturingen-en-drivers/bigtreetech-tmc2209-stappenmotordriver-module), checked 2026-10-28). The page doesn't state the board revision | — |
+
+## Other parts
+
+| Part | Status | Notes |
+|---|---|---|
+| Omron microswitch | Unverified | The parts list says "DF2-5L". Omron's part number is probably **D2F-5L**. `TODO(parts)`: confirm and correct the parts list |
+| POWERbreathe filtered mouthpiece | Partly verified | A single-use POWERbreathe bacteria filter is in stock at Oxycare (EU), €1.79 ([oxycare.eu](https://oxycare.eu/en/powerbreathe-bacteria-filter-blue-trendvent-physio-pulsar), checked 2026-10-28). Not confirmed to be the TrySafe/anti-viral mouthpiece used in the studies |
+| Hans Rudolph 1410 T-valve | Unverified | The manufacturer's two-way valve page doesn't list series 1410. `TODO(parts)`: contact Hans Rudolph |
+| Fan | Unverified | The parts list says 30×30 mm, but its link is a 40×40 mm fan. `TODO(parts)`: measure the shell |
+| Silicone tube, power supply, barrel socket, NCP1117, XM1584, TVS/Schottky diodes, capacitors | Unverified | Generic or widely stocked parts, not yet checked |
 
 ## Reports from other labs
 

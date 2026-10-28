@@ -5,8 +5,8 @@ hardware revision of May 2022. They are adapted from the 2022 "RRST Build and Se
 guide, with its photos.
 
 !!! warning "Not recommended for new builds"
-    Two core parts are no longer made: the **Teensy 3.1** microcontroller and the
-    **E3D Super Whopper** stepper motor
+    The **Teensy 3.1** microcontroller is discontinued, and the **E3D Super Whopper**
+    stepper motor is reported unavailable
     ([issue #1](https://github.com/embodied-computation-group/RespiroceptionMethodsPaper/issues/1)).
     Other parts may be hard to find. For a new device, build the mechanics from these
     pages and the electronics from [RRST 2.0](../v2/index.md). See
