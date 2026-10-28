@@ -150,6 +150,20 @@ classdef TestKids < matlab.unittest.TestCase
             tc.verifyFalse(f.unusable);
         end
 
+        % --- trial structure ----------------------------------------------------
+        function eachTrialIsThreeSlurps(tc)
+            cfg = kidsConfig();
+            tc.verifyEqual(cfg.child.slurps, 3);
+        end
+
+        function slurpsMustBeAPositiveWholeNumber(tc)
+            cfg = kidsConfig();
+            cfg.child.slurps = 0;
+            tc.verifyError(@() validateKidsConfig(cfg), 'rrst:badConfig');
+            cfg.child.slurps = 2.5;
+            tc.verifyError(@() validateKidsConfig(cfg), 'rrst:badConfig');
+        end
+
         % --- saving -------------------------------------------------------------
         function twoSavesInOneMinuteKeepBothFiles(tc)
             d = tc.applyFixture(matlab.unittest.fixtures.TemporaryFolderFixture).Folder;
