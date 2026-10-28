@@ -198,7 +198,13 @@ classdef Device < handle
                 if n > 0
                     buf = [buf, read(obj.Port, n, 'char')]; %#ok<AGROW>
                     [lines, complete] = rrst.splitReply(buf);
-                    if complete
+                    if complete && isempty(lines)
+                        % A bare prompt is never a reply (every command produces
+                        % text): it is the extra prompt the firmware sends after a
+                        % move, arriving late. Log it and keep reading.
+                        obj.log("unsolicited", buf);
+                        buf = '';
+                    elseif complete
                         obj.log("rx", buf);
                         return
                     end

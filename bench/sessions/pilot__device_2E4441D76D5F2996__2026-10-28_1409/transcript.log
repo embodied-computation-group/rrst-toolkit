@@ -1,0 +1,251 @@
+% Serial transcript captured from device 2E4441D76D5F2996 on 2026-10-28 (stim laptop, COM7 via USB hub), 20-trial Psi pilot, rain loop.
+% Columns: seconds since device open, direction (tx/rx/unsolicited), text. CRLF shown as \n.
+    0.003  tx           s
+    0.026  rx           s\n--- SYSTEM STATUS ---\nSoftware Version: Patient-Regulator (Oct  7 2026 08:45:06)\nDevice ID:        2E4441D76D5F2996\nStepper Enabled:  NO\nCurrent Position: 8612 steps\nMax Range Limit:  41204 steps (stale - not calibrated)\nCalibrated:       NO\nSaved Max Pos:    41204 steps\nRetract Distance: 24000 steps (15.000 mm)\nFirst-Contact:    unavailable (not calibrated)\nCurrent Speed:    16000 steps/s\nAcceleration:     10000 steps/sÂ²\nRun Current:      795 mA\nHold Current:     50%\nMicrosteps:       16\nChopper Mode:     SpreadCycle\nFan Mode:         Auto\nFan State:        OFF\nMin Endstop:      ok\nMax Endstop:      ok\nSoft Limit Guard: inactive - not calibrated, moves refused\nTotal Run Time:   0.7 hours\nSession Run Time: 0.1 hours\nTotal Distance:   1.4 m\nTotal Min Hits:   24\nTotal Max Hits:   28\nPeak Heat Sink Temp: never recorded\n---\n\nValve>
+   22.807  tx           s
+   22.829  rx           s\n--- SYSTEM STATUS ---\nSoftware Version: Patient-Regulator (Oct  7 2026 08:45:06)\nDevice ID:        2E4441D76D5F2996\nStepper Enabled:  NO\nCurrent Position: 8612 steps\nMax Range Limit:  41204 steps (stale - not calibrated)\nCalibrated:       NO\nSaved Max Pos:    41204 steps\nRetract Distance: 24000 steps (15.000 mm)\nFirst-Contact:    unavailable (not calibrated)\nCurrent Speed:    16000 steps/s\nAcceleration:     10000 steps/sÂ²\nRun Current:      795 mA\nHold Current:     50%\nMicrosteps:       16\nChopper Mode:     SpreadCycle\nFan Mode:         Auto\nFan State:        OFF\nMin Endstop:      ok\nMax Endstop:      ok\nSoft Limit Guard: inactive - not calibrated, moves refused\nTotal Run Time:   0.7 hours\nSession Run Time: 0.1 hours\nTotal Distance:   1.4 m\nTotal Min Hits:   24\nTotal Max Hits:   28\nPeak Heat Sink Temp: never recorded\n---\n\nValve>
+   22.840  tx           c
+   44.572  rx           c\nStarting calibration...\nMin Endstop found. Position set to 0.\nMax Endstop found. Max Position: 41219 (previous saved: 41204, diff: +15)\nFirst-contact position (retract 15.000 mm): 17219\n\n\nValve>
+   44.585  tx           e
+   44.592  rx           e\nStepper enabled in normal mode\n\n\nValve>
+  102.900  tx           a
+  102.902  tx           34737
+  104.493  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 34737\nMove complete.\n\nValve>\nValve>
+  108.816  tx           a
+  108.816  tx           15619
+  111.558  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 15619\nMove complete.\n\nValve>
+  115.396  unsolicited  \nValve>
+  115.397  tx           a
+  115.398  tx           33599
+  118.060  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 33599\nMove complete.\n\nValve>
+  125.759  unsolicited  \nValve>
+  125.760  tx           a
+  125.760  tx           29256
+  127.058  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 29256\nMove complete.\n\nValve>
+  129.693  unsolicited  \nValve>
+  129.694  tx           a
+  129.695  tx           15619
+  132.007  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 15619\nMove complete.\n\nValve>
+  135.840  unsolicited  \nValve>
+  135.840  tx           a
+  135.841  tx           36079
+  138.679  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 36079\nMove complete.\n\nValve>
+  146.805  unsolicited  \nValve>
+  146.806  tx           a
+  146.807  tx           33227
+  147.853  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 33227\nMove complete.\n\nValve>
+  150.307  unsolicited  \nValve>
+  150.308  tx           a
+  150.309  tx           36079
+  151.358  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 36079\nMove complete.\n\nValve>
+  155.199  unsolicited  \nValve>
+  155.200  tx           a
+  155.201  tx           15619
+  158.038  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 15619\nMove complete.\n\nValve>
+  164.991  unsolicited  \nValve>
+  164.992  tx           a
+  164.992  tx           21356
+  166.485  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 21356\nMove complete.\n\nValve>
+  168.777  unsolicited  \nValve>
+  168.778  tx           a
+  168.779  tx           36079
+  171.181  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 36079\nMove complete.\n\nValve>
+  175.021  unsolicited  \nValve>
+  175.022  tx           a
+  175.022  tx           15619
+  177.862  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 15619\nMove complete.\n\nValve>
+  185.423  unsolicited  \nValve>
+  185.425  tx           a
+  185.426  tx           24720
+  187.313  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 24720\nMove complete.\n\nValve>
+  188.878  unsolicited  \nValve>
+  188.879  tx           a
+  188.880  tx           35459
+  190.930  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 35459\nMove complete.\n\nValve>
+  194.766  unsolicited  \nValve>
+  194.767  tx           a
+  194.768  tx           15619
+  197.564  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 15619\nMove complete.\n\nValve>
+  205.831  unsolicited  \nValve>
+  205.834  tx           a
+  205.834  tx           30968
+  208.290  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 30968\nMove complete.\n\nValve>
+  208.958  unsolicited  \nValve>
+  208.959  tx           a
+  208.959  tx           35459
+  210.278  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 35459\nMove complete.\n\nValve>
+  214.116  unsolicited  \nValve>
+  214.117  tx           a
+  214.118  tx           15619
+  216.912  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 15619\nMove complete.\n\nValve>
+  224.027  unsolicited  \nValve>
+  224.028  tx           a
+  224.029  tx           30509
+  226.449  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 30509\nMove complete.\n\nValve>
+  226.463  tx           a
+  226.464  tx           37319
+  228.093  rx           \nValve>a\nEnter absolute target position (steps):\nMoving to absolute position: 37319\nMove complete.\n\nValve>
+  231.930  unsolicited  \nValve>
+  231.930  tx           a
+  231.931  tx           15619
+  234.857  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 15619\nMove complete.\n\nValve>
+  242.533  unsolicited  \nValve>
+  242.535  tx           a
+  242.537  tx           30305
+  244.935  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 30305\nMove complete.\n\nValve>
+  245.997  unsolicited  \nValve>
+  245.998  tx           a
+  245.998  tx           37319
+  247.649  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 37319\nMove complete.\n\nValve>
+  251.486  unsolicited  \nValve>
+  251.487  tx           a
+  251.488  tx           15619
+  254.411  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 15619\nMove complete.\n\nValve>
+  262.674  unsolicited  \nValve>
+  262.674  tx           a
+  262.675  tx           25077
+  264.598  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 25077\nMove complete.\n\nValve>
+  265.241  unsolicited  \nValve>
+  265.242  tx           a
+  265.243  tx           15619
+  267.168  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 15619\nMove complete.\n\nValve>
+  271.008  unsolicited  \nValve>
+  271.009  tx           a
+  271.010  tx           37319
+  273.933  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 37319\nMove complete.\n\nValve>
+  281.474  unsolicited  \nValve>
+  281.477  tx           a
+  281.479  tx           28684
+  283.317  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 28684\nMove complete.\n\nValve>
+  283.573  unsolicited  \nValve>
+  283.574  tx           a
+  283.574  tx           37319
+  285.413  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 37319\nMove complete.\n\nValve>
+  289.254  unsolicited  \nValve>
+  289.255  tx           a
+  289.255  tx           15619
+  292.182  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 15619\nMove complete.\n\nValve>
+  298.156  unsolicited  \nValve>
+  298.157  tx           a
+  298.159  tx           23691
+  299.933  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 23691\nMove complete.\n\nValve>
+  302.036  unsolicited  \nValve>
+  302.036  tx           a
+  302.037  tx           15619
+  303.812  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 15619\nMove complete.\n\nValve>
+  307.652  unsolicited  \nValve>
+  307.653  tx           a
+  307.653  tx           37319
+  310.580  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 37319\nMove complete.\n\nValve>
+  316.540  unsolicited  \nValve>
+  316.541  tx           a
+  316.541  tx           28296
+  318.419  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 28296\nMove complete.\n\nValve>
+  319.740  unsolicited  \nValve>
+  319.741  tx           a
+  319.741  tx           15619
+  321.973  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 15619\nMove complete.\n\nValve>
+  325.808  unsolicited  \nValve>
+  325.809  tx           a
+  325.809  tx           37319
+  328.735  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 37319\nMove complete.\n\nValve>
+  334.566  unsolicited  \nValve>
+  334.567  tx           a
+  334.568  tx           25274
+  336.743  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 25274\nMove complete.\n\nValve>
+  337.269  unsolicited  \nValve>
+  337.270  tx           a
+  337.271  tx           15619
+  339.216  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 15619\nMove complete.\n\nValve>
+  343.055  unsolicited  \nValve>
+  343.056  tx           a
+  343.056  tx           32359
+  345.621  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 32359\nMove complete.\n\nValve>
+  352.879  unsolicited  \nValve>
+  352.881  tx           a
+  352.882  tx           32619
+  353.184  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 32619\nMove complete.\n\nValve>\nValve>
+  355.915  tx           a
+  355.916  tx           37939
+  357.353  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 37939\nMove complete.\n\nValve>
+  361.190  unsolicited  \nValve>
+  361.191  tx           a
+  361.191  tx           15619
+  364.158  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 15619\nMove complete.\n\nValve>
+  372.267  unsolicited  \nValve>
+  372.268  tx           a
+  372.268  tx           24269
+  374.104  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 24269\nMove complete.\n\nValve>
+  374.904  unsolicited  \nValve>
+  374.905  tx           a
+  374.906  tx           37319
+  377.170  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 37319\nMove complete.\n\nValve>
+  381.008  unsolicited  \nValve>
+  381.009  tx           a
+  381.010  tx           15619
+  383.933  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 15619\nMove complete.\n\nValve>
+  392.010  unsolicited  \nValve>
+  392.011  tx           a
+  392.011  tx           24069
+  393.828  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 24069\nMove complete.\n\nValve>
+  394.804  unsolicited  \nValve>
+  394.805  tx           a
+  394.806  tx           15619
+  396.621  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 15619\nMove complete.\n\nValve>
+  400.461  unsolicited  \nValve>
+  400.461  tx           a
+  400.462  tx           37319
+  403.386  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 37319\nMove complete.\n\nValve>
+  409.277  unsolicited  \nValve>
+  409.278  tx           a
+  409.279  tx           26575
+  411.327  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 26575\nMove complete.\n\nValve>
+  411.739  unsolicited  \nValve>
+  411.740  tx           a
+  411.740  tx           15619
+  413.810  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 15619\nMove complete.\n\nValve>
+  417.646  unsolicited  \nValve>
+  417.647  tx           a
+  417.647  tx           37319
+  420.572  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 37319\nMove complete.\n\nValve>
+  426.728  unsolicited  \nValve>
+  426.729  tx           a
+  426.729  tx           31831
+  428.193  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 31831\nMove complete.\n\nValve>\nValve>
+  430.534  tx           a
+  430.534  tx           15619
+  433.058  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 15619\nMove complete.\n\nValve>
+  436.894  unsolicited  \nValve>
+  436.895  tx           a
+  436.896  tx           37319
+  439.822  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 37319\nMove complete.\n\nValve>
+  446.222  unsolicited  \nValve>
+  446.223  tx           a
+  446.224  tx           32062
+  447.651  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 32062\nMove complete.\n\nValve>
+  448.523  unsolicited  \nValve>
+  448.524  tx           a
+  448.525  tx           37319
+  449.955  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 37319\nMove complete.\n\nValve>
+  453.796  unsolicited  \nValve>
+  453.797  tx           a
+  453.798  tx           15619
+  456.723  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 15619\nMove complete.\n\nValve>
+  463.385  unsolicited  \nValve>
+  463.387  tx           a
+  463.389  tx           23023
+  465.089  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 23023\nMove complete.\n\nValve>
+  467.128  unsolicited  \nValve>
+  467.129  tx           a
+  467.130  tx           15619
+  468.831  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 15619\nMove complete.\n\nValve>\nValve>
+  472.668  tx           a
+  472.669  tx           37319
+  475.593  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 37319\nMove complete.\n\nValve>
+  482.210  unsolicited  \nValve>
+  482.210  tx           a
+  482.211  tx           24079
+  484.492  rx           a\nEnter absolute target position (steps):\nMoving to absolute position: 24079\nMove complete.\n\nValve>
+  484.496  tx           a
+  484.498  tx           1600
+  487.486  rx           \nValve>a\nEnter absolute target position (steps):\nMoving to absolute position: 1600\nMove complete.\n\nValve>

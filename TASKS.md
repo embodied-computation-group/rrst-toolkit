@@ -71,6 +71,27 @@ session so a fresh session can continue from the files.
 
 ## Next
 
+- Zurich design (Micah, 2026-10-28): 30 participants, within-subject placebo vs low vs
+  moderate THC. RRST gets 30 minutes in total, including tutorial and breaks. At about
+  24 s per trial with confidence (20-trial pilot), that leaves roughly 45-50 Psi trials,
+  half the paper's 100, so the prior and the procedure matter more.
+- Timing for THC (Micah, 2026-10-28, from the pilots): the task feels a little too fast;
+  each breath should be about 0.5 s longer (`cfg.timing.inhale` is 0.8 s). Add exhale
+  feedback to the expanding circle (it only paces the inhale now). Both change the
+  trial length and so the trial budget above.
+- Empirical prior (Courtin, Hierarchical-Interoception, doi 10.1101/2025.08.27.672360):
+  log(alpha) ~ N(2.57, 0.105) on the old 0-17 mm axis, log(beta) ~ N(2.05, 0.85),
+  lambda 0.03. The slope part transfers (Weibull slope is scale-free); the threshold
+  location does not map onto this device's anchored percent axis. Concern: a tight
+  prior railroads real participants, more so across drug conditions. Simulating bias vs
+  prior width before any decision. Their updated `loadParams.m` would not run as
+  written (`PM.priorAlphas` for `stair.PM.priorAlphas`, `10^` for `10.^`).
+- Try QUEST aimed at about 70 % correct, to feel what a harder target is like. The
+  current "quest" procedure (PAL_AMRF) places trials at the fitted threshold (about 80 %
+  correct for a 2AFC Weibull), so it needs a target quantile, not just the switch.
+- Roadmap: drop the fixed stimulus grid. The device resolves single steps (1600 steps
+  per mm), so the procedure could place any level, not 2.5 % steps (e.g. a continuous
+  QUEST/Psi variant, or a grid fine enough not to matter).
 - Pilot idea (Micah, 2026-10-28): resistance rises very non-linearly as the tube
   closes. Most of the travel is imperceptible, and the useful range is the last 3-4 mm.
   Instead of a uniform mm grid, give Psi a non-uniform stimulus grid (Palamedes accepts
@@ -137,16 +158,45 @@ session so a fresh session can continue from the files.
     threshold 76.2 %. `bench/sessions/pilot__device_2E4441D76D5F2996__2026-10-28_1329/`.
   - [x] Rain loop for masking, 2026-10-28: `task/helpers/audio/rain_loop_30s.wav`
     (Freesound 650541, CC0, synthesised rain, 48 kHz stereo; checks and limits in
-    that folder's README). Not wired into the task yet: MATLAB needs a file option
-    in `startMaskingNoise` (`audioread`, the file's own 48 kHz rate).
+    that folder's README). Wired in: `cfg.noise.file` (pilotConfig points at the
+    loop, volume 1 = as recorded) is played by `startMaskingNoise` at the file's own
+    48 kHz via `rrst.loadMaskingSound`; empty falls back to generated noise. Start
+    and stop checked silently under PsychPortAudio on the stim laptop. Not yet heard
+    in a pilot, and not yet checked against the 14 kHz SpreadCycle whine.
+    (A synthesised "rain" colour was tried and dropped unpushed: scratchy, and
+    built for a 1 kHz whine that Martin's measurements do not show.)
+  - [x] Fourth pilot, 2026-10-28 14:00, rain loop at volume 1: "basically perfect",
+    motor not audible next to the device, not unpleasant. The run stopped after 3
+    trials with `Move to 15604 failed: No 'Move complete.' line`, and the park
+    failed too (`Firmware confirmed target NaN`). Cause: Patient-Regulator sends one
+    extra empty prompt after every move; a null move sent 9 ms after the previous
+    move read that prompt as its reply, and the park then read the leftover reply.
+    Host bug, not a device fault. Fixed in `rrst.Device.command`: a bare prompt is
+    logged as unsolicited and reading continues (MockPort reproduces the race).
+    Device afterwards (`s`): disabled, not calibrated, at 8612 steps, i.e. open
+    (zero is 15604): the park was cut off when the port closed.
+  - [x] 20-trial pilot, 2026-10-28 14:09, rain loop: device clean (62/62 moves, 55
+    stray prompts skipped). 17/20 correct; Psi sat at 87.5 % for 12 of the last 14
+    trials (13/13 correct there) and felt "extremely easy, like it got stuck".
+    Threshold 77.6 %, SE 8.0 %. Errors only at 67.5-80 %, so no sign of a
+    non-respiratory cue. Simulation: Psi behaves as designed (about 80 % correct,
+    trials above threshold to learn the slope); 20 trials leave SE about 10 %.
+    Marginalising the slope brings trials closer to threshold and cuts the error a
+    little; a finer grid does nothing.
+    `bench/sessions/pilot__device_2E4441D76D5F2996__2026-10-28_1409/`.
+  - [ ] Decide for convergence: more trials, slope-marginalised Psi (needs a
+    `cfg.psi.marginalize` pass-through), or a staircase aimed at a lower % correct.
   - [ ] Masking noise: brown had to be loud ("a bit eye watering") and the motor was
     still faintly audible next to the device. Try a blend of colours that sounds
     like rain (the RRS_3-0 rain recording masked well); measure the motor's
     spectrum first so the blend covers it.
   - [x] Fixed: stray backslash on the calibration screen (`\ Please wait`, from
     RRS_3-0).
-  - [x] `bench/qcSession.m`: QC figure for a saved session (staircase with
-    correct/incorrect and the Psi estimate, confidence, move times).
+  - [x] `bench/qcSession.m`: QC figure for a saved session, after the methods paper
+    (Fig. 2-3) and the Cardioception report: staircase with the Psi threshold and a
+    95 % band, the fitted psychometric function with a posterior band and data sized
+    by trial count, RT and confidence by accuracy, move times. The threshold band
+    is +/- 1.96 posterior SE per trial (the full posterior is only saved at the end).
   - [x] Device not detected on the stim laptop, 2026-10-28. Plugged directly into
     either USB-A port of the X1 Carbon Gen 6, the unit produced no USB event at all
     (no VID_16C0 device, no unknown device, no Kernel-PnP event), with the cable

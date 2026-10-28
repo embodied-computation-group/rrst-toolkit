@@ -56,4 +56,7 @@ end
 if cfg.timing.itiMin > cfg.timing.itiMax
     bad('timing.itiMin must not exceed timing.itiMax.');
 end
+if isfield(cfg.noise, 'file') && strlength(string(cfg.noise.file)) > 0 && ~isfile(cfg.noise.file)
+    bad('noise.file not found: %s', cfg.noise.file);
+end
 end
