@@ -19,7 +19,7 @@ and no photodiode triggers are needed.
 
 | | Where | Notes |
 |---|---|---|
-| Physio Recorder (`plux-lsl`) | `Desktop\cannabodies\plux-lsl` | Python 3.13 environment in `.venv` (PLUX's API has no Python 3.11 build). Holds `physio_app.py`, the stream programs, the quality checks and the analysis scripts. Its `README.md` has the RA checklists. `TODO(plux-lsl)`: not yet in version control |
+| Physio Recorder (`plux-lsl`) | `Desktop\cannabodies\plux-lsl` | Python 3.13 environment in `.venv` (PLUX's API has no Python 3.11 build). Holds `physio_app.py`, the stream programs, the quality checks and the analysis scripts. Its `README.md` has the RA checklists and the setup for a new PC. Private repository: [embodied-computation-group/plux-lsl](https://github.com/embodied-computation-group/plux-lsl). Desktop shortcut: **Physio Recorder** |
 | LabRecorder 1.18 | `plux-lsl\LabRecorder` | started by the app (`LabRecorderCLI.exe`) |
 | liblsl-Matlab v1.14.0 | `C:\toolbox\liblsl-Matlab` | **with `bin\lsl.dll` replaced by liblsl 1.18** (see below) |
 

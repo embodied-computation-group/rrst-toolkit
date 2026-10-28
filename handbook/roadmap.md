@@ -78,13 +78,20 @@ on.
 
 ## Recording and analysis tools
 
-- [ ] **Standard figures for every recording**: session overview, breaths aligned on
+- [x] **Standard figures for every recording**: session overview, breaths aligned on
       the inhale cue (load vs null), staircase with each trial's null and load peak
-      flow, and a per-trial breath gallery; the wedge-level figure for bench runs.
+      flow and volume, and a per-trial breath gallery; the wedge-level figure for
+      bench runs. Made by the Physio Recorder after Stop (2026-10-28).
+- [ ] Confidence ratings as markers and in the by-trial figure. In the pilot,
+      confidence followed both level and peak-flow drop.
 - [ ] **Measure the PLUX Bluetooth delay** against the task markers with a hardware
       test, before any ECG-locked (cardiac phase) analysis.
-- [ ] **Put `plux-lsl` under version control** (Physio Recorder, stream programs,
-      quality checks, analysis scripts). It exists only on the stim laptop.
+- [x] **`plux-lsl` under version control**: private repository
+      [embodied-computation-group/plux-lsl](https://github.com/embodied-computation-group/plux-lsl)
+      (2026-10-28).
+- [ ] **Fixed-level flow protocol** for effects below the perceptual threshold:
+      randomised fixed levels (e.g. 20/40/60/80 %), each paired with a null breath.
+      The staircase keeps levels near threshold, so it can't test this.
 - [ ] **Flow streamer watchdog**: fail with a clear message, instead of hanging, if
       the SensorBridge's USB link stops responding.
 

@@ -5,6 +5,21 @@ session so a fresh session can continue from the files.
 
 ## Now
 
+- [x] **Recording with physiology and airflow (2026-10-28, end of day, ships to Zurich
+      on 2026-10-29).** The task sends LSL markers (`RRST`, opened at launch;
+      `trial_<n>_level_<x>` and `_correct|wrong` added last and only checked in MATLAB,
+      not yet in a live session). It waits before calibration until a recorder receives
+      them (`cfg.markers.requireRecorder`). The Physio Recorder
+      ([plux-lsl](https://github.com/embodied-computation-group/plux-lsl), private,
+      desktop shortcut) records PLUX, flow (SFM3019 via SensorBridge, COM10) and
+      markers, and starts recording by itself when RRST launches. PLUX and flow are
+      optional per PC. Standard figures are made after Stop. A 20-trial pilot passed
+      end to end; data and README are in
+      `bench/sessions/flow__device_2E4441D76D5F2996__2026-10-28/`. liblsl-Matlab needs
+      the 1.18 `lsl.dll`. Open: first ECG test with clip-on leads; the new app code's
+      first full hardware run with ECG; PLUX Bluetooth latency; flow watchdog.
+      Handbook: `shared/airflow-sensor.md`, `shared/recording.md`, roadmap.
+
 - [x] Device layer (`device/+rrst`), built test-first against a simulated device.
       41/41 tests pass; mutation checks recorded in VERIFICATION.md (2026-10-28).
 - [x] Bench step 1: `bench/readStatus.m` (sends only `s`), first 2.0 unit on COM3,
