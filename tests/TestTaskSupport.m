@@ -187,7 +187,61 @@ classdef TestTaskSupport < matlab.unittest.TestCase
         function zurichConfigRefusesUntilDecided(tc)
             tc.verifyError(@() zurichConfig(), 'rrst:decisionsPending');
         end
+
+        % --- session files: several sessions per ID, nothing overwritten ----
+        function fileStemCarriesIdAndSession(tc)
+            tc.verifyEqual(sessionFileStem(1, 2, false), 'RRST_0001_s2');
+            tc.verifyEqual(sessionFileStem(17, 3, true), 'MOCK_RRST_0017_s3');
+        end
+
+        function sessionMustBeAPositiveWholeNumber(tc)
+            tc.verifyError(@() sessionFileStem(1, 0, false), 'rrst:badSession');
+            tc.verifyError(@() sessionFileStem(1, 1.5, false), 'rrst:badSession');
+            tc.verifyError(@() sessionFileStem(1, [], false), 'rrst:badSession');
+        end
+
+        function nextSessionOfTheSameIdIsAllowed(tc)
+            d = tc.applyFixture(matlab.unittest.fixtures.TemporaryFolderFixture).Folder;
+            touch(d, 'RRST_0001_s1_psi_2026-11-02_0900.mat');
+            checkSessionIsNew(d, 'RRST_0001_s2');               % no error
+            checkSessionIsNew(d, 'RRST_0002_s1');
+        end
+
+        function completedSessionCannotBeRunAgain(tc)
+            d = tc.applyFixture(matlab.unittest.fixtures.TemporaryFolderFixture).Folder;
+            touch(d, 'RRST_0001_s2_psi_2026-11-09_0900.mat');
+            tc.verifyError(@() checkSessionIsNew(d, 'RRST_0001_s2'), 'rrst:dataExists');
+        end
+
+        function abortedSessionCanBeRunAgain(tc)
+            d = tc.applyFixture(matlab.unittest.fixtures.TemporaryFolderFixture).Folder;
+            touch(d, 'Aborted_RRST_0001_s2_psi_2026-11-09_0900.mat');
+            touch(d, 'Error_RRST_0001_s2_psi_2026-11-09_0910.mat');
+            checkSessionIsNew(d, 'RRST_0001_s2');               % no error
+        end
+
+        function sessionTenIsNotSessionOne(tc)
+            d = tc.applyFixture(matlab.unittest.fixtures.TemporaryFolderFixture).Folder;
+            touch(d, 'RRST_0001_s10_psi_2026-11-09_0900.mat');
+            checkSessionIsNew(d, 'RRST_0001_s1');               % no error
+        end
+
+        function savingNeverOverwrites(tc)
+            d = tc.applyFixture(matlab.unittest.fixtures.TemporaryFolderFixture).Folder;
+            tc.verifyEqual(uniqueFileName(d, 'Aborted_RRST_0001_s2_psi_2026-11-09_0900'), ...
+                'Aborted_RRST_0001_s2_psi_2026-11-09_0900');
+            touch(d, 'Aborted_RRST_0001_s2_psi_2026-11-09_0900.mat');
+            tc.verifyEqual(uniqueFileName(d, 'Aborted_RRST_0001_s2_psi_2026-11-09_0900'), ...
+                'Aborted_RRST_0001_s2_psi_2026-11-09_0900_2');
+            touch(d, 'Aborted_RRST_0001_s2_psi_2026-11-09_0900_2.csv');   % a .csv alone also counts
+            tc.verifyEqual(uniqueFileName(d, 'Aborted_RRST_0001_s2_psi_2026-11-09_0900'), ...
+                'Aborted_RRST_0001_s2_psi_2026-11-09_0900_3');
+        end
     end
+end
+
+function touch(d, name)
+fclose(fopen(fullfile(d, name), 'w'));
 end
 
 function R = fictionalResults(n)
