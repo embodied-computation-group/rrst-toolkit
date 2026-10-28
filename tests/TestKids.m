@@ -5,7 +5,8 @@ classdef TestKids < matlab.unittest.TestCase
     methods (TestClassSetup)
         function addKidsPath(tc)
             root = fileparts(fileparts(mfilename('fullpath')));
-            p = fullfile(root, 'task', 'RRST_kids', {'config', 'code'});
+            p = [fullfile(root, 'task', 'RRST_kids', {'config', 'code'}), ...
+                {fullfile(root, 'task', 'RRST_2-0', 'code')}];      % uniqueFileName
             addpath(p{:});
             tc.addTeardown(@() rmpath(p{:}));
             tc.assumeNotEmpty(which('PAL_AMPM_setupPM'), 'Palamedes is not on the path.');
@@ -147,6 +148,20 @@ classdef TestKids < matlab.unittest.TestCase
             tc.verifyEqual(f.faRate, 0.25);
             tc.verifyEqual(f.hitRateHigh, 1);
             tc.verifyFalse(f.unusable);
+        end
+
+        % --- saving -------------------------------------------------------------
+        function twoSavesInOneMinuteKeepBothFiles(tc)
+            d = tc.applyFixture(matlab.unittest.fixtures.TemporaryFolderFixture).Folder;
+            cfg = kidsConfig(); cfg.output.dir = d; cfg.device.mock = false;
+            cfg.debug.simulateChild = [];
+            vars = struct('subNo', 7);
+            stim = struct('summary', @() struct('deviceId', "TEST"));   % stands in for rrst.Stimulator
+            result = struct('outcome', "aborted", 'trials', [], 'practice', [], 'flags', [], 'kp', []);
+            f1 = kidsSave(cfg, vars, stim, result);
+            f2 = kidsSave(cfg, vars, stim, result);
+            tc.verifyNotEqual(f1, f2);
+            tc.verifyTrue(isfile(f1) && isfile(f2));
         end
 
         % --- answer screen ----------------------------------------------------
