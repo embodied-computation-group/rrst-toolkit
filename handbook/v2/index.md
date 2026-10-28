@@ -32,6 +32,8 @@ breathing circuit are the same as the legacy v3-0 device. Build those parts from
 3. [Firmware and Control Panel](firmware.md): flashing, the serial protocol and tuning.
 4. [Bench check and calibration](bench-check.md): what to verify before any participant
    sits down.
+5. [Running the 2.0 task](running.md): starting a session, what happens in it, data
+   and QC.
 
 !!! todo "TODO(Martin): new PCB?"
     Martin's README says the TMC2209 is currently hand-wired onto the existing board,
