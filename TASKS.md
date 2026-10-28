@@ -154,6 +154,17 @@ session so a fresh session can continue from the files.
     logged as unsolicited and reading continues (MockPort reproduces the race).
     Device afterwards (`s`): disabled, not calibrated, at 8612 steps, i.e. open
     (zero is 15604): the park was cut off when the port closed.
+  - [x] 20-trial pilot, 2026-10-28 14:09, rain loop: device clean (62/62 moves, 55
+    stray prompts skipped). 17/20 correct; Psi sat at 87.5 % for 12 of the last 14
+    trials (13/13 correct there) and felt "extremely easy, like it got stuck".
+    Threshold 77.6 %, SE 8.0 %. Errors only at 67.5-80 %, so no sign of a
+    non-respiratory cue. Simulation: Psi behaves as designed (about 80 % correct,
+    trials above threshold to learn the slope); 20 trials leave SE about 10 %.
+    Marginalising the slope brings trials closer to threshold and cuts the error a
+    little; a finer grid does nothing.
+    `bench/sessions/pilot__device_2E4441D76D5F2996__2026-10-28_1409/`.
+  - [ ] Decide for convergence: more trials, slope-marginalised Psi (needs a
+    `cfg.psi.marginalize` pass-through), or a staircase aimed at a lower % correct.
   - [ ] Masking noise: brown had to be loud ("a bit eye watering") and the motor was
     still faintly audible next to the device. Try a blend of colours that sounds
     like rain (the RRS_3-0 rain recording masked well); measure the motor's
