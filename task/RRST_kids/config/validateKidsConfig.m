@@ -24,6 +24,9 @@ end
 if c.numCatchTrials > c.numPsiTrials
     bad('more catch trials (%d) than Psi trials (%d).', c.numCatchTrials, c.numPsiTrials);
 end
+if ~(isscalar(c.slurps) && c.slurps >= 1 && c.slurps == round(c.slurps))
+    bad('child.slurps (breaths per trial) must be a whole number from 1.');
+end
 if c.rampMax <= 0 || c.stopMinTrials > c.numPsiTrials
     bad('child.rampMax must be positive and child.stopMinTrials at most numPsiTrials.');
 end

@@ -8,7 +8,7 @@ t.calibrating = 'Getting the straw ready...';
 t.story = ['This is Milkshake Monster!\nIt loves milkshake.\n\n' ...
     'A cheeky mouse likes to pinch the straw.\nThen slurping feels squishy!'];
 t.ready = 'Ready to slurp?';
-t.cue = 'Ready...';
+t.cue = 'Ready to slurp?';
 t.inhale = 'Big slurp!';
 t.exhale = 'Ahhh...';
 t.question = 'Did the mouse pinch the straw?';

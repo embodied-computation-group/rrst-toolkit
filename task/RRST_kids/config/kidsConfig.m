@@ -3,7 +3,8 @@ function cfg = kidsConfig()
 %   cfg = kidsConfig()
 %
 %   PILOT settings, not a study decision. Single-interval yes/no: on each trial the
-%   child takes one breath and says whether "the mouse pinched the straw" (added
+%   experimenter starts the slurping when the child is ready, the child takes a few
+%   breaths at the same level and says whether "the mouse pinched the straw" (added
 %   resistance). A Psi method with the guess rate (yes-bias) marginalised estimates
 %   the threshold; catch trials at level 0 measure the false-alarm rate. Design
 %   rationale: task/RRST_kids/README.md.
@@ -30,6 +31,7 @@ cfg.child.numPsiTrials = 30;
 cfg.child.numCatchTrials = 10;           % level 0, random positions, not first, never two in a row
 cfg.child.stopSE = 8;                    % stop early when the threshold SE is below this...
 cfg.child.stopMinTrials = 20;            % ...after at least this many Psi trials
+cfg.child.slurps = 3;                    % breaths per trial, all at the trial's level
 cfg.child.maxRepeats = 10;               % trials re-queued after no answer or a bad breath
 cfg.child.flagFAmax = 0.40;              % false-alarm rate above this: threshold unusable
 cfg.child.flagHitMin = 0.60;             % hit rate at levels >= flagHighLevel below this: unusable
@@ -51,9 +53,9 @@ cfg.practice.maxRounds = 2;
 
 % --- Timing (s) --------------------------------------------------------------
 cfg.timing.moveMin = 1.5;                % mouse animation while the wedge moves
-cfg.timing.cue = 0.8;                    % straw drops into the cup
-cfg.timing.inhale = 1.2;                 % belly grows (adult task: 0.8)
-cfg.timing.exhale = 1.8;                 % belly shrinks, bubbles rise
+cfg.timing.inhale = 1.2;                 % per slurp: belly grows, a third of the milkshake goes
+cfg.timing.exhale = 1.8;                 % belly shrinks, bubbles rise. Pacing only: the child
+                                         % need not follow it; Space ends the slurps early
 cfg.timing.response = 8;                 % experimenter clicks the child's answer
 cfg.timing.reward = 1.0;
 cfg.timing.dance = 2.0;                  % a cup is full

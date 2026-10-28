@@ -4,9 +4,10 @@ function result = kidsMain(cfg, stim, vars)
 %
 %   Flow: calibrate (nobody on the tube) -> story -> practice with feedback ->
 %   main yes/no trials with stars, cups and breaks -> sticker. Each trial: the
-%   mouse scampers while the wedge moves (catch trials: level 0), the straw drops
-%   in, the belly grows (inhale) and shrinks with bubbles (exhale), then the
-%   experimenter clicks the child's answer.
+%   mouse scampers while the wedge moves (catch trials: level 0), the monster waits
+%   ("Ready to slurp?") until the experimenter presses Space, then cfg.child.slurps
+%   slurps at that level (belly grows, milkshake drains a share, bubbles out; Space
+%   ends them early), then the experimenter clicks the child's answer.
 %
 %   Experimenter: click the face the child chose, or Left/n = easy (no),
 %   Right/y = squishy (yes); the chosen face lights up for 0.5 s, x = bad breath (trial repeated later), Space = pause (wedge to
@@ -19,7 +20,7 @@ ts = cfg.debug.timeScale;
 txt = kidsText(cfg.text.language);
 result = struct('outcome', "", 'trials', [], 'practice', [], 'flags', [], 'kp', []);
 trials = struct('n', {}, 'phase', {}, 'level', {}, 'isCatch', {}, 'proposed', {}, 'limited', {}, ...
-    'answer', {}, 'response', {}, 'rt', {}, 'moveT', {}, 'tStart', {});
+    'answer', {}, 'response', {}, 'rt', {}, 'moveT', {}, 'slurpT', {}, 'tStart', {});
 practice = trials;
 kp = kidsProcedure(cfg, vars.seed);
 noise = [];
@@ -124,7 +125,7 @@ end
         kidsCheckLevel(level, cfg);
         tr = struct('n', numel(trials) + numel(practice) + 1, 'phase', "", 'level', level, ...
             'isCatch', info.isCatch, 'proposed', info.proposed, 'limited', info.limited, ...
-            'answer', "", 'response', NaN, 'rt', NaN, 'moveT', NaN, 'tStart', GetSecs - t0);
+            'answer', "", 'response', NaN, 'rt', NaN, 'moveT', NaN, 'slurpT', NaN, 'tStart', GetSecs - t0);
         % Move: the mouse scampers while the wedge goes to the level
         tMove = GetSecs;
         show(scr, struct('mouseX', 0.1, 'straw', false), prog);
@@ -132,13 +133,21 @@ end
         tr.moveT = mv.elapsed;
         status = animate(cfg.timing.moveMin - (GetSecs - tMove), @(p) struct('mouseX', 0.1 + 0.8 * p, 'straw', false), prog);
         if status ~= "", return; end
-        % Cue, inhale, exhale
-        status = animate(cfg.timing.cue, @(p) struct('text', txt.cue), prog);
-        if status ~= "", return; end
-        status = animate(cfg.timing.inhale, @(p) struct('belly', p, 'cup', 1 - p, 'text', txt.inhale), prog);
-        if status ~= "", return; end
-        status = animate(cfg.timing.exhale, @(p) struct('belly', 1 - p, 'cup', 0, 'bubbles', p, 'text', txt.exhale), prog);
-        if status ~= "", return; end
+        % The experimenter starts the slurps when the child is ready (Space)
+        show(scr, struct('text', txt.cue), prog);
+        if waitGo(), status = "abort"; return; end
+        % Slurps at this level: each drinks a share of the milkshake. Pacing only; the
+        % experimenter can end them early with Space once the child has slurped enough.
+        n = cfg.child.slurps; tr.slurpT = GetSecs;
+        for k = 1:n
+            left = 1 - (k - 1) / n;           % milkshake left before this slurp
+            status = animate(cfg.timing.inhale, @(p) struct('belly', p, 'cup', left - p / n, 'text', txt.inhale), prog, true);
+            if status == "", status = animate(cfg.timing.exhale, @(p) struct('belly', 1 - p, 'cup', left - 1 / n, 'bubbles', p, 'text', txt.exhale), prog, true); end
+            if status == "skip", break; end
+            if status ~= "", return; end
+        end
+        tr.slurpT = GetSecs - tr.slurpT;
+        status = "";
         if ~ask
             status = "free"; return
         end
@@ -158,8 +167,10 @@ end
         end
     end
 
-    function status = animate(dur, sceneAt, prog)
-        % Frame loop for dur seconds; returns "abort" if Esc is pressed.
+    function status = animate(dur, sceneAt, prog, skippable)
+        % Frame loop for dur seconds; returns "abort" if Esc is pressed, and "skip" if
+        % skippable and Space is pressed (simulated child: never).
+        if nargin < 4, skippable = false; end
         status = "";
         dur = max(dur, 0) * ts;
         tStart = GetSecs;
@@ -168,6 +179,7 @@ end
             show(scr, sceneAt(p), prog);
             [down, ~, code] = KbCheck;
             if down && any(code(keys.abort)), status = "abort"; return; end
+            if skippable && isempty(sim) && down && any(code(keys.go)), status = "skip"; waitRelease(); return; end
             if p >= 1, return; end
         end
     end
