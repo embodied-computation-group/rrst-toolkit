@@ -5,7 +5,9 @@ session so a fresh session can continue from the files.
 
 ## Now
 
-- [ ] Device layer (`device/+rrst`), built test-first against a simulated device.
+- [x] Device layer (`device/+rrst`), built test-first against a simulated device.
+      41/41 tests pass; mutation checks recorded in VERIFICATION.md (2026-10-28).
+- [ ] Bench step 1: `bench/readStatus.m` (sends only `s`).
 - [ ] Bench session with the physical device (needs the user and the device):
   - `s` status;
   - check whether MATLAB `serialport` asserts DTR;
