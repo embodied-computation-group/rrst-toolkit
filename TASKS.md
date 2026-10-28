@@ -171,8 +171,11 @@ session so a fresh session can continue from the files.
     spectrum first so the blend covers it.
   - [x] Fixed: stray backslash on the calibration screen (`\ Please wait`, from
     RRS_3-0).
-  - [x] `bench/qcSession.m`: QC figure for a saved session (staircase with
-    correct/incorrect and the Psi estimate, confidence, move times).
+  - [x] `bench/qcSession.m`: QC figure for a saved session, after the methods paper
+    (Fig. 2-3) and the Cardioception report: staircase with the Psi threshold and a
+    95 % band, the fitted psychometric function with a posterior band and data sized
+    by trial count, RT and confidence by accuracy, move times. The threshold band
+    is +/- 1.96 posterior SE per trial (the full posterior is only saved at the end).
   - [x] Device not detected on the stim laptop, 2026-10-28. Plugged directly into
     either USB-A port of the X1 Carbon Gen 6, the unit produced no USB event at all
     (no VID_16C0 device, no unknown device, no Kernel-PnP event), with the cable
