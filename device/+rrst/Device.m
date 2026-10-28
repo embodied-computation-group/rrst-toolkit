@@ -106,10 +106,19 @@ classdef Device < handle
                 mv.errorText = sprintf('Firmware confirmed target %g, but %d was requested.', mv.target, steps);
             end
             if ~mv.ok
+                msg = sprintf('Move to %d failed: %s', steps, mv.errorText);
                 if contains(mv.errorText, "stepper disabled")
                     obj.Enabled = false;
                 end
-                error('rrst:moveFailed', 'Move to %d failed: %s', steps, mv.errorText);
+                if any(contains(lines, "Serial connection lost"))
+                    % The firmware disables the driver and invalidates calibration.
+                    obj.Enabled = false;
+                    obj.Calibrated = false;
+                    obj.MaxPosition = NaN;
+                    obj.FirstContact = NaN;
+                    msg = [msg, ' The firmware reported the serial link as closed (DTR not asserted?).'];
+                end
+                error('rrst:moveFailed', '%s', msg);
             end
         end
 

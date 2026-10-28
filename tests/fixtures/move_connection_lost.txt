@@ -1,0 +1,7 @@
+
+Enter absolute target position (steps):
+Moving to absolute position: 32500
+
+Serial connection lost - stepper disabled. Reconnect and use 'e' to re-enable (recalibrate 'c' before moving).
+
+Valve>

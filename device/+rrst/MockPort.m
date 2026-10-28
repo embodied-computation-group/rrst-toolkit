@@ -166,6 +166,15 @@ classdef MockPort < handle
                 out = sprintf('Error: Target out of calibrated bounds!\r\n');
             else
                 out = sprintf('Moving to absolute position: %d\n', target);
+                if ~obj.DtrAsserted
+                    % MoveAbsWithEndstopGuard returns early when CheckSerialConnection fails.
+                    out = [out, sprintf(['\nSerial connection lost - stepper disabled. Reconnect and use ''e'' ' ...
+                        'to re-enable (recalibrate ''c'' before moving).\r\n'])];
+                    obj.Enabled = false;
+                    obj.Calibrated = false;
+                    obj.emit([out, obj.PROMPT]);
+                    return
+                end
                 switch obj.Fault
                     case "moveWarning"
                         out = [out, warnLine, resume, sprintf('Move complete.\r\n')];

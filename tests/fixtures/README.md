@@ -22,5 +22,6 @@ At the first bench session, capture real replies and save them next to these fil
 | `move_ok_with_warning.txt` | `a` + `32500`, with one auto-corrected endstop hit |
 | `move_out_of_bounds.txt`, `move_not_calibrated.txt` | `a` + value, refused |
 | `move_safety_disable.txt` | `a` + value, three unexpected hits, then the driver is disabled |
+| `move_connection_lost.txt` | `a` + value, `CheckSerialConnection()` fails mid-move (e.g. DTR not asserted): no `Move complete.` and no ERROR line |
 | `enable.txt`, `disable.txt` | `e`, `d` |
 | `status_calibrated.txt`, `status_uncalibrated.txt` | `s` |

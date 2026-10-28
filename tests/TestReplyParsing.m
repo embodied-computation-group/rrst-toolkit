@@ -98,6 +98,15 @@ classdef TestReplyParsing < matlab.unittest.TestCase
             tc.verifyTrue(startsWith(mv.errorText, "ERROR: Repeated unexpected endstop hits"));
         end
 
+        function moveWithoutCompletionIsNotOk(tc)
+            % The connection-lost path prints no ERROR line, so only the missing
+            % "Move complete." shows the move did not finish.
+            mv = rrst.parseMoveReply(rrst.splitReply(readFixture('move_connection_lost.txt')));
+            tc.verifyFalse(mv.ok);
+            tc.verifyEqual(mv.target, 32500);
+            tc.verifyNotEqual(mv.errorText, "");
+        end
+
         % --- status ----------------------------------------------------------
         function statusCalibrated(tc)
             st = rrst.parseStatus(rrst.splitReply(readFixture('status_calibrated.txt')));

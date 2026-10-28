@@ -99,6 +99,14 @@ classdef TestDevice < matlab.unittest.TestCase
             tc.verifyError(@() dev.moveTo(32500), 'rrst:moveFailed');
         end
 
+        function connectionLostMidMoveRaises(tc)
+            port = rrst.MockPort('MaxPosition', 45123);
+            dev = rrst.Device(port);
+            dev.calibrate();
+            setDTR(port, false);
+            tc.verifyError(@() dev.moveTo(32500), 'rrst:moveFailed');
+        end
+
         function autoCorrectedHitSucceedsWithWarning(tc)
             port = rrst.MockPort('MaxPosition', 45123);
             dev = rrst.Device(port);
