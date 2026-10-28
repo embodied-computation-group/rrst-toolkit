@@ -5,7 +5,7 @@ function endSession(vars, scr, keys, Results, stair, status)
 % status is "complete", "aborted" or "error"; the caller rethrows errors itself
 % (experimentEnd rethrew psychlasterror, which could be a stale error).
 % Files: <DataFileName>.mat (stair, Results, vars incl. vars.device and vars.cfg,
-% scr, keys) and <DataFileName>.csv (Results); aborted and error runs get an
+% scr, keys) and <DataFileName>.csv (one row per trial, trialTable.m); aborted and error runs get an
 % Aborted_ / Error_ prefix.
 
 switch status
@@ -34,12 +34,21 @@ end
 vars.DataFileName = [prefix, vars.DataFileName];
 matName = fullfile(vars.OutputFolder, [vars.DataFileName, '.mat']);
 save(matName, 'stair', 'Results', 'vars', 'scr', 'keys');
-Results.stair = stair;
-struct2csv(Results, fullfile(vars.OutputFolder, [vars.DataFileName, '.csv']));
 fprintf('Run %s. Results saved as %s\n', status, matName);
+try
+    % per-trial columns only; the rest is in the .mat (struct2csv failed silently)
+    writetable(trialTable(Results), fullfile(vars.OutputFolder, [vars.DataFileName, '.csv']));
+catch csvErr
+    warning('rrst:csvNotWritten', 'CSV not written (%s). The .mat file is complete.', csvErr.message);
+end
 
-if PsychPortAudio('GetOpenDeviceCount') ~= 0
-    PsychPortAudio('Close');
+% Masking noise is closed by stopMaskingNoise. Without noise the audio driver was
+% never loaded, and any PsychPortAudio call errors.
+if vars.playNoiseSound
+    try
+        PsychPortAudio('Close');
+    catch
+    end
 end
 sca;
 ShowCursor;
