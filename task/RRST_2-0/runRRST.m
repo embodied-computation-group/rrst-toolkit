@@ -33,6 +33,12 @@ end
 fprintf('Psychtoolbox %s\n', PsychtoolboxVersion);
 fprintf('Configuration: %s, procedure %s, stimulus unit %s\n', cfg.label, cfg.procedure, cfg.stim.unit);
 
+%% Event markers (LSL). Opened first so a recorder started now already sees them.
+if cfg.markers.lsl
+    rrstMarker('open', cfg.markers.liblslDir);
+    closeMarkers = onCleanup(@() rrstMarker('close'));
+end
+
 %% Participant
 vars.exptName   = 'RRST';
 vars.exptVers   = '2-0';

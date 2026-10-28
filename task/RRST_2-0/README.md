@@ -40,6 +40,33 @@ Calibration (about 25 s) closes the wedge fully, then opens it.
 **Esc** aborts at any time: the wedge is parked open and the data so far are saved
 with an `Aborted_` prefix.
 
+## Event markers (LSL)
+
+With `cfg.markers.lsl = true` (the pilot default) the task opens a Lab Streaming
+Layer marker stream named `RRST` at launch, before the participant prompts. Start
+RRST first, then the recorder (LabRecorder or the Physio Recorder app), so the
+stream is online when recording starts. Each marker carries the event's own time:
+
+| Marker | Event |
+|---|---|
+| `RRST_ready` | stream opened (sent before any recorder connects) |
+| `tutorial_start`, `tutorial_end` | tutorial |
+| `session_start` | participant pressed space to begin |
+| `trial_<n>_interval<k>_ready` | wedge move confirmed; ISI countdown starts (k = 1, 2) |
+| `trial_<n>_interval<k>_onset_load` / `_onset_null` | inhale cue: the expanding ring appears |
+| `trial_<n>_response` / `trial_<n>_noresponse` | answer, or none in time (the trial is repeated with the same n) |
+| `trial_<n>_confidence` | confidence rating confirmed |
+| `trial_<n>_iti` | ITI starts, wedge goes to rest |
+| `break_start`, `break_end` | break |
+| `session_end_complete` / `_aborted` / `_error` | end of the run |
+
+Needs **liblsl-Matlab** at `cfg.markers.liblslDir` (default
+`C:\toolbox\liblsl-Matlab`, release v1.14.0). Replace its `bin\lsl.dll` with a
+liblsl 1.18 DLL (for example pylsl's `pylsl\lib\lsl.dll`): with the bundled 1.14
+DLL, recorders on liblsl 1.18 kept losing the string stream ("Stream transmission
+broke off"). With more than one serial port (e.g. the airflow sensor's
+SensorBridge), set `cfg.device.port` explicitly.
+
 ## Configuration
 
 `config/pilotConfig.m` holds every setting: device, stimulus axis, procedure (`psi`
