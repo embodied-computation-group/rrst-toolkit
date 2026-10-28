@@ -185,7 +185,13 @@ class Device:
             if n:
                 buf += self._decoder.decode(self.port.read(n))
                 lines, complete = split_reply(buf)
-                if complete:
+                if complete and not lines:
+                    # A bare prompt is never a reply (every command produces text): it is
+                    # the extra prompt the firmware sends after a move, arriving late.
+                    # Log it and keep reading.
+                    self._log("unsolicited", buf)
+                    buf = ""
+                elif complete:
                     self._log("rx", buf)
                     return lines
             if self._clock() - t0 > timeout:
