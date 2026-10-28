@@ -36,6 +36,13 @@ def list_ports():
     return [p.device for p in lp.comports()]
 
 
+def list_teensy_ports():
+    """Serial ports that are a Teensy (USB VID 16C0, PID 0483)."""
+    from serial.tools import list_ports as lp
+    from .records import teensy_ports
+    return teensy_ports(lp.comports())
+
+
 class Device:
     default_timeout = 10        # s, for e/d/s
     calibration_timeout = 120   # s, two precise endstop seeks

@@ -21,9 +21,20 @@ def load_device_record(device_id, devices_dir):
     return rec
 
 
+TEENSY_USB_ID = (0x16C0, 0x0483)   # PJRC Teensy USB serial (VID, PID)
+
+
+def teensy_ports(ports):
+    """Names of the ports that are a Teensy, from serial.tools.list_ports.comports().
+    Other serial devices (an LTE modem, Bluetooth) are left out, so "auto" can work on
+    machines that have them."""
+    return [p.device for p in ports if (p.vid, p.pid) == TEENSY_USB_ID]
+
+
 def choose_port(requested, available):
     """Pick the device's serial port without guessing: "auto" is accepted only when
-    exactly one port is available."""
+    exactly one port is available. Pass teensy_ports(comports()) as available so that
+    other serial devices don't count."""
     available = list(available)
     if requested == "auto":
         if not available:
