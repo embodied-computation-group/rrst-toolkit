@@ -1,0 +1,65 @@
+10:12:44.164  device 2E4441D76D5F2996, firmware Patient-Regulator (Oct  7 2026 08:45:06)
+10:13:04.942  calibrated: MaxPosition 41296, computed first contact 17296
+10:13:09.033  READY at 1600
+10:13:16.391  goto 12496 ok (2.07 s, 18.00 mm from max)
+10:22:52.050  NOTE tube in device is longer than production (uncut); full-scale anchor provisional
+10:22:52.061  NOTE gap at 12496
+10:22:52.639  goto 13296 ok (0.57 s, 17.50 mm from max)
+10:23:08.711  NOTE very small gap at 13296
+10:23:09.118  goto 13696 ok (0.40 s, 17.25 mm from max)
+10:23:21.155  NOTE gap at 13696
+10:23:21.565  goto 14096 ok (0.41 s, 17.00 mm from max)
+10:24:05.863  NOTE barely perceptible gap at 14096; tube not flat against backstop (ends pulled down, few mm gap behind); user reseating tube
+10:24:47.434  NOTE tube reseated as in a real session; gap at 14096
+10:24:47.837  goto 14496 ok (0.40 s, 16.75 mm from max)
+10:25:40.104  NOTE small gap at 14496
+10:25:40.493  goto 14896 ok (0.39 s, 16.50 mm from max)
+10:26:05.373  NOTE gap at 14896
+10:26:05.781  goto 15296 ok (0.41 s, 16.25 mm from max)
+10:26:40.248  NOTE gap <1 mm at 15296
+10:26:40.654  goto 15696 ok (0.41 s, 16.00 mm from max)
+10:27:27.199  NOTE ANCHOR-A wedge touches tube at 15696
+10:27:27.605  goto 16096 ok (0.40 s, 15.75 mm from max)
+10:28:02.831  NOTE gap behind tube at 16096
+10:28:03.392  goto 16896 ok (0.56 s, 15.25 mm from max)
+10:28:13.798  NOTE gap behind tube at 16896
+10:28:14.363  goto 17696 ok (0.56 s, 14.75 mm from max)
+10:28:21.950  NOTE gap behind tube at 17696
+10:28:22.508  goto 18496 ok (0.56 s, 14.25 mm from max)
+10:28:36.344  NOTE gap behind tube at 18496
+10:28:36.904  goto 19296 ok (0.56 s, 13.75 mm from max)
+10:29:53.599  NOTE at 19296: back gap persists (cutout geometry, ~0.5 mm mismatch between round tube cutouts and flat backstop); wedge side already deformed several mm. 'Flat' criterion unusable. ZERO ANCHOR = touch 15696 (zeroOffset 25600 from tube-in max 41296)
+10:30:15.864  NOTE PART 2 full scale: breathing through uncut long tube
+10:30:16.673  goto 20896 ok (0.81 s, 12.75 mm from max)
+10:34:47.900  NOTE CLOSED search: 1 mm steps, user says 'closed' when no air passes
+10:34:49.225  goto 25296 ok (1.32 s, 10.00 mm from max)
+10:35:00.025  NOTE air passes at 25296 (6 mm past zero)
+10:35:00.834  goto 26896 ok (0.81 s, 9.00 mm from max)
+10:35:14.111  NOTE air at 26896 (7 mm)
+10:35:14.907  goto 28496 ok (0.79 s, 8.00 mm from max)
+10:35:25.715  NOTE air at 28496 (8 mm)
+10:35:26.524  goto 30096 ok (0.81 s, 7.00 mm from max)
+10:35:35.719  NOTE air at 30096 (9 mm)
+10:35:36.516  goto 31696 ok (0.79 s, 6.00 mm from max)
+10:35:54.002  NOTE air at 31696 (10 mm); back gap now closed (closed somewhere between 2.25 and 10 mm past zero)
+10:35:54.809  goto 33296 ok (0.81 s, 5.00 mm from max)
+10:36:14.637  NOTE air at 33296 (11 mm)
+10:36:15.440  goto 34896 ok (0.80 s, 4.00 mm from max)
+10:36:34.007  NOTE air at 34896 (12 mm), noticeable resistance increase starting
+10:36:34.574  goto 35696 ok (0.56 s, 3.50 mm from max)
+10:36:46.369  NOTE air at 35696 (12.5 mm)
+10:36:46.918  goto 36496 ok (0.55 s, 3.00 mm from max)
+10:36:56.096  NOTE air at 36496 (13 mm)
+10:36:56.670  goto 37296 ok (0.57 s, 2.50 mm from max)
+10:37:10.124  NOTE air at 37296 (13.5 mm)
+10:37:10.697  goto 38096 ok (0.57 s, 2.00 mm from max)
+10:37:22.298  NOTE air at 38096 (14 mm)
+10:37:22.874  goto 38896 ok (0.57 s, 1.50 mm from max)
+10:37:35.478  NOTE air at 38896 (14.5 mm)
+10:37:36.038  goto 39696 ok (0.56 s, 1.00 mm from max)
+10:37:48.475  NOTE air at 39696 (15 mm), noticeably difficult to breathe
+10:37:49.034  goto 40496 ok (0.56 s, 0.50 mm from max)
+10:38:03.455  NOTE ANCHOR-FULL barely possible to inhale at 40496 (15.5 mm past zero; fullOffset 800 from tube-in max 41296); PROVISIONAL: uncut long tube
+10:38:03.987  goto 41196 ok (0.53 s, 0.06 mm from max)
+10:38:43.745  NOTE end of travel 41196: air passes only with maximum effort (never fully closes); unmistakable
+10:38:47.826  parked at 1600; session ended

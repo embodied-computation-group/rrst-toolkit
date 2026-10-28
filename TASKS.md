@@ -52,7 +52,17 @@ session so a fresh session can continue from the files.
     **Conclusion: elastic compliance, no lost steps.** Positions are reliable; the
     calibration condition (tube in/out) must be the same every session;
   - capture real transcripts into `tests/fixtures/`;
-  - measure the physical 0 and full-scale anchors;
+  - [x] anchors measured 2026-10-28 (`bench/anchorSession.m`; record in
+    `devices/2E4441D76D5F2996.json`; log in `bench/sessions/`). Calibrated tube in
+    (max 41296). Zero (wedge touches tube) at **15696** (zeroOffset 25600). Full scale
+    (barely possible to inhale) at **40496** (fullOffset 800). Range **15.5 mm**.
+    PROVISIONAL: uncut, longer tube; re-measure full scale with the production tube.
+    Breathing reports: no change up to about 12 mm past zero, first noticeable
+    resistance at 12 mm, very difficult at 15 mm, barely possible at 15.5 mm. At the end
+    of travel (41196) air still passes with maximum effort. The old hard-coded
+    12000-38000 range doesn't fit (it starts 2.3 mm before touch and ends 2.5 mm short of
+    full). The paper's 0-18 mm and the code's 0-17 mm don't fit either: only 15.5 mm is
+    available;
   - time real moves.
 
 - [ ] Device handbook (`handbook/`, MkDocs Material, branch `handbook`). Drafted
@@ -60,6 +70,14 @@ session so a fresh session can continue from the files.
       Waiting on Martin's review, the parts survey, and photos of the 2.0 devices.
 
 ## Next
+
+- Pilot idea (Micah, 2026-10-28): resistance rises very non-linearly as the tube
+  closes. Most of the travel is imperceptible, and the useful range is the last 3-4 mm.
+  Instead of a uniform mm grid, give Psi a non-uniform stimulus grid (Palamedes accepts
+  any vector): densely spaced near closure (e.g. even in log of the remaining gap), or
+  even in measured resistance after a pressure/flow calibration. Psi adapts which level
+  to use, not the grid itself. Changing the stimulus axis changes what a threshold
+  means, so decide before Zurich data collection.
 
 - Generate the masking noise in Psychtoolbox (replacing the 60-min `32-Waterfall-60min.wav`).
 

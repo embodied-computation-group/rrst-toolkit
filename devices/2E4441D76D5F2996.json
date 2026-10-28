@@ -1,0 +1,28 @@
+{
+  "deviceId": "2E4441D76D5F2996",
+  "description": "First RRST 2.0 unit (Teensy 4.0 + TMC2209), bench-tested in Aarhus",
+  "firmware": "Patient-Regulator (Oct  7 2026 08:45:06)",
+  "anchors": {
+    "measured": "2026-10-28",
+    "provisional": true,
+    "provisionalReason": "Measured with an uncut, longer-than-production tube. The zero does not depend on tube length; the full-scale point probably does. Re-measure full scale with the production tube.",
+    "calibrationCondition": "tube in",
+    "maxPositionAtMeasurement": 41296,
+    "zeroOffset": 25600,
+    "fullOffset": 800,
+    "zeroStepAtMeasurement": 15696,
+    "fullStepAtMeasurement": 40496,
+    "zeroCriterion": "wedge first touches the tube, as seated in a real session. A gap behind the tube (round cutouts vs flat backstop, about 0.5 mm) persists past touch, so 'tube flat against backstop' is not usable",
+    "fullCriterion": "barely possible to inhale (comfortable effort)",
+    "method": "bench/anchorSession.m, wedge closed in 0.25-1 mm steps, one person at the device; log in bench/sessions/anchors__device_2E4441D76D5F2996__2026-10-28.log"
+  },
+  "observations": {
+    "rangeMm": 15.5,
+    "firstNoticeableResistanceMmPastZero": 12,
+    "endOfTravel": "at 41196 (0.06 mm from max) air still passes with maximum effort; the tube never fully closes",
+    "tubeOutMaxPosition": [39963, 40079, 40111, 40099],
+    "tubeInMaxPosition": [41220, 41283, 41257, 41265, 41296],
+    "tubeEffectSteps": "about +1150 with the tube in; elastic, no lost steps (bench/slipTest.m)",
+    "moveTimes": "0.25 mm 0.40 s, 0.5 mm 0.56 s, 1 mm 0.80 s, 3 mm 2.07 s, full travel 4.09 s (command to 'Move complete.')"
+  }
+}
