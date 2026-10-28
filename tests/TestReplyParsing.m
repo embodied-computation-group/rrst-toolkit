@@ -152,6 +152,16 @@ classdef TestReplyParsing < matlab.unittest.TestCase
             tc.verifyEqual(st.chopperMode, "SpreadCycle");
         end
 
+        function statusCapturedAfterFlash(tc)
+            % Same unit after flashing Patient-Regulator, 2026-10-28: settings and saved max kept.
+            st = rrst.parseStatus(rrst.splitReply(readFixture('status_uncalibrated__device_2E4441D76D5F2996__2026-10-28.txt')));
+            tc.verifyEqual(st.softwareVersion, "Patient-Regulator (Oct  7 2026 08:45:06)");
+            tc.verifyEqual(st.deviceId, "2E4441D76D5F2996");
+            tc.verifyFalse(st.calibrated);
+            tc.verifyTrue(isnan(st.maxPosition));
+            tc.verifyEqual(st.runCurrent, 795);
+        end
+
         function statusWithoutHeaderIsAnError(tc)
             tc.verifyError(@() rrst.parseStatus(["Move complete."]), 'rrst:badStatus');
         end

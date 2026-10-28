@@ -18,12 +18,16 @@ session so a fresh session can continue from the files.
   - The max endstop reads **TRIGGERED** at power-up. The switches are wired
     normally-closed (INPUT_PULLUP, HIGH = triggered), so either the carriage is
     resting on the max endstop (wedge at full obstruction) or the max switch wire is
-    open. Inspect before calibrating.
+    open. Inspected 2026-10-28: the wedge is fully closed and the switch is pressed,
+    so the reading is genuine. No tube was fitted.
   - Saved max position from an earlier calibration: 39963 steps, so first contact is
     about 15963 and the old hard-coded 12000-38000 range doesn't fit this unit.
   - Run current reads 795 mA (800 requested; the TMC2209 rounds the current scale).
 - [ ] Bench session with the physical device (needs the user and the device):
-  - decide whether to flash Patient-Regulator before calibrating;
+  - [x] flashed Patient-Regulator (hex SHA-256 dcd17a6c..., matches PROVENANCE.md)
+    with the bundled teensy_loader_cli 2.3 (`--mcu=TEENSY40 -w -v`, after a 134-baud
+    reboot request), 2026-10-28. Device ID **2E4441D76D5F2996**. Saved settings and
+    saved max (39963) survived; usage counters start at zero;
   - check whether MATLAB `serialport` asserts DTR;
   - calibrate and record `MaxPosition`;
   - capture real transcripts into `tests/fixtures/`;

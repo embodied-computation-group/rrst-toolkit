@@ -26,3 +26,4 @@ At the first bench session, capture real replies and save them next to these fil
 | `enable.txt`, `disable.txt` | `e`, `d` |
 | `status_calibrated.txt`, `status_uncalibrated.txt` | `s` |
 | `status_uncalibrated__fw_Vigilant-Piston__2026-10-28.txt` | `s`. **Captured from device** (first 2.0 unit, firmware "Vigilant-Piston (Oct  1 2026 11:30:50)", which predates the device ID line) on 2026-10-28, uncalibrated after power-up. Starts with the firmware's echo of `s` |
+| `status_uncalibrated__device_2E4441D76D5F2996__2026-10-28.txt` | `s`. **Captured from device** 2E4441D76D5F2996 (the same unit) on 2026-10-28, right after flashing Patient-Regulator; uncalibrated |

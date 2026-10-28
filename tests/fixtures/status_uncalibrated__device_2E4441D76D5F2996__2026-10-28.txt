@@ -1,0 +1,31 @@
+s
+--- SYSTEM STATUS ---
+Software Version: Patient-Regulator (Oct  7 2026 08:45:06)
+Device ID:        2E4441D76D5F2996
+Stepper Enabled:  NO
+Current Position: 0 steps
+Max Range Limit:  45000 steps (stale - not calibrated)
+Calibrated:       NO
+Saved Max Pos:    39963 steps
+Retract Distance: 24000 steps (15.000 mm)
+First-Contact:    unavailable (not calibrated)
+Current Speed:    16000 steps/s
+Acceleration:     10000 steps/s²
+Run Current:      795 mA
+Hold Current:     50%
+Microsteps:       16
+Chopper Mode:     SpreadCycle
+Fan Mode:         Auto
+Fan State:        OFF
+Min Endstop:      ok
+Max Endstop:      TRIGGERED
+Soft Limit Guard: inactive - not calibrated, moves refused
+Total Run Time:   0.0 hours
+Session Run Time: 0.0 hours
+Total Distance:   0.0 m
+Total Min Hits:   0
+Total Max Hits:   0
+Peak Heat Sink Temp: never recorded
+---
+
+Valve>
