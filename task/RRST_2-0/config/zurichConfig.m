@@ -10,6 +10,8 @@ function cfg = zurichConfig()
 %     {{CALIBRATION_TUBE}}   calibrate with the tube in or out (must match the record)
 %     {{TUBE_LENGTH}}        production tube length; re-measure full scale after cutting
 %     {{NOISE}}              masking noise on/off, colour and level
+%     {{MOTION}}             chopper mode, speed and acceleration (noise vs move time;
+%                            Martin's measurements of 2026-10-28 in TASKS.md)
 
 error('rrst:decisionsPending', ...
     ['The Zurich configuration is not decided yet: stimulus unit and grid, Psi priors, ' ...
