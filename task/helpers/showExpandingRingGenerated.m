@@ -77,6 +77,13 @@ for thisFr = 1:totalFr
     % Update display:
      Screen('Flip', scr.win);
 
+    % Esc ends the breath at once; the caller aborts the session
+    [~, ~, keyCode] = KbCheck;
+    if keyCode(KbName('ESCAPE')) == 1
+        vars.abortFlag = 1;
+        return
+    end
+
 end
 
 % Exhale

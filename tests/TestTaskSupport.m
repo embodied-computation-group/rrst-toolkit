@@ -113,6 +113,18 @@ classdef TestTaskSupport < matlab.unittest.TestCase
             tc.verifyEqual(cfg.label, "PILOT");
         end
 
+        function tutorialNeedsABreathForEveryPracticeLevel(tc)
+            cfg = pilotConfig();
+            cfg.tutorial.stimInAlt = [1 2];
+            tc.verifyError(@() validateConfig(cfg), 'rrst:badConfig');
+        end
+
+        function tutorialBreathMustBeFirstOrSecond(tc)
+            cfg = pilotConfig();
+            cfg.tutorial.stimInAlt = [1 3 2];
+            tc.verifyError(@() validateConfig(cfg), 'rrst:badConfig');
+        end
+
         function oddTrialCountIsRejected(tc)
             cfg = pilotConfig();
             cfg.psi.numTrials = 99;

@@ -53,6 +53,12 @@ if cfg.runTutorial && cfg.stim.unit == "percent" && ...
         any([cfg.tutorial.easyStim cfg.tutorial.hardStim cfg.tutorial.exampleStimuli] > 100)
     bad('tutorial levels must be <= 100 percent.');
 end
+if numel(cfg.tutorial.stimInAlt) ~= numel(cfg.tutorial.exampleStimuli)
+    bad('tutorial.stimInAlt needs one breath (1 or 2) per tutorial.exampleStimuli level.');
+end
+if ~all(ismember(cfg.tutorial.stimInAlt, [1 2]))
+    bad('tutorial.stimInAlt must contain only 1 (first breath) or 2 (second breath).');
+end
 if cfg.timing.itiMin > cfg.timing.itiMax
     bad('timing.itiMin must not exceed timing.itiMax.');
 end

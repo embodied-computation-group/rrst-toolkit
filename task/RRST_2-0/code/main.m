@@ -138,6 +138,7 @@ try
     if vars.runTutorial
         disp('Running through tutorial...');
         respiroceptionTutorial(scr, keys, vars, stim, cfg);
+        stim.rest();    % Esc ends the tutorial early, possibly with the wedge loaded
     end
 
 
@@ -252,6 +253,10 @@ try
 
             % Show expanding circle
             [scr, vars] = showExpandingRingGenerated(scr, vars);
+            if vars.abortFlag   % Esc during the breath
+                abortSession(stim, noiseHandle, vars, scr, keys, Results, stair, cfg);
+                return
+            end
 
         end% 2 Intervals
 
@@ -418,6 +423,11 @@ try
                     'aborttime', vars.eqT,...
                     'slidercolor', [0.14 0.42 0.38],...
                     'scalacolor', [1 1 1]);
+
+                if answer == -1     % Esc on the rating
+                    abortSession(stim, noiseHandle, vars, scr, keys, Results, stair, cfg);
+                    return
+                end
 
                 % Update results
                 Results.ExpRateTask(1, probeNb) = position;
