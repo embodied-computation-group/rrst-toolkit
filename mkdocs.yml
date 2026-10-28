@@ -1,0 +1,56 @@
+site_name: RRST Toolkit
+site_description: Build, set up and run the Respiratory Resistance Sensitivity Task (RRST) device - legacy and 2.0
+repo_url: https://github.com/micahgallen/rrst-toolkit
+edit_uri: edit/main/handbook/
+docs_dir: handbook
+site_dir: site
+strict: true
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - content.code.copy
+    - search.highlight
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle: {icon: material/weather-night, name: Dark mode}
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle: {icon: material/weather-sunny, name: Light mode}
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc: {permalink: true}
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tasklist: {custom_checkbox: true}
+
+nav:
+  - Home: index.md
+  - Which device do I have?: identify.md
+  - RRST 2.0 (2026):
+      - v2/index.md
+      - Parts: v2/parts.md
+      - Electronics (TMC2209 conversion): v2/electronics.md
+      - Firmware and Control Panel: v2/firmware.md
+      - Bench check and calibration: v2/bench-check.md
+  - Legacy device (2021-2022):
+      - legacy/index.md
+      - Parts: legacy/parts.md
+      - Build: legacy/build.md
+      - Programming: legacy/programming.md
+  - Lab setup (all versions):
+      - Breathing circuit: shared/breathing-circuit.md
+      - Room and masking: shared/room-and-masking.md
+      - Running the task: shared/running-the-task.md
+      - Hygiene: shared/hygiene.md
+  - Parts sourcing: parts-sourcing.md
+  - Roadmap: roadmap.md
+  - Contributing: contributing.md

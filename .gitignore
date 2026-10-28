@@ -81,3 +81,7 @@ token.json
 *.mex*
 slprj/
 codegen/
+
+# --- Docs site ---
+site/
+.venv-docs/
