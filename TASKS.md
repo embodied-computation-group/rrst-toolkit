@@ -43,6 +43,14 @@ session so a fresh session can continue from the files.
     compare. If confirmed, calibrate tube-out, or raise the run current, and ask
     Martin about this. Also seen: the move reply was followed by a second `Valve>`
     prompt; check how the firmware handles the value line;
+  - [x] Tube effect on calibration, 2026-10-28 (`bench/repeatCalibration.m`,
+    `bench/slipTest.m`). MaxPosition with the tube **out**: 39963 (Martin's), 40079,
+    40111, 40099. Tube **in**: 41220, 41283, 41257, 41265. The tube adds about 1150
+    steps (0.72 mm), consistently. Slip test (tube in): after calibrating, two cycles of
+    open-to-1600 then `k` triggered the max endstop at 41295 and 41279 (+30, +14), with
+    no warnings. With lost steps the count would have grown by about 1150 per close.
+    **Conclusion: elastic compliance, no lost steps.** Positions are reliable; the
+    calibration condition (tube in/out) must be the same every session;
   - capture real transcripts into `tests/fixtures/`;
   - measure the physical 0 and full-scale anchors;
   - time real moves.
@@ -80,6 +88,10 @@ session so a fresh session can continue from the files.
 ## Open questions
 
 Scientific decisions for the scientist (see the decision sheet):
+
+- Calibrate with the tube out or in? The tube adds about 1150 steps to MaxPosition, so
+  mixing conditions shifts every anchor by about 0.7 mm. Recommendation: tube out
+  (purely mechanical reference, 32 vs 63 steps spread). Ask Martin what he intended.
 
 - Stimulus unit and range: paper (0-18 mm, 1 mm steps) or code (0-17 mm, 36 levels)?
 - Psi priors: paper (beta log 1-16, lambda 0.02) or code (beta 0-7 log10, lambda 0.03)?
