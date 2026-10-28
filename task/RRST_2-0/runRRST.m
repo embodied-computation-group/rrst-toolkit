@@ -37,22 +37,22 @@ fprintf('Configuration: %s, procedure %s, stimulus unit %s\n', cfg.label, cfg.pr
 vars.exptName   = 'RRST';
 vars.exptVers   = '2-0';
 vars.subNo      = input('What is the subject ID, e.g. 0001)?   ');
-vars.languageIn = input('Language?: (e for english, or d for danish)   ', 's');
 if isempty(vars.subNo)
     vars.subNo = 9999;                                       % test
 end
+vars.session    = input('Session number (1, 2, 3, ...)?   ');
+if isempty(vars.session) && vars.subNo == 9999
+    vars.session = 1;                                        % test
+end
+vars.languageIn = input('Language?: (e for english, or d for danish)   ', 's');
 
 vars.OutputFolder = cfg.output.dir;
 if ~exist(vars.OutputFolder, 'dir')
     mkdir(vars.OutputFolder);
 end
-vars.DataFileName = sprintf('RRST_%04d', vars.subNo);
-if cfg.device.mock
-    vars.DataFileName = ['MOCK_', vars.DataFileName];     % never mistaken for real data
-end
-if vars.subNo ~= 9999 && ~isempty(dir(fullfile(vars.OutputFolder, [vars.DataFileName, '_*.mat'])))
-    error('rrst:dataExists', 'Data for subject %04d already exist in %s. Use a different ID.', ...
-        vars.subNo, vars.OutputFolder);
+vars.DataFileName = sessionFileStem(vars.subNo, vars.session, cfg.device.mock);   % e.g. RRST_0001_s2
+if vars.subNo ~= 9999
+    checkSessionIsNew(vars.OutputFolder, vars.DataFileName);   % a completed session is never run again
 end
 
 %% Device
