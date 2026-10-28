@@ -1,7 +1,8 @@
 function file = kidsSave(cfg, vars, stim, result)
 %KIDSSAVE Save an RRST-Kids session: .mat with everything, .csv with one row per trial.
 %   file = kidsSave(cfg, vars, stim, result)
-%   Name: [MOCK_|SIM_][Aborted_|Error_|PracticeFailed_]RRSTkids_<ID>_<date>.mat
+%   Name: [MOCK_|SIM_][Aborted_|Error_|PracticeFailed_]RRSTkids_<ID>_<date>.mat, with _2, _3
+%   added if that name is taken (never overwrites).
 prefix = "";
 switch extractBefore(result.outcome + ":", ":")
     case "aborted", prefix = "Aborted_";
@@ -12,6 +13,7 @@ if ~isempty(cfg.debug.simulateChild), prefix = "SIM_" + prefix; end
 if cfg.device.mock, prefix = "MOCK_" + prefix; end
 name = prefix + sprintf('RRSTkids_%04d_%s', vars.subNo, datestr(now, 'yyyy-mm-dd_HHMM')); %#ok<TNOW1,DATST>
 if ~exist(cfg.output.dir, 'dir'), mkdir(cfg.output.dir); end
+name = string(uniqueFileName(cfg.output.dir, char(name)));   % never overwrite: _2, _3
 file = fullfile(cfg.output.dir, name + ".mat");
 
 session.result = result;
