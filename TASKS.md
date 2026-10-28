@@ -113,6 +113,25 @@ session so a fresh session can continue from the files.
 - Firmware snapshot: hex, SHA-256, source commit, library versions.
 - Hardware bench checklist and pre-study acceptance checklist in `docs/`.
 
+## Python port (branch `python-port`, `python/`)
+
+- [x] uv project, Python 3.11 (PsychoPy 2026.2 needs < 3.13; on Windows `pywinhook` has
+  wheels only up to 3.11). Psi runs on `questplus` (QUEST+, GPL-3), not pypalamedes:
+  pypalamedes needs numpy >= 2.5.1, which can't be installed together with PsychoPy on
+  Windows, and has no running fit or up/down.
+- [x] Device layer ported (`rrst.replies`, `mapping`, `device`, `mock`, `stimulator`,
+  `records`, `noise`), tests ported from the MATLAB suites on the same fixtures. 90 tests.
+- [x] `rrst.psi.PsiStaircase`: reproduces four pypalamedes reference runs
+  (`tests/fixtures/psi/`) stimulus for stimulus, estimates within 1e-6. Rejects grids
+  the Weibull cannot evaluate (alpha <= 0: the pilot grid's alpha = 0 crashes
+  pypalamedes and makes questplus present 0 % first). 121 tests in total.
+- [ ] Run `tests/reference/makePsiReference.m` on the stim laptop (needs Palamedes) to
+  add MATLAB Palamedes references; `python/tests/test_psi.py` picks them up.
+- [ ] Task config (TOML) and the PsychoPy task; mock run with Micah watching; device run.
+- Found while porting: `getPMFbasedTrials` (MATLAB) inverts the PF with guess rate 0,
+  not 0.5, so the "75 %" metacognition trials are easier than intended (only matters
+  when metacogTrials > 0).
+
 ## Decisions
 
 - 2026-10-28: Renamed from rrst-zurich to **rrst-toolkit** (RRST Toolkit 2.0): a general-purpose toolkit, with Zurich as its first deployment.
