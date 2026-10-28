@@ -137,8 +137,13 @@ session so a fresh session can continue from the files.
     threshold 76.2 %. `bench/sessions/pilot__device_2E4441D76D5F2996__2026-10-28_1329/`.
   - [x] Rain loop for masking, 2026-10-28: `task/helpers/audio/rain_loop_30s.wav`
     (Freesound 650541, CC0, synthesised rain, 48 kHz stereo; checks and limits in
-    that folder's README). Not wired into the task yet: MATLAB needs a file option
-    in `startMaskingNoise` (`audioread`, the file's own 48 kHz rate).
+    that folder's README). Wired in: `cfg.noise.file` (pilotConfig points at the
+    loop, volume 1 = as recorded) is played by `startMaskingNoise` at the file's own
+    48 kHz via `rrst.loadMaskingSound`; empty falls back to generated noise. Start
+    and stop checked silently under PsychPortAudio on the stim laptop. Not yet heard
+    in a pilot, and not yet checked against the 14 kHz SpreadCycle whine.
+    (A synthesised "rain" colour was tried and dropped unpushed: scratchy, and
+    built for a 1 kHz whine that Martin's measurements do not show.)
   - [ ] Masking noise: brown had to be loud ("a bit eye watering") and the motor was
     still faintly audible next to the device. Try a blend of colours that sounds
     like rain (the RRS_3-0 rain recording masked well); measure the motor's

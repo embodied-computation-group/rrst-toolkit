@@ -76,14 +76,17 @@ cfg.timing.pauseEvery = 20;              % trials (30 without confidence ratings
 cfg.timing.experienceQuestion = 10;
 
 % --- Masking noise -------------------------------------------------------
-cfg.noise.enabled = false;               % generated in code; no wav file
-cfg.noise.colour = "brown";              % pilot 2026-10-28: pink was harsh, brown much easier to sit through
-cfg.noise.volume = 0.2;                  % pilot 2026-10-28 (0.5 was painfully loud); depends on system volume
-cfg.noise.fs = 44100;
-cfg.noise.durS = 30;                     % looped
+root = fileparts(fileparts(fileparts(fileparts(mfilename('fullpath')))));
+cfg.noise.enabled = false;
+% Sound file looped as is (48 kHz stereo, about -29 dBFS RMS; see its README).
+% Empty: generate noise of cfg.noise.colour instead.
+cfg.noise.file = fullfile(root, 'task', 'helpers', 'audio', 'rain_loop_30s.wav');
+cfg.noise.volume = 1;                    % file: 1 = as recorded, about as loud as brown at 0.2; depends on system volume
+cfg.noise.colour = "brown";              % generated noise only. Pilot 2026-10-28: pink was harsh
+cfg.noise.fs = 44100;                    % generated noise only
+cfg.noise.durS = 30;                     % generated noise only; looped
 
 % --- Output --------------------------------------------------------------
-root = fileparts(fileparts(fileparts(fileparts(mfilename('fullpath')))));
 cfg.output.dir = fullfile(root, 'data', 'raw');
 cfg.devicesDir = fullfile(root, 'devices');
 end
