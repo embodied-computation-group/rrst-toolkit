@@ -2,9 +2,10 @@
 
 !!! note "Two task versions"
     The instructions below are for the **legacy task** (`RRS_2-2` / `RRS_3-0`, MATLAB
-    2020a and later). The **RRST Toolkit 2.0 task** is in development. It will confirm
-    every device move, log a full device transcript with the data, and map stimuli onto
-    anchors measured on each device. This page will be updated when it's released.
+    2020a and later). For the **RRST 2.0 task** (`task/RRST_2-0/`), which confirms every
+    device move, logs a full device transcript with the data, and maps stimuli onto
+    anchors measured on each device, see [Running the 2.0 task](../v2/running.md).
+    The participant instructions at the end of this page apply to both.
 
 ## Software
 

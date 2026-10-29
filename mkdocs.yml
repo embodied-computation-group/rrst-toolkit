@@ -42,6 +42,7 @@ nav:
       - Electronics (TMC2209 conversion): v2/electronics.md
       - Firmware and Control Panel: v2/firmware.md
       - Bench check and calibration: v2/bench-check.md
+      - Running the task: v2/running.md
   - Legacy device (2021-2022):
       - legacy/index.md
       - Parts: legacy/parts.md
@@ -49,6 +50,8 @@ nav:
       - Programming: legacy/programming.md
   - Lab setup (all versions):
       - Breathing circuit: shared/breathing-circuit.md
+      - Airflow sensor (optional): shared/airflow-sensor.md
+      - Recording physiology and airflow: shared/recording.md
       - Room and masking: shared/room-and-masking.md
       - Running the task: shared/running-the-task.md
       - Hygiene: shared/hygiene.md

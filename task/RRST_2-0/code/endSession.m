@@ -6,7 +6,9 @@ function endSession(vars, scr, keys, Results, stair, status)
 % (experimentEnd rethrew psychlasterror, which could be a stale error).
 % Files: <DataFileName>.mat (stair, Results, vars incl. vars.device and vars.cfg,
 % scr, keys) and <DataFileName>.csv (one row per trial, trialTable.m); aborted and error runs get an
-% Aborted_ / Error_ prefix.
+% Aborted_ / Error_ prefix. An existing file is never overwritten: the name gets _2, _3.
+
+rrstMarker("session_end_" + status);
 
 switch status
     case "complete"
@@ -31,7 +33,7 @@ if isfield(scr, 'win') && ~isempty(message)
     end
 end
 
-vars.DataFileName = [prefix, vars.DataFileName];
+vars.DataFileName = uniqueFileName(vars.OutputFolder, [prefix, vars.DataFileName]);   % never overwrite
 matName = fullfile(vars.OutputFolder, [vars.DataFileName, '.mat']);
 save(matName, 'stair', 'Results', 'vars', 'scr', 'keys');
 fprintf('Run %s. Results saved as %s\n', status, matName);

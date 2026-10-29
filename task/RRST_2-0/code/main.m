@@ -137,7 +137,10 @@ try
 
     if vars.runTutorial
         disp('Running through tutorial...');
+        rrstMarker('tutorial_start');
         respiroceptionTutorial(scr, keys, vars, stim, cfg);
+        stim.rest();    % Esc ends the tutorial early, possibly with the wedge loaded
+        rrstMarker('tutorial_end');
     end
 
 
@@ -152,9 +155,11 @@ try
     % Wait for space
     while keys.KeyCode(keys.Space) == 0
         [~, ~, keys.KeyCode] = KbCheck;
+        GetMouse;                           % keeps the window responsive (KbCheck alone lets Windows grey it out)
         WaitSecs(0.001);
     end
     Results.SessionStartT = GetSecs;            % Session start timestamp
+    rrstMarker('session_start', Results.SessionStartT);
 
 
     %% Get Ready screen
@@ -221,6 +226,10 @@ try
 
             % Count down the ISI from the confirmed move
             ISIstart = GetSecs;
+            rrstMarker(sprintf('trial_%d_interval%d_ready', thisTrial, thisAlt), ISIstart);
+            if vars.stimIsHere   % level in the recording itself, so figures need no task file
+                rrstMarker(sprintf('trial_%d_level_%g', thisTrial, thisTrialStim), ISIstart);
+            end
             while (GetSecs - ISIstart) <= vars.ISI
                 tRemaining = round(vars.ISI - (GetSecs - ISIstart));
                 counterText = strcat(instructionPrepare2Breathe, num2str(tRemaining), ' sec.');
@@ -235,6 +244,7 @@ try
                     return
                 end
                 [~, ~, keys.KeyCode] = KbCheck;
+                GetMouse;                           % keeps the window responsive (KbCheck alone lets Windows grey it out)
                 WaitSecs(0.001);
             end
 
@@ -250,6 +260,13 @@ try
 
             % Show expanding circle
             [scr, vars] = showExpandingRingGenerated(scr, vars);
+            loadNames = ["null" "load"];
+            rrstMarker(sprintf('trial_%d_interval%d_onset_%s', thisTrial, thisAlt, ...
+                loadNames(vars.stimIsHere + 1)), vars.StimOn);
+            if vars.abortFlag   % Esc during the breath
+                abortSession(stim, noiseHandle, vars, scr, keys, Results, stair, cfg);
+                return
+            end
 
         end% 2 Intervals
 
@@ -266,6 +283,11 @@ try
 
         % Fetch the participant's response, via keyboard or mouse
         [vars] = getResponse(keys, scr, vars);
+        if vars.ValidTrial(1)
+            rrstMarker(sprintf('trial_%d_response', thisTrial), vars.EndRT);
+        else
+            rrstMarker(sprintf('trial_%d_noresponse', thisTrial));
+        end
 
         % Get response time
         RT = (vars.EndRT - vars.StartRT);
@@ -273,6 +295,8 @@ try
         % Get accuracy: correct if the response names the breath with the load
         if vars.RespLR == 0 || vars.RespLR == 1
             Resp = double((vars.RespLR + 1) == vars.wheresTheSignal(thisTrial));
+            outcome = ["wrong" "correct"];
+            rrstMarker(sprintf('trial_%d_%s', thisTrial, outcome(Resp + 1)), vars.EndRT);
         else
             Resp = NaN;
         end
@@ -336,6 +360,9 @@ try
 
             Results.ConfOn(thisTrial)   = vars.ConfOnset - Results.SessionStartT;
             Results.ConfOff(thisTrial)  = vars.ConfOffset - Results.SessionStartT;
+            if vars.ValidTrial(2)
+                rrstMarker(sprintf('trial_%d_confidence', thisTrial), vars.ConfOffset);
+            end
 
             if vars.abortFlag       % Esc was pressed
                 Results.ConfResp(thisTrial) = NaN;
@@ -363,6 +390,7 @@ try
         %% ITI: move to a rest position, then wait out the rest of the ITI
         Screen('FillRect', scr.win, scr.BackgroundGray, scr.winRect);
         [~, StartITI] = Screen('Flip', scr.win);
+        rrstMarker(sprintf('trial_%d_iti', thisTrial), StartITI);
         [Results.RestLevel(thisTrial), mv] = stim.rest();
         Results.RestMoveT(thisTrial) = mv.elapsed;
 
@@ -372,6 +400,7 @@ try
                 return
             end
             [~, ~, keys.KeyCode] = KbCheck;
+            GetMouse;                           % keeps the window responsive (KbCheck alone lets Windows grey it out)
             WaitSecs(0.001);
         end
 
@@ -416,6 +445,11 @@ try
                     'slidercolor', [0.14 0.42 0.38],...
                     'scalacolor', [1 1 1]);
 
+                if answer == -1     % Esc on the rating
+                    abortSession(stim, noiseHandle, vars, scr, keys, Results, stair, cfg);
+                    return
+                end
+
                 % Update results
                 Results.ExpRateTask(1, probeNb) = position;
                 Results.ExpRateTask(2, probeNb) = RT;
@@ -432,6 +466,7 @@ try
 
             % Break screen; recalibrate during the break (about 25 s), then rest
             [~, startPause] = Screen('Flip', scr.win);
+            rrstMarker('break_start', startPause);
             counterText = strcat(vars.InstructionPause, num2str(ceil(vars.pauseT/60)), ' min.');
             Screen('FillRect', scr.win, scr.BackgroundGray, scr.winRect);
             DrawFormattedText(scr.win, counterText, 'center', 'center', scr.TextColour);
@@ -456,6 +491,7 @@ try
                     return
                 end
                 [~, ~, keys.KeyCode] = KbCheck;
+                GetMouse;                           % keeps the window responsive (KbCheck alone lets Windows grey it out)
                 WaitSecs(0.001);
             end
 
@@ -467,8 +503,10 @@ try
             [~, ~, keys.KeyCode] = KbCheck;
             while keys.KeyCode(keys.Space) == 0
                 [~, ~, keys.KeyCode] = KbCheck;
+                GetMouse;                           % keeps the window responsive (KbCheck alone lets Windows grey it out)
                 WaitSecs(0.001);
             end
+            rrstMarker('break_end');
 
         end
 

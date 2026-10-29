@@ -13,6 +13,8 @@ tube → Hans Rudolph T-valve → mouthpiece coupler → POWERbreathe filtered m
 - Inhaled air must come **through the silicone tube**, the end the device compresses.
 - Exhaled air leaves through the **free port of the T-valve**, so the participant never
   re-breathes from the circuit.
+- Optional: an [airflow sensor](airflow-sensor.md) at the free-air end, before the
+  silicone tube, records every inhalation.
 
 ![Breathing circuit](../assets/img/shared/breathing_circuit.jpg){ width="300" }
 

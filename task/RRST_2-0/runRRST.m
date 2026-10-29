@@ -33,26 +33,32 @@ end
 fprintf('Psychtoolbox %s\n', PsychtoolboxVersion);
 fprintf('Configuration: %s, procedure %s, stimulus unit %s\n', cfg.label, cfg.procedure, cfg.stim.unit);
 
+%% Event markers (LSL). Opened first so a recorder started now already sees them.
+if cfg.markers.lsl
+    rrstMarker('open', cfg.markers.liblslDir);
+    closeMarkers = onCleanup(@() rrstMarker('close'));
+end
+
 %% Participant
 vars.exptName   = 'RRST';
 vars.exptVers   = '2-0';
 vars.subNo      = input('What is the subject ID, e.g. 0001)?   ');
-vars.languageIn = input('Language?: (e for english, or d for danish)   ', 's');
 if isempty(vars.subNo)
     vars.subNo = 9999;                                       % test
 end
+vars.session    = input('Session number (1, 2, 3, ...)?   ');
+if isempty(vars.session) && vars.subNo == 9999
+    vars.session = 1;                                        % test
+end
+vars.languageIn = input('Language?: (e for english, or d for danish)   ', 's');
 
 vars.OutputFolder = cfg.output.dir;
 if ~exist(vars.OutputFolder, 'dir')
     mkdir(vars.OutputFolder);
 end
-vars.DataFileName = sprintf('RRST_%04d', vars.subNo);
-if cfg.device.mock
-    vars.DataFileName = ['MOCK_', vars.DataFileName];     % never mistaken for real data
-end
-if vars.subNo ~= 9999 && ~isempty(dir(fullfile(vars.OutputFolder, [vars.DataFileName, '_*.mat'])))
-    error('rrst:dataExists', 'Data for subject %04d already exist in %s. Use a different ID.', ...
-        vars.subNo, vars.OutputFolder);
+vars.DataFileName = sessionFileStem(vars.subNo, vars.session, cfg.device.mock);   % e.g. RRST_0001_s2
+if vars.subNo ~= 9999
+    checkSessionIsNew(vars.OutputFolder, vars.DataFileName);   % a completed session is never run again
 end
 
 %% Device
@@ -87,6 +93,10 @@ if cfg.runTutorial
 end
 fprintf('Scale: 0-%g %s (zero = wedge touching the tube, max = barely possible to inhale)\n', ...
     stim.ScaleMax, stim.Unit);
+
+if cfg.markers.lsl && cfg.markers.requireRecorder
+    waitForRecorder();
+end
 
 input(sprintf(['\nCalibration runs with the tube %s, as in the device record.\n' ...
     'The wedge will close fully, then open. Press Enter when ready...'], ...

@@ -17,6 +17,7 @@ DrawFormattedText(scr.win, textInput, 'center', 'center', scr.TextColour);
 % Wait for space
 while keys.KeyCode(keys.Space) == 0
     [~, ~, keys.KeyCode] = KbCheck;
+    GetMouse;                           % keeps the window responsive (KbCheck alone lets Windows grey it out)
     WaitSecs(0.001);
 end
 
