@@ -282,6 +282,60 @@ session so a fresh session can continue from the files.
 - [ ] Send Martin the masking sound (or the generated-noise settings) so he can test
   motor noise against it; `helpers/audio/32-Waterfall-60min.wav` is not in either repo.
 
+## Martin's second reply, shipping and sites (2026-10-29)
+
+- Zurich and Maastricht are both sites of Micah's ERC project. Three rebuilt units:
+  2E4441D76D5F2996 (for Zurich), one in Aarhus, one on Martin's desk. Maastricht has an
+  older "blue" unit that comes back to be upgraded. Martin was invited to this repo
+  (write access).
+- Martin (email 2026-10-29), hardware:
+  - no new PCB, no fan, no mechanical changes;
+  - the upgrade is a ~10-minute board modification: input bulk capacitor, TVS diode,
+    resistor and wire for the TMC2209 UART link, configuration resistor, soldered cfg
+    jumpers. He will write the procedure with parts.
+  - The Schottky reverse-polarity diode is NOT fitted, so only each unit's own power
+    supply may be used.
+  - Martin said the TVS diodes an AI tool suggested had the wrong voltage. So
+    `handbook/v2/parts.md` and `electronics.md` (SS34, SMBJ26A) are probably wrong:
+    replace them with his document.
+  - Micah has a photo of the modified board (not in the repo). Its capacitor hangs on
+    long leads and the TVS lead is bare: ask Martin to secure and sleeve them.
+- [ ] Martin: don't rely on `z` defaults; the task should set everything. It sets
+  speed, acceleration and chopper mode now. Proposed: also set and verify run current
+  (`i`), hold current (`p`) and microsteps (`u`, which changes steps/mm and so every
+  anchor) at each calibration, PROVISIONAL values. Not started; MATLAB on main, Python
+  on `python-port`.
+- [ ] Audio test: Martin can't fit headphones to his sound recorder. Proposed instead:
+  a blinded detection check with a listener in headphones and the rain at task volume,
+  about 20 trials of move or no move, where chance (50 %) means masked.
+- Shipping plan with per-site to-do lists:
+  https://claude.ai/artifact/PBAAkKN8zptUGeJy2b7mS7 (shared by link).
+  - **Zurich:** the route is decided on Monday 2 Nov. Either Julia carries the unit
+    (preferred), or DHL Express ships it from Thursday 5 Nov. Ruled out: shipping to
+    Italy or Germany for pickup.
+  - Zurich customs: Swiss import as scientific equipment in temporary use by an
+    approved institution, with no deposit (BAZG R-10-60 section 3.6.2). The Danish
+    export needs a full declaration with an MRN (AU EORI DK31119103). No ATA carnet.
+    HS 9019.10 to propose.
+  - **Maastricht:** inside the EU, so no customs. Meeting on Thu 5 or Fri 6 Nov; the
+    rebuilt unit ships at the end of that week, and the blue unit and laptops come back.
+    The unit needs its bench session and device record first, with Micah at the device.
+  - Power: Swiss T12-to-C13 cables have been ordered; Maastricht needs Schuko-to-C13.
+- Laptops: three refurbished ThinkPad T14 Gen 2 (i5-1135G7, 16 GB) from Atea. Set them
+  up and test them in Aarhus before they ship:
+  - BIOS and USB-C PD firmware update;
+  - USB selective suspend off; BitLocker on;
+  - test the RRST plugged in directly, run the Psychtoolbox sync tests, and do a
+    full session with PLUX.
+  - Still to check: MATLAB licences for non-AU users.
+- T-valves: the Hans Rudolph 1410 costs about EUR 300-470 and some variants are no
+  longer distributed.
+  - Candidate: Intersurgical 1954000 (directional valve 22M in - 22M/15F - 22M out,
+    single-use, box of 25). Dora is asking hospital procurement.
+  - Before adopting it: get the datasheet, bench-compare it with the Hans Rudolph, and
+    use the same valve at all sites, chosen before Zurich starts.
+  - Possible contact: AUH Lungesygdomme (CPET).
+
 ## Python port (branch `python-port`, `python/`)
 
 - [x] uv project, Python 3.11 (PsychoPy 2026.2 needs < 3.13; on Windows `pywinhook` has
@@ -302,7 +356,7 @@ session so a fresh session can continue from the files.
   "auto" works next to the stim laptop's LTE modem. Not done in MATLAB.
 - [x] Task config: `python/configs/pilot.toml`, `rrst.config` (unknown keys are an
   error). The alpha grid starts at 100/71 (pilot grid without 0): PROVISIONAL, open.
-  Masking: the rain loop at volume 0.2, PROVISIONAL. 167 tests.
+  Masking: the rain loop at volume 1.0 (as pilotConfig.m after the 2026-10-28 pilots). 167 tests.
 - [x] PsychoPy task (`rrst.task`: session logic, texts EN/DA, PsychoPy screens, launcher
   `python -m rrst.task.run`), 2026-10-28. 190 tests; session logic tested with a scripted
   UI and the mock device, mutation-checked. Unattended smoke run of the real screens
@@ -312,6 +366,11 @@ session so a fresh session can continue from the files.
 - [ ] Mock run with Micah clicking through (real mouse, slider, Esc, text size, sound).
 - [ ] Device run with Micah present.
 - [ ] Not ported yet: tutorial, metacognition trials, quest procedure.
+- [x] 2026-10-29: stray-prompt race ported (Patient-Regulator's extra `Valve>` after a
+  move is logged as unsolicited, as MATLAB 6d3e4c0); main merged up to 40af1d0. 191 tests.
+- [ ] Behind MATLAB since the 2026-10-28 evening work on main: session numbers with
+  `RRST_<ID>_s<session>_...` file names and no overwrites; LSL markers (`RRST` stream)
+  and waiting for a recorder before calibration (`cfg.markers.*`); the tutorial.
 - Found while porting, applies to MATLAB `main.m` too: an invalid response on the last
   trial ends the session without repeating it (Psi then has num_trials - 1 updates).
 - Found while porting: `getPMFbasedTrials` (MATLAB) inverts the PF with guess rate 0,
