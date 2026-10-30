@@ -21,7 +21,12 @@ addpath(fullfile(here, 'code'));
 S = load(matFile);
 cfg = S.cfg; kp = S.result.kp; PM = kp.PM;
 tr = S.result.trials;
-tr = tr([tr.phase] == "main");
+[~, name] = fileparts(matFile);
+if isempty(tr) || ~any(string([tr.phase]) == "main")   % stopped in the tutorial or practice
+    error('rrst:qcNoMainTrials', ['%s has no main trials (outcome %s): nothing to fit. ' ...
+        'The tutorial and practice slurps are in result.practice.'], name, string(S.result.outcome));
+end
+tr = tr(string([tr.phase]) == "main");
 n = numel(tr);
 lev = [tr.level]; resp = [tr.response]; isCatch = [tr.isCatch];
 yes = resp == 1; no = resp == 0;
@@ -31,7 +36,6 @@ ink = hex2rgb("#2b2b29"); muted = hex2rgb("#8a8a84"); grid = hex2rgb("#e4e3df");
 
 fig = figure('Visible', 'off', 'Color', hex2rgb("#fcfcfb"), 'Units', 'pixels', 'Position', [0 0 1400 900]);
 tl = tiledlayout(fig, 2, 6, 'TileSpacing', 'loose', 'Padding', 'compact');
-[~, name] = fileparts(matFile);
 title(tl, sprintf('%s   %s, %d main trials (%d catch), outcome %s', strrep(name, '_', '\_'), ...
     cfg.label, n, sum(isCatch), S.result.outcome), 'Color', ink, 'FontSize', 13);
 yl = [-5 cfg.child.hardCap + 10];

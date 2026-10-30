@@ -318,6 +318,58 @@ fell from about 85 slm at 0 to 35 slm at 95 %. Three reports:
   the line says `Trial 21 of up to 28 (Psi 15/20, catch 6/8)` and the console prints
   the plan, the estimate after every answer and why the run stopped.
 
+## First child (2026-10-30, 4.5 years, usability)
+
+The experimenter's own daughter, real device, breath feedback on, standalone recording,
+the Session B settings of the pilot protocol (start level 60, 15 Psi + 5 catch). She
+went through the story, free play, both demos and one practice trial, then got bored
+and the run was stopped with Esc at the first catch trial, about 2.5 minutes after free
+play began (Halloween was the competition). "Fun", by both. Not a measurement of the
+child: a measurement of the game. Archive: `bench/sessions/child-kids__device_2E4441D76D5F2996__2026-10-30_1534/`.
+
+What the sensor saw:
+
+- **Free play:** four slurps of 0.19 to 0.52 L at 17 to 37 slm, a fifth cut off by
+  Space. Reference slurp 0.28 L (the median), so the belly was full at 0.11 L and a
+  slurp counted above 0.10 L: the absolute floor was the binding rule (25 % of the
+  reference is 0.07 L).
+- **Pinch demo at 90:** thirteen onsets in nine seconds. Four counted (0.11 to 0.24 L),
+  eight weak (0.01 to 0.07 L, 0.1 to 0.3 s each), one cut off. Against the
+  obstruction she took rapid short sniffs instead of one slurp; the demo shows no
+  "weak" on screen (by design), so nothing told her to slurp longer.
+- **Sleep demo at 0:** 0.65 and 0.78 L at 64 to 72 slm, more than twice her free-play
+  slurps. By then she had learned to pull hard.
+- **Practice trial 1 at 90:** three slurps of 0.57 to 0.71 L at 48 to 58 slm, answered
+  "easy" (wrong). Her peak flow fell by about a quarter between level 0 and 90; the
+  adult tester's fell from about 85 to 35 slm between 0 and 95 (second run above).
+- **Detector:** every breath found, no false onset, the exhale through the T-valve never
+  triggered.
+
+**Read this run narrowly.** She was excited and barely following the instructions, so
+nothing here is evidence about what a child can perceive, and her one wrong answer at
+level 90 is not data. What it does show is that the machinery ran on a small child's
+breathing:
+
+1. **The detector held.** Every real breath was found, no false onset, the exhale
+   through the T-valve never triggered one. That was the main thing to find out.
+2. **The 0.10 L floor, not the 25 % rule, decided what counted** at her 0.28 L
+   reference. Her counted slurps against the obstruction were 0.11 to 0.24 L, so a
+   higher floor would have called them weak. One child, so this sets no value; it
+   does say the floor is in the right region.
+3. **Short sniffs against the obstruction.** Her breaths at level 90 were 0.1 to 0.3 s
+   bursts rather than one slurp. The demos accept whatever comes, but in practice and
+   main trials those would be "weak" and would trigger the try-again pose. Worth
+   watching next time, before deciding it needs a change.
+4. **Flow numbers, for the record.** Peak flow 17 to 37 slm in free play, 64 to 72 at
+   level 0 in the sleep demo, 48 to 58 at level 90. Noted because a child's flow is
+   what sets the pressure drop across the wedge, and the scale's anchors are measured
+   at an adult's; whether that matters needs a child who is actually doing the task.
+
+To fill in from the observation sheet (Micah), when a session is calm enough to judge
+any of it: did she breathe on the ready cue without a prompt; did she look at the
+belly; sucking or blowing; how she answered and whether "squishy" landed; her reaction
+to the mouse, the star and the sounds.
+
 ## Open questions
 
 - **Does the breath feedback leak the level?** Peak flow and volume both fall with
@@ -331,8 +383,17 @@ fell from about 85 slm at 0 to 35 slm at 95 %. Three reports:
   alarms or a guess rate that moves by more than 0.15 calls for a second pair of runs
   (pilot protocol, Session A). `{{FLOW_FEEDBACK_MODE}}` stays "breath" unless that
   comparison says otherwise.
-- **The minimum slurp for a child.** 25 % of the reference and at least 0.10 L are
-  guesses; the first child's free slurps and weak count will tell.
+- **The minimum slurp for a child.** 25 % of the reference and at least 0.10 L were
+  guesses. The first child (2026-10-30) had a 0.28 L reference, so the 0.10 L floor
+  was the rule that counted; her counted slurps against the obstruction were 0.11 to
+  0.24 L. One child: the floor looks right, the fraction is untested.
+- **Is the adult scale the right scale for a child?** The anchors are measured at an
+  adult's flow, and the pressure drop across the wedge depends on the flow through it,
+  so the same wedge position need not be the same stimulus for a child. Nothing
+  measures this yet: the one child so far was not doing the task. Open until a child
+  completes a run, or a bench measurement of pressure against flow at fixed wedge
+  positions settles it directly. `{{CHILD_SCALE}}` in `kidsConfig` stays the adult
+  scale until then.
 - **The cap** was 85 % from one adult run until 2026-10-30, when Micah set it to the
   full scale (100): children breathe with less flow, so the same obstruction gives
   less pressure drop, and a cap below full scale left high thresholds unmeasurable.

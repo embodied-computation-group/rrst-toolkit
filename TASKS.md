@@ -131,16 +131,23 @@ session so a fresh session can continue from the files.
        (device `'WhileWaiting'` callback), practice feedback the child can see (answer
        cards, the correct one in gold), and trial counts on the experimenter line and
        console; mock session only, not yet on the real device.
-    Tests: 366 pass (whole suite, 2026-10-30); an unattended mock session with the
-    simulated child completes through the tutorial and on the breath path (3 counted
-    slurps every trial). Next: the pilot protocol
-    `docs/kids_pilot_protocol_2026-10-30.md` (experimenter self-test with feedback on
-    and off, then one child as a usability check). Not for children before that. Open:
-    - **Practice at 80 % failed for an adult** (2026-10-30: "easy" twice at 80, both
-      must-pass trials). The practice levels, pass rule and cap are unchanged: a design
-      call for Micah (the first adult pilot's threshold was 79 %).
-    - The tutorial has run only in mock sessions; the earlier key frames (01-14) were
-      rendered before the experimenter line and do not show it.
+    10. First child, 2026-10-30 15:34 (usability, ID 9002, Session B settings): she
+       went through the story, free play, both demos and one practice trial, then was
+       done (excited, barely following the instructions; stopped with Esc). The
+       detector found every breath with no false onset, and the 0.10 L floor was the
+       rule that counted her slurps (reference 0.28 L). Nothing about her perception
+       can be read from it. Archive
+       `bench/sessions/child-kids__device_2E4441D76D5F2996__2026-10-30_1534/`,
+       write-up in `handbook/v2/kids.md` ("First child"). `qcKids` now raises
+       `rrst:qcNoMainTrials` instead of crashing on a run with no main trials.
+    Tests: 434 pass (whole suite, 2026-10-30). Next: a calmer second session with the
+    child (a shorter tutorial is the obvious trim), and the adult feedback on/off
+    comparison of protocol Session A, still not run. Open:
+    - The tutorial has run on the real device twice (adult, and the first child); the
+      key frames (01-14) were rendered before the experimenter line and do not show it.
+    - **Is the adult scale the right scale for a child?** The anchors are measured at
+      an adult's flow; a bench measurement of pressure against flow at fixed wedge
+      positions would settle it. `{{CHILD_SCALE}}` in `kidsConfig`.
     - Lag from breath to screen: `TODO(measure)` in `handbook/shared/airflow-sensor.md`
       (`bench/flowFeedbackCheck(60, SmallWindow=false)`).
     - Cue sounds not checked by ear (loudness over the rain, timing).
