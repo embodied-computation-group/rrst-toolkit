@@ -14,8 +14,9 @@ classdef TestKidsSound < matlab.unittest.TestCase
         function addKidsPath(tc)
             root = fileparts(fileparts(mfilename('fullpath')));
             p = [fullfile(root, 'task', 'RRST_kids', {'config', 'code'}), {fullfile(root, 'device')}];
-            addpath(p{:});
-            tc.addTeardown(@() rmpath(p{:}));
+            % PathFixture restores the earlier path, so 'device' stays when the
+            % runner added it (a plain rmpath would remove it for later test classes)
+            tc.applyFixture(matlab.unittest.fixtures.PathFixture(p));
         end
     end
 
