@@ -9,7 +9,7 @@ function result = runKidsRRST(cfg)
 %     cfg.debug.timeScale = 0.2;                   % everything 5x faster
 %     runKidsRRST(cfg)
 %
-%   SAFETY: no level above cfg.child.hardCap (85 % of the adult scale at most) is
+%   SAFETY: no level above cfg.child.hardCap (100 = full adult scale at most) is
 %   ever sent. Calibration closes the wedge fully: do it before the child sits down.
 %   Esc aborts at any time (wedge parked open, data saved). Space pauses.
 %

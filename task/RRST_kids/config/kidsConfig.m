@@ -10,7 +10,7 @@ function cfg = kidsConfig()
 %   rationale: task/RRST_kids/README.md.
 %
 %   SAFETY: no level above cfg.child.hardCap (percent of the ADULT scale) is ever
-%   presented. validateKidsConfig rejects a cap above 85 and any configured level
+%   presented. validateKidsConfig rejects a cap above 100 (full scale) and any configured level
 %   above the cap, and kidsCheckLevel re-checks every level before it is sent.
 
 cfg.label = "KIDS PILOT";
@@ -32,7 +32,7 @@ cfg.markers.requireRecorder = true;      % wait before calibration until a recor
 cfg.markers.liblslDir = "C:\toolbox\liblsl-Matlab";
 
 % --- Child safety and procedure --------------------------------------------
-cfg.child.hardCap = 85;                  % % of the adult scale; never exceeded (85 is the absolute maximum)
+cfg.child.hardCap = 100;                 % % of the adult scale; never exceeded (100 = full scale, the absolute maximum; Micah 2026-10-30: no restriction below it)
 cfg.child.rampMax = 15;                  % no level more than this above the highest level so far
 cfg.child.startLevel = 70;               % first Psi trial: just perceptible for an adult
 cfg.child.numPsiTrials = 30;
@@ -46,8 +46,8 @@ cfg.child.flagHitMin = 0.60;             % hit rate at levels >= flagHighLevel b
 cfg.child.flagHighLevel = 80;
 
 cfg.psi.PF = "PAL_Weibull";
-cfg.psi.stimRange = 0:5:85;              % must contain 0 (catch) and the start level
-cfg.psi.priorAlphaRange = linspace(30, 85, 56);
+cfg.psi.stimRange = 0:5:100;             % must contain 0 (catch) and the start level
+cfg.psi.priorAlphaRange = linspace(30, 100, 71);
 cfg.psi.priorBetaRange = linspace(log10(2), log10(16), 40);   % log10 beta
 cfg.psi.priorGammaRange = 0:0.05:0.5;    % yes-bias (false-alarm rate), marginalised
 cfg.psi.priorLambdaRange = 0.10;         % lapses: children miss more trials than adults
@@ -58,16 +58,16 @@ cfg.psi.priorLambdaRange = 0.10;         % lapses: children miss more trials tha
 % pinchLevel with the mouse pinching the straw during the slurps, "sleep" at 0 with
 % the mouse asleep, each followed by its reveal; then the answer cards, explained.
 cfg.tutorial.enabled = true;             % false: the old free slurps (practice.nFree)
-cfg.tutorial.pinchLevel = 80;            % % of the adult scale; at most child.hardCap
+cfg.tutorial.pinchLevel = 90;            % % of the adult scale; at most child.hardCap
 cfg.tutorial.demoOrder = ["pinch" "sleep"];
 
 % --- Practice ----------------------------------------------------------------
-cfg.practice.levels = [80 0 80 0 75 0];  % questioned trials, the truth shown after each
+cfg.practice.levels = [90 0 90 0 85 0];  % questioned trials, the truth shown after each (90/90/85: Micah 2026-10-30, after 80 was missed by an adult)
 cfg.practice.nFree = 0;                  % free slurps (no question) before them, counted in
                                          % levels: 0 with the tutorial (free play replaces
                                          % them); without it nFree = 2, levels [0 0 80 0 80 0 75 0]
 cfg.practice.passMin = 5;                % correct of the questioned trials...
-cfg.practice.mustPass = [80 80];         % ...and both trials at 80 correct
+cfg.practice.mustPass = [90 90];         % ...and both trials at 90 correct
 cfg.practice.maxRounds = 2;
 
 % --- Timing (s) --------------------------------------------------------------

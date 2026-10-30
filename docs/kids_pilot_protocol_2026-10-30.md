@@ -99,17 +99,11 @@ Purpose: does a 4.5-year-old understand what to do from the screen and sounds al
 does she stay engaged for one or two cups. The threshold is not the point; stop as soon
 as she is done.
 
-**Settings** (lower and shorter than the pilot defaults; a child draws less flow, so the
-same obstruction gives less pressure drop, and the 85 % cap came from one adult):
+**Settings** (shorter than the pilot defaults; levels and cap as the defaults, full
+scale, by Micah's decision of 2026-10-30):
 ```matlab
 cfg = kidsConfig(); cfg.device.port = "COM7";
-cfg.child.hardCap = 75;                      % first child: well below the adult 85
 cfg.child.startLevel = 60;
-cfg.psi.stimRange = 0:5:75;
-cfg.psi.priorAlphaRange = linspace(30, 75, 46);
-cfg.tutorial.pinchLevel = 70;                % the pinch demo, at the practice's top level
-cfg.practice.levels = [70 0 70 0 65 0];      % 6 practice trials (free play is in the tutorial)
-cfg.practice.mustPass = [70 70];
 cfg.child.numPsiTrials = 15; cfg.child.numCatchTrials = 5;
 cfg.child.stopMinTrials = 10;
 cfg.timing.pause = 30;
@@ -178,7 +172,7 @@ you are in and which key goes on)
 
 ## Safety reminders
 
-- The cap and every level are checked at launch and before each move; nothing above 75 %
+- The cap and every level are checked at launch and before each move; nothing above `cfg.child.hardCap`
   can be sent with the settings above.
 - Esc parks the wedge open; closing the port disables the motor; she can always take the
   mouthpiece out.

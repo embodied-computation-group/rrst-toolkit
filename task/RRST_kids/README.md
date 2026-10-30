@@ -31,7 +31,7 @@ answer cards for the experimenter to explain ("Now you say: did the mouse pinch?
 | Bias | none modelled | guess rate (false alarms) 0-0.5 in the posterior, marginalised |
 | Catch trials | none | 10 at level 0 (wedge just touching), never first, never two in a row |
 | Lapse | 0.02 | 0.10 |
-| Levels | 0-100 % | 0-85 % in 5 % steps, **hard cap 85 %** |
+| Levels | 0-100 % | 0-100 % in 5 % steps; `cfg.child.hardCap` (default 100, the full scale) is enforced at launch and before every move |
 | Start | Psi's choice | forced 70 % (just perceptible for an adult) |
 | Jumps | any | at most 15 % above the highest level so far |
 | Trials | 100 | 30 Psi + 10 catch; stops early when SE < 8 after 20 Psi trials |
@@ -227,8 +227,11 @@ shows every pose.
 ## Safety
 
 - No level above `cfg.child.hardCap` is ever sent. `validateKidsConfig` rejects a cap
-  above 85 and any configured level (grid, prior, practice, rest, start) above the
-  cap; `kidsCheckLevel` checks every level again right before it goes to the device.
+  above 100 (the full adult scale) and any configured level (grid, prior, practice,
+  rest, start, pinch demo) above the cap; `kidsCheckLevel` checks every level again
+  right before it goes to the device. The default cap is 100: Micah decided on
+  2026-10-30 that the children's levels should not be restricted below the adult
+  scale (full scale = barely possible to inhale, set per device at the bench).
 - Calibration closes the wedge fully: do it before the child sits down (the script
   asks for that).
 - Esc parks the wedge open; closing the port at the end disables the motor. The child

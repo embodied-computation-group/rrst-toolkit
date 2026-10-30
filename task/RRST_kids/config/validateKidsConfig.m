@@ -2,7 +2,7 @@ function validateKidsConfig(cfg)
 %VALIDATEKIDSCONFIG Reject an RRST-Kids configuration that is unsafe or cannot run.
 %   validateKidsConfig(cfg)   errors with rrst:badConfig and the reason.
 
-ABSOLUTE_MAX = 85;       % percent of the adult scale; no child configuration may exceed it
+ABSOLUTE_MAX = 100;      % percent of the adult scale (full scale); no configuration may exceed it
 bad = @(msg, varargin) error('rrst:badConfig', ['Kids configuration: ' msg], varargin{:});
 
 c = cfg.child;

@@ -19,24 +19,24 @@ classdef TestKids < matlab.unittest.TestCase
             cfg = kidsConfig();
             validateKidsConfig(cfg);
             tc.verifyEqual(cfg.label, "KIDS PILOT");
-            tc.verifyLessThanOrEqual(cfg.child.hardCap, 85);
+            tc.verifyLessThanOrEqual(cfg.child.hardCap, 100);
         end
 
         function capAboveAbsoluteMaximumIsRejected(tc)
             cfg = kidsConfig();
-            cfg.child.hardCap = 90;
+            cfg.child.hardCap = 105;
             tc.verifyError(@() validateKidsConfig(cfg), 'rrst:badConfig');
         end
 
         function levelsAboveTheCapAreRejected(tc)
             cfg = kidsConfig();
-            cfg.child.hardCap = 80;                  % grid still reaches 85
+            cfg.child.hardCap = 95;                  % grid still reaches 100
             tc.verifyError(@() validateKidsConfig(cfg), 'rrst:badConfig');
             cfg = kidsConfig();
-            cfg.practice.levels(end) = 90;
+            cfg.practice.levels(end) = 105;
             tc.verifyError(@() validateKidsConfig(cfg), 'rrst:badConfig');
             cfg = kidsConfig();
-            cfg.stim.restRange = [10 90];
+            cfg.stim.restRange = [10 105];
             tc.verifyError(@() validateKidsConfig(cfg), 'rrst:badConfig');
         end
 

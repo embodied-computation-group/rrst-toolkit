@@ -32,7 +32,7 @@ feedback on or off.
 
 **The tutorial** comes between the story and the practice: free play (the child slurps
 as often as they like and watches the belly fill), two demos with no question (three
-slurps with the mouse pinching the straw at 80 %, then three with it asleep at 0, each
+slurps with the mouse pinching the straw at 90 %, then three with it asleep at 0, each
 followed by its reveal), and a bridge screen with the two answer cards, "Now you say:
 did the mouse pinch?", for the experimenter to explain. Only then does the practice
 ask.
@@ -42,7 +42,7 @@ ask.
 | Judgement | 2 breaths, which was harder (2AFC) | 3 breaths at one level, yes/no ("did the mouse pinch?") |
 | Bias | none modelled | yes-bias (guess rate 0-0.5) estimated and marginalised |
 | Catch trials | none | 10 at level 0, never first, never two in a row |
-| Levels | 0-100 % | 0-85 % in 5 % steps, **hard cap 85 %** |
+| Levels | 0-100 % | 0-100 % in 5 % steps; a configurable cap (`cfg.child.hardCap`, default 100) is enforced at launch and before every move |
 | Start | Psi's choice | 70 % |
 | Jumps | any | at most 15 % above the highest level so far |
 | Trials | set by the study | 30 Psi + 10 catch; stops early when SE < 8 after 20 Psi trials |
@@ -94,7 +94,7 @@ prints the same line.
 | ![Story, beat 1](../assets/img/kids/01_story.png) | **Story, beat 1.** Shown once, in three beats; Space moves on from each, so the experimenter tells the story over them. The monster slurps happily, the milkshake drains, then "ahh" with bubbles. Stars (top) and cups (top right) show progress. |
 | ![Story, beat 2](../assets/img/kids/14_story2.png) | **Story, beat 2.** The mouse pinches the straw (scamper sound); the monster strains, cheeks puffed. Beat 3: the mouse runs off and the monster relaxes. |
 | ![Free play](../assets/img/kids/15_freeplay.png) | **Tutorial, free play.** Wedge at 0. The monster waits in its ready pose; every slurp fills the belly and drinks a third of the glass, and an empty glass is replaced at once. The child slurps as often as they like; Space ends it after at least one slurp. Every slurp sets the reference. |
-| ![Demo, mouse pinching](../assets/img/kids/16_demo_pinch.png) | **Tutorial, demo 1.** The wedge at 80 % and the mouse pinching the straw *while* the child slurps three times: the only time the pinch is seen during breathing. Then the reveal. Demo 2 is the same at 0 with the mouse asleep. Then the two answer cards, explained, and the practice. |
+| ![Demo, mouse pinching](../assets/img/kids/16_demo_pinch.png) | **Tutorial, demo 1.** The wedge at 90 % and the mouse pinching the straw *while* the child slurps three times: the only time the pinch is seen during breathing. Then the reveal. Demo 2 is the same at 0 with the mouse asleep. Then the two answer cards, explained, and the practice. |
 | ![Mouse running](../assets/img/kids/02_mouse.png) | **Mouse.** The mouse scampers along the bottom (scamper sound) while the wedge moves, at least 1.5 s. On catch trials the wedge moves to 0; the screen is the same. |
 | ![Ready](../assets/img/kids/03_cue.png) | **Ready to slurp?** The monster looks at the child, eyebrows up, mouth open on a wiggling straw, with a chime. When the child has the mouthpiece in and is ready, the experimenter presses Space. |
 | ![Slurp](../assets/img/kids/04_inhale.png) | **Slurp.** As soon as the child inhales, the monster slurps (cheeks in, happy eyes, lines running up the straw) and the belly fills with the breath. |
@@ -118,9 +118,9 @@ the console.
 1. **Calibration**, before the child sits down: tube in, nobody on the mouthpiece. The
    wedge closes fully once (about 0.5 min).
 2. **Story** (three beats), then the **tutorial**: free play (sets the reference
-   slurp), the pinch demo at 80 and the sleep demo at 0 (three slurps each, no
+   slurp), the pinch demo at 90 and the sleep demo at 0 (three slurps each, no
    question, each followed by the reveal), the answer cards explained.
-3. **Practice**: 6 trials (80, 0, 80, 0, 75, 0), each followed by the reveal, marked
+3. **Practice**: 6 trials (90, 0, 90, 0, 85, 0), each followed by the reveal, marked
    `PRACTICE k of 6` on the experimenter line. Pass: 5 of 6 right, including both 80s.
    The console prints every practice answer and, after each round, whether it passed
    and why not. One retry; a second failure ends the session as `PracticeFailed_`,
@@ -227,7 +227,7 @@ qcKids("data/raw/RRSTkids_9001_2026-10-28_1712.mat")
 
 ## Safety
 
-- No level above `cfg.child.hardCap` (85 % of the adult scale at most) is ever sent.
+- No level above `cfg.child.hardCap` (default 100, the full adult scale; Micah, 2026-10-30: no restriction below it) is ever sent.
   The configuration is rejected at start if any level is above the cap, and every
   level is checked again right before it goes to the device.
 - Calibration closes the wedge fully: do it before the child sits down.
@@ -266,8 +266,8 @@ Changed in response: the experimenter line on every screen and the console
 (`PRACTICE k of n`, `Trial n`, which key goes on), the tutorial (free play, the two
 demos, the answer cards), stars explained above, and a 1.0 s drain
 (`cfg.timing.drain`). Not changed: the practice levels, the pass rule and the cap.
-An adult failing practice at 80 % is a design question (the first adult pilot's
-threshold was 79 %, so 80 % is near threshold for an adult), now visible on the
+An adult failing practice at 80 % was near threshold (the first adult pilot's
+threshold was 79 %); practice is now 90/90/85 and the cap is full scale. The round outcome is visible on the
 console with the reason.
 
 ## Open questions
@@ -285,10 +285,11 @@ console with the reason.
   comparison says otherwise.
 - **The minimum slurp for a child.** 25 % of the reference and at least 0.10 L are
   guesses; the first child's free slurps and weak count will tell.
-- **The cap.** 85 % comes from one adult run. Children breathe with less flow, so the
-  same obstruction gives less pressure drop; check 70-85 % on a flow rig. The adult
-  tester's threshold was 79 %, close to the cap: a child whose threshold is above
-  85 % cannot be measured, and what to report then is undecided.
+- **The cap** was 85 % from one adult run until 2026-10-30, when Micah set it to the
+  full scale (100): children breathe with less flow, so the same obstruction gives
+  less pressure drop, and a cap below full scale left high thresholds unmeasurable.
+  `cfg.child.hardCap` remains for any site that wants one. Practice moved from
+  80/80/75 to 90/90/85 the same day, after an adult missed two of three at 80.
 - **The "low hit rate" flag misfires** for thresholds near 80 % (43 % of simulated
   children there were flagged). It should apply only when the estimated threshold is
   well below 80, or be dropped.

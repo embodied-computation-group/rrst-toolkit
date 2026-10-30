@@ -325,5 +325,6 @@ between them.
   volume and at least 0.10 L.
 - **Masking: keep the rain loop**, volume 0.6; cue sounds are mixed over it on a second
   PsychPortAudio slave.
+- **No cap below full scale** (Micah, later on 2026-10-30, after the first run): `cfg.child.hardCap` default 100, Psi grid 0:5:100, practice 90/90/85, pinch demo 90.
 - **The kids site has the same rig** (SFM3019 + SensorBridge). Flow feedback is the
   default; `cfg.flow.enabled = false` stays as a tested fallback only.

@@ -133,7 +133,7 @@ classdef TestKidsTutorial < matlab.unittest.TestCase
             cfg = kidsConfig();
             validateKidsConfig(cfg);
             tc.verifyTrue(cfg.tutorial.enabled);
-            tc.verifyEqual(cfg.tutorial.pinchLevel, 80);
+            tc.verifyEqual(cfg.tutorial.pinchLevel, 90);
             tc.verifyEqual(cfg.tutorial.demoOrder, ["pinch" "sleep"]);
             tc.verifyEqual(cfg.practice.nFree, 0, 'free play replaces the free slurps');
             tc.verifyLessThanOrEqual(cfg.tutorial.pinchLevel, cfg.child.hardCap);
@@ -181,12 +181,12 @@ classdef TestKidsTutorial < matlab.unittest.TestCase
             tc.assertNumElements(plan, 4);
             tc.verifyEqual([plan.kind], ["freeplay" "demo" "demo" "bridge"]);
             tc.verifyEqual([plan.name], ["freeplay" "pinch" "sleep" "bridge"]);
-            tc.verifyEqual([plan(1:3).level], [0 80 0], 'free play at 0, the pinch at pinchLevel');
+            tc.verifyEqual([plan(1:3).level], [0 90 0], 'free play at 0, the pinch at pinchLevel');
             tc.verifyEqual([plan.mousePose], ["" "pinch" "sleep" ""], 'the mouse during the slurps');
             tc.verifyEqual([plan.reveal], ["" "pinch" "sleep" ""], 'the reveal after the demo');
             tc.verifyEqual([plan.prompt], ["freeplay" "demo" "demo" "bridge"]);
             tc.verifyEqual(tc.markerOrder(plan), ["tutorial_start" "freeplay_start" ...
-                "freeplay_end" "demo_pinch_level_80" "demo_sleep_level_0" "tutorial_end"]);
+                "freeplay_end" "demo_pinch_level_90" "demo_sleep_level_0" "tutorial_end"]);
             for k = 1:numel(plan)
                 if plan(k).kind ~= "bridge"
                     kidsCheckLevel(plan(k).level, cfg);
