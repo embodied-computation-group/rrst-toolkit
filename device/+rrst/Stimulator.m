@@ -12,6 +12,13 @@ classdef Stimulator < handle
     %   [0, ScaleMax] is an error, never clipped. Every move waits for the firmware's
     %   confirmation (rrst.Device.moveTo) and is logged with its duration.
     %
+    %   Animating while the wedge moves: present, null, rest and park take
+    %   'WhileWaiting', fcn, passed to rrst.Device.moveTo: fcn() runs on every poll
+    %   iteration until the firmware confirms the move (draw a frame, note a key).
+    %     stim.present(level, 'WhileWaiting', @() frame());
+    %     stim.null('WhileWaiting', @() frame());
+    %   The confirmation is still checked as without it; see rrst.Device.
+    %
     %   'Motion', struct('speed', s, 'acceleration', a, 'chopperMode', m) makes every
     %   calibrate() set and check these first (rrst.Device.applyMotion), so a session
     %   never runs on whatever tuning the device loaded from EEPROM. Empty (default):
@@ -122,25 +129,36 @@ classdef Stimulator < handle
             steps = rrst.obstructionToSteps(level, obj.ScaleMax, obj.ZeroStep, obj.FullStep);
         end
 
-        function mv = present(obj, level, kind)
-            if nargin < 3, kind = 'stim'; end
+        function mv = present(obj, level, varargin)
+            %PRESENT Move to a stimulus level.
+            %   mv = stim.present(level)
+            %   mv = stim.present(level, kind)              kind for the log (default 'stim')
+            %   mv = stim.present(___, 'WhileWaiting', fcn)   fcn() while the wedge moves
+            kind = 'stim';
+            if mod(numel(varargin), 2) == 1
+                kind = varargin{1};
+                varargin = varargin(2:end);
+            end
             steps = obj.levelToSteps(level);
-            mv = obj.Device.moveTo(steps);
+            mv = obj.Device.moveTo(steps, varargin{:});
             obj.addLog(kind, level, steps, mv.elapsed);
         end
 
-        function mv = null(obj)
-            mv = obj.present(0, 'null');
+        function mv = null(obj, varargin)
+            %NULL Level 0 (wedge just touching the tube); takes 'WhileWaiting', fcn.
+            mv = obj.present(0, 'null', varargin{:});
         end
 
-        function [level, mv] = rest(obj)
+        function [level, mv] = rest(obj, varargin)
+            %REST A random level in RestRange; takes 'WhileWaiting', fcn.
             r = obj.RestRange;
             level = r(1) + (r(2) - r(1)) * rand(obj.Rng);
-            mv = obj.present(level, 'rest');
+            mv = obj.present(level, 'rest', varargin{:});
         end
 
-        function mv = park(obj)
-            mv = obj.Device.moveTo(obj.ParkStep);
+        function mv = park(obj, varargin)
+            %PARK Wedge well open, at ParkStep; takes 'WhileWaiting', fcn.
+            mv = obj.Device.moveTo(obj.ParkStep, varargin{:});
             obj.addLog('park', NaN, obj.ParkStep, mv.elapsed);
         end
 

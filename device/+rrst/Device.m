@@ -16,6 +16,19 @@ classdef Device < handle
     %     rrst:timeout            no complete reply within the timeout
     %   Every line sent and every reply received is kept in Transcript, so it can be
     %   saved with the session data.
+    %
+    %   Work while waiting: command and moveTo take 'WhileWaiting', fcn. fcn() is
+    %   called on every poll iteration while the reply is incomplete (then the usual
+    %   pause of PollInterval), e.g. to draw an animation frame while the wedge
+    %   moves:
+    %     mv = dev.moveTo(steps, 'WhileWaiting', @() drawNextFrame());
+    %     mv = dev.moveTo(steps, timeoutS, 'WhileWaiting', fcn);
+    %   It changes nothing else: the firmware's reply is still read and checked, and
+    %   the timeout still applies. fcn takes no input, must return quickly (a frame,
+    %   not a wait) and must not error: an error propagates and leaves the move's
+    %   reply unread (the next command logs it as unsolicited). To stop on a key,
+    %   let fcn note it and act after the move is confirmed.
+    %     rrst:badArgument        WhileWaiting is not a function handle, or an unknown option
 
     properties
         DefaultTimeout = 10        % s, for e/d/s
@@ -148,8 +161,12 @@ classdef Device < handle
             end
         end
 
-        function mv = moveTo(obj, steps, timeoutS)
-            if nargin < 3, timeoutS = obj.MoveTimeout; end
+        function mv = moveTo(obj, steps, varargin)
+            %MOVETO Move to an absolute step and check the firmware's confirmation.
+            %   mv = dev.moveTo(steps)
+            %   mv = dev.moveTo(steps, timeoutS)
+            %   mv = dev.moveTo(___, 'WhileWaiting', fcn)   fcn() on every poll
+            [timeoutS, waitFcn] = obj.options(obj.MoveTimeout, varargin);
             if ~obj.Calibrated
                 error('rrst:notCalibrated', 'Calibrate the device before moving.');
             end
@@ -159,7 +176,7 @@ classdef Device < handle
                     obj.MaxPosition, mat2str(steps));
             end
             t0 = tic;
-            lines = obj.command(["a"; string(sprintf('%d', steps))], timeoutS);
+            lines = obj.command(["a"; string(sprintf('%d', steps))], timeoutS, 'WhileWaiting', waitFcn);
             mv = rrst.parseMoveReply(lines);
             mv.requested = steps;
             mv.elapsed = toc(t0);
@@ -184,8 +201,12 @@ classdef Device < handle
             end
         end
 
-        function lines = command(obj, cmds, timeoutS)
+        function lines = command(obj, cmds, varargin)
             %COMMAND Send one or more lines and return the parsed reply up to the prompt.
+            %   lines = dev.command(cmds)                    DefaultTimeout
+            %   lines = dev.command(cmds, timeoutS)
+            %   lines = dev.command(___, 'WhileWaiting', fcn)   fcn() on every poll
+            [timeoutS, waitFcn] = obj.options(obj.DefaultTimeout, varargin);
             obj.checkUnsolicited();
             for c = string(cmds(:))'
                 writeline(obj.Port, c);
@@ -214,12 +235,40 @@ classdef Device < handle
                     error('rrst:timeout', 'No complete reply to "%s" within %g s. Partial reply: %s', ...
                         strjoin(string(cmds), '","'), timeoutS, strjoin(rrst.splitReply(buf), ' | '));
                 end
+                if ~isempty(waitFcn)
+                    waitFcn();
+                end
                 pause(obj.PollInterval);
             end
         end
     end
 
     methods (Access = private)
+        function [timeoutS, waitFcn] = options(~, defaultTimeout, args)
+            % Optional timeout (a number first), then name-value 'WhileWaiting', fcn.
+            timeoutS = defaultTimeout;
+            waitFcn = [];
+            if ~isempty(args) && isnumeric(args{1})
+                timeoutS = args{1};
+                args = args(2:end);
+            end
+            if mod(numel(args), 2) ~= 0
+                error('rrst:badArgument', 'Options come in name-value pairs (''WhileWaiting'', fcn).');
+            end
+            for k = 1:2:numel(args)
+                name = args{k};
+                if ~((ischar(name) && isrow(name)) || (isstring(name) && isscalar(name))) || ...
+                        ~strcmpi(name, 'WhileWaiting')
+                    error('rrst:badArgument', 'Unknown option; the only one is ''WhileWaiting''.');
+                end
+                f = args{k + 1};
+                if ~(isempty(f) || isa(f, 'function_handle'))
+                    error('rrst:badArgument', 'WhileWaiting must be a function handle (or empty).');
+                end
+                waitFcn = f;
+            end
+        end
+
         function setValue(obj, cmd, label, value)
             % 'f' and 'g' prompt for a value; the firmware confirms "<label> set to <value>".
             lines = obj.command([cmd; string(sprintf('%d', value))], obj.DefaultTimeout);
