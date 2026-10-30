@@ -255,6 +255,11 @@ end
 end
 
 function pill(w, colour, r, rad)
+% A bar with round ends; narrower than its two ends, an oval of its own size.
+if r(3) - r(1) <= 2 * rad
+    Screen('FillOval', w, colour, r);
+    return
+end
 Screen('FillRect', w, colour, [r(1) + rad, r(2), r(3) - rad, r(4)]);
 Screen('FillOval', w, colour, disc(r(1) + rad, (r(2) + r(4)) / 2, rad));
 Screen('FillOval', w, colour, disc(r(3) - rad, (r(2) + r(4)) / 2, rad));
