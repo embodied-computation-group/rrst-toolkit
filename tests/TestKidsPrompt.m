@@ -42,6 +42,10 @@ classdef TestKidsPrompt < matlab.unittest.TestCase
                 "question",    struct()
                 "reveal",      struct('phase', "practice")
                 "reveal",      struct('phase', "demo")
+                "reveal",      struct('phase', "main")
+                "feedback",    struct('phase', "practice", 'correct', true)
+                "feedback",    struct('phase', "practice", 'correct', false)
+                "feedback",    struct('phase', "main", 'correct', false)
                 "reward",      struct()
                 "cup",         struct()
                 "rest",        struct('restS', 30)
@@ -116,6 +120,18 @@ classdef TestKidsPrompt < matlab.unittest.TestCase
                     tc.verifyFalse(contains(lower(line), 'catch'), line);
                 end
             end
+        end
+
+        function feedbackLineSaysRightOrNot(tc)
+            % The cards feedback (2026-10-30): the child sees the gold card; the
+            % experimenter's line says whether the answer was right.
+            tc.verifyEqual(kidsPrompt("feedback", struct('phase', "practice", 'correct', true)), ...
+                'Practice: right. The gold card shows the truth.');
+            tc.verifyEqual(kidsPrompt("feedback", struct('phase', "practice", 'correct', false)), ...
+                'Practice: not right. The gold card shows the truth.');
+            tc.verifyEqual(kidsPrompt("feedback", struct('phase', "main", 'correct', true)), ...
+                'Feedback: right. The gold card shows the truth.');
+            tc.verifyError(@() kidsPrompt("feedback", struct('phase', "practice")), 'rrst:badPrompt');
         end
 
         function unknownMomentIsAnError(tc)
