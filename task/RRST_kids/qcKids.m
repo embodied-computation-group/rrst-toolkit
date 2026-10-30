@@ -109,6 +109,7 @@ ylabel(ax, 'Response time (s, experimenter click)'); title(ax, 'Response time', 
 ax = nexttile(tl, [1 3]); axis(ax, 'off');
 f = kidsFlags(kp, cfg);
 prac = S.result.practice;
+if ~isempty(prac), prac = prac([prac.phase] == "practice"); end   % not the tutorial's trials
 lines = [
     string(sprintf('Threshold        %.1f %%   (SE %.1f)', S.threshold, S.seThreshold))
     string(sprintf('Slope (beta)     %.1f', S.slope))

@@ -79,7 +79,7 @@ st = dev.status();
 rec = rrst.loadDeviceRecord(st.deviceId, cfg.devicesDir);
 stim = rrst.Stimulator(dev, rec, 'Unit', cfg.stim.unit, 'RestRange', cfg.stim.restRange, ...
     'CalibrationTolerance', cfg.stim.calibrationTolerance, 'Motion', cfg.device.motion);
-stim.validateLevels([cfg.psi.stimRange cfg.practice.levels cfg.child.hardCap]);
+stim.validateLevels([cfg.psi.stimRange cfg.practice.levels cfg.tutorial.pinchLevel cfg.child.hardCap]);
 fprintf('Device %s, firmware %s\n', st.deviceId, st.softwareVersion);
 
 if kidsWaitsForRecorder(cfg)               % never for a mock device or a simulated child

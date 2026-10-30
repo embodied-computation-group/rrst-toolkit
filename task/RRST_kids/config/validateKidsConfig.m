@@ -12,10 +12,25 @@ end
 if ~(isscalar(c.hardCap) && c.hardCap > 0 && c.hardCap <= ABSOLUTE_MAX)
     bad('child.hardCap must be in (0, %d] (got %g).', ABSOLUTE_MAX, c.hardCap);
 end
+if ~isfield(cfg, 'tutorial') || ~isstruct(cfg.tutorial)
+    bad('the tutorial block is missing; start from kidsConfig().');
+end
+tu = cfg.tutorial;
+if ~isfield(tu, 'enabled') || ~isLogicalScalar(tu.enabled)
+    bad('tutorial.enabled must be true or false.');
+end
+if ~isfield(tu, 'pinchLevel') || ~(isPositive(tu.pinchLevel) && tu.pinchLevel <= c.hardCap)
+    bad('tutorial.pinchLevel (the pinch demo) must be in (0, %g], the cap.', c.hardCap);
+end
+if ~isfield(tu, 'demoOrder') || ~(isstring(tu.demoOrder) || iscellstr(tu.demoOrder)) || ...
+        isempty(tu.demoOrder) || ~all(ismember(string(tu.demoOrder), ["pinch" "sleep"])) || ...
+        numel(unique(string(tu.demoOrder))) < numel(tu.demoOrder)
+    bad('tutorial.demoOrder must list "pinch" and/or "sleep", each once.');
+end
 levels = [cfg.psi.stimRange(:); cfg.psi.priorAlphaRange(:); cfg.practice.levels(:); ...
-    cfg.stim.restRange(:); c.startLevel];
+    cfg.stim.restRange(:); c.startLevel; tu.pinchLevel];
 if any(levels > c.hardCap) || any(levels < 0)
-    bad('every level (grid, prior, practice, rest, start) must be in [0, %g]; max is %g.', ...
+    bad('every level (grid, prior, practice, rest, start, tutorial) must be in [0, %g]; max is %g.', ...
         c.hardCap, max(levels));
 end
 if ~ismember(0, cfg.psi.stimRange) || ~ismember(c.startLevel, cfg.psi.stimRange)
@@ -29,6 +44,17 @@ if ~(isscalar(c.slurps) && c.slurps >= 1 && c.slurps == round(c.slurps))
 end
 if c.rampMax <= 0 || c.stopMinTrials > c.numPsiTrials
     bad('child.rampMax must be positive and child.stopMinTrials at most numPsiTrials.');
+end
+nFree = cfg.practice.nFree;
+if ~(isscalar(nFree) && nFree >= 0 && nFree == round(nFree))
+    bad('practice.nFree must be a whole number from 0.');
+end
+if tu.enabled && nFree > 0
+    bad(['practice.nFree must be 0 with the tutorial (its free play replaces the free ' ...
+        'slurps); drop the first %d practice levels, or set tutorial.enabled = false.'], nFree);
+end
+if ~isfield(cfg.timing, 'drain') || ~isPositive(cfg.timing.drain)
+    bad('timing.drain (s, the milkshake draining after a slurp) must be a positive number.');
 end
 if numel(cfg.practice.levels) <= cfg.practice.nFree
     bad('practice.levels must include questioned trials after the %d free ones.', cfg.practice.nFree);

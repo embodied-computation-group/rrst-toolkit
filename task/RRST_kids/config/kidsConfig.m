@@ -52,9 +52,20 @@ cfg.psi.priorBetaRange = linspace(log10(2), log10(16), 40);   % log10 beta
 cfg.psi.priorGammaRange = 0:0.05:0.5;    % yes-bias (false-alarm rate), marginalised
 cfg.psi.priorLambdaRange = 0.10;         % lapses: children miss more trials than adults
 
+% --- Intro tutorial (between the story and the practice) ----------------------
+% Free play (wedge at 0: the child slurps as often as they like and every slurp sets
+% the reference slurp), then one demo per demoOrder with no question: "pinch" at
+% pinchLevel with the mouse pinching the straw during the slurps, "sleep" at 0 with
+% the mouse asleep, each followed by its reveal; then the answer cards, explained.
+cfg.tutorial.enabled = true;             % false: the old free slurps (practice.nFree)
+cfg.tutorial.pinchLevel = 80;            % % of the adult scale; at most child.hardCap
+cfg.tutorial.demoOrder = ["pinch" "sleep"];
+
 % --- Practice ----------------------------------------------------------------
-cfg.practice.levels = [0 0 80 0 80 0 75 0];   % first two: free slurps, no question
-cfg.practice.nFree = 2;
+cfg.practice.levels = [80 0 80 0 75 0];  % questioned trials, the truth shown after each
+cfg.practice.nFree = 0;                  % free slurps (no question) before them, counted in
+                                         % levels: 0 with the tutorial (free play replaces
+                                         % them); without it nFree = 2, levels [0 0 80 0 80 0 75 0]
 cfg.practice.passMin = 5;                % correct of the questioned trials...
 cfg.practice.mustPass = [80 80];         % ...and both trials at 80 correct
 cfg.practice.maxRounds = 2;
@@ -64,6 +75,9 @@ cfg.timing.moveMin = 1.5;                % mouse animation while the wedge moves
 cfg.timing.inhale = 1.2;                 % per slurp: belly grows, a third of the milkshake goes
 cfg.timing.exhale = 1.8;                 % belly shrinks, bubbles rise. Pacing only: the child
                                          % need not follow it; Space ends the slurps early
+                                         % (timed animation, no airflow sensor)
+cfg.timing.drain = 1.0;                  % breath-driven: a third of the milkshake drains with
+                                         % bubbles after each counted slurp (and in free play)
 cfg.timing.response = 8;                 % experimenter clicks the child's answer
 cfg.timing.reward = 1.0;
 cfg.timing.dance = 2.0;                  % a cup is full

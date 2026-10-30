@@ -2,8 +2,8 @@ function result = kidsMain(cfg, stim, vars)
 %KIDSMAIN Run one RRST-Kids session on an open device (called by runKidsRRST).
 %   result = kidsMain(cfg, stim, vars)
 %
-%   Flow: calibrate (nobody on the tube) -> story -> practice with feedback ->
-%   main yes/no trials with stars, cups and breaks -> sticker. Each trial: the
+%   Flow: calibrate (nobody on the tube) -> story -> tutorial -> practice with
+%   feedback -> main yes/no trials with stars, cups and breaks -> sticker. Each trial: the
 %   mouse scampers while the wedge moves (catch trials: level 0), the monster waits
 %   ("Ready to slurp?") until the experimenter presses Space, then cfg.child.slurps
 %   slurps at that level (kidsSlurpPhase: with the airflow sensor the monster drinks
@@ -11,16 +11,26 @@ function result = kidsMain(cfg, stim, vars)
 %   without it a timed animation; Space ends them early, x marks a bad breath), then
 %   the experimenter clicks the child's answer.
 %
+%   Tutorial (cfg.tutorial, kidsTutorialPlan): free play at level 0 (kidsFreePlay:
+%   the child slurps as often as they like, Space ends it after a slurp or when held
+%   1 s), then the demos with no question (the mouse pinching the straw during the
+%   slurps at cfg.tutorial.pinchLevel, then asleep at 0, each followed by its
+%   reveal), then the answer cards for the experimenter to explain (Space). Its
+%   trials are saved in result.practice with phase "tutorial" and answer "freeplay",
+%   "demo_pinch" or "demo_sleep". With the tutorial off, cfg.practice.nFree free
+%   slurp trials open each practice round instead (the old path).
+%
 %   Airflow: vars.flowSrc is the flow source opened by runKidsRRST (flowInlet, or
 %   kidsSimFlow for mock and simulated runs); with cfg.flow.enabled it drives a
-%   kidsFlow. The free practice slurps set the child's reference slurp (console line):
-%   every free slurp of type end or weak (kidsReferenceSlurps), since before the
-%   reference exists a small child's slurps can all be weak; free slurps are never
-%   marked weak on screen (kidsSlurpPhase, io.free).
+%   kidsFlow. Free play (or the free practice slurps) sets the child's reference
+%   slurp (console line): every free slurp of type end or weak (kidsSetReference),
+%   since before the reference exists a small child's slurps can all be weak; free
+%   slurps and demo slurps are never marked weak on screen (kidsSlurpPhase, io.free).
 %   Breath-driven trials whose phase Space ends with no slurp counted are repeated
 %   later (answer "noslurp"). A lost stream is looked for again before each trial.
 %   For a simulated flow (kidsSimFlow), cfg.child.slurps breaths (25 slm, 1.3 s,
-%   2.5 s apart, the first 0.5 s after Space) are scheduled before each slurp phase.
+%   2.5 s apart, the first 0.5 s after Space) are scheduled before each slurp phase,
+%   and two before free play (a simulated child ends it after two).
 %   Per trial: tr.slurps (every slurp the detector saw), tr.shortSlurps, tr.flowLost.
 %
 %   Sound: kidsSound plays the rain and the cues: ready (Ready to slurp?, end of a
@@ -45,13 +55,16 @@ function result = kidsMain(cfg, stim, vars)
 %   cfg.debug.timeScale shortens every duration.
 %
 %   LSL markers (rrstMarker; no-ops unless runKidsRRST opened the stream):
-%   calibration_start/end, story, practice_start (each round), main_start, and per
+%   calibration_start/end, story, tutorial_start, freeplay_start/end,
+%   demo_pinch_level_<x> and demo_sleep_level_0 (move confirmed, in place of the
+%   trial's level marker), tutorial_end, practice_start (each round), main_start, and per
 %   trial trial_<n>_level_<x> (move confirmed; catch trials level_0), trial_<n>_go
 %   (Space), slurp_<k>_onset / slurp_<k>_end_<L>_<slm> / slurp_<k>_weak|overlong
 %   (kidsSlurpPhase), question (screen onset), answer_yes|answer_no|bad_breath|no_answer|pause,
 %   trial_<n>_correct|wrong (answered trials: "yes" on a load or "no" on a catch is
 %   correct); rest_start/end; aborted (Esc or error) or done. n counts every trial
-%   run, free slurps and repeats included, so each n is unique; it is tr.n.
+%   run, free play, demos, free slurps and repeats included, so each n is unique;
+%   it is tr.n.
 
 ts = cfg.debug.timeScale;
 txt = kidsText(cfg.text.language);
@@ -84,6 +97,7 @@ t0 = GetSecs;
 nRun = 0;                                    % trials run so far (marker and tr.n)
 nMain = 0;                                   % main trials run so far (the prompt's "Trial n")
 expLine = '';                                % the experimenter's line (kidsPrompt)
+sceneMouse = "";                             % mouse pose forced on every scene (tutorial demos)
 
 try
     scr = openScreen(cfg);
@@ -107,6 +121,9 @@ try
         if beat == "story1", rrstMarker('story', tBeat); end
         if st == "abort" || holdBeat(beat, progress), finish("aborted"); return; end
     end
+
+    % Tutorial: free play, the demos (pinch, sleep), the answer cards
+    if tutorial(progress), finish("aborted"); return; end
 
     % Practice
     passed = false;
@@ -242,7 +259,11 @@ end
         show(scr, s, prog);
         playCue(cue);
         if level == 0, mv = stim.null(); else, mv = stim.present(level); end
-        rrstMarker(kidsMarkerLabel("level", tr.n, level));   % move confirmed (as the adult task)
+        if isfield(pr, 'marker')                           % tutorial demo: demo_<name>_level_<x>
+            rrstMarker(char(pr.marker));
+        else
+            rrstMarker(kidsMarkerLabel("level", tr.n, level));   % move confirmed (as the adult task)
+        end
         tr.moveT = mv.elapsed;
         status = animate(cfg.timing.moveMin - (GetSecs - tMove), @(p) kidsBeat("move", p, c), prog);
         if status ~= "", return; end
@@ -251,7 +272,12 @@ end
             if src.reconnect(0.5), fprintf('Airflow stream is back.\n'); end
         end
         % The experimenter starts the slurps when the child is ready (Space)
-        say("ready", pr);
+        if pr.phase == "demo"
+            say("demo", pr);
+            sceneMouse = pr.mousePose;              % the mouse pinching or asleep, until the reveal
+        else
+            say("ready", pr);
+        end
         if readyScreen(prog), status = "abort"; return; end
         rrstMarker(kidsMarkerLabel("go", tr.n));
         pr.slurps = cfg.child.slurps;
@@ -263,8 +289,10 @@ end
         end
         io = struct('draw', @(s) show(scr, s, prog), 'keys', @phaseKeys, 'now', @GetSecs, ...
             'marker', @(label, t) rrstMarker(label, t), 'sound', @playCue, ...
-            'prompt', @(msg) fprintf('%s\n', msg), 'sim', ~isempty(sim), 'free', ~ask);
+            'prompt', @(msg) fprintf('%s\n', msg), 'sim', ~isempty(sim), 'free', ~ask, ...
+            'label', ifelse(pr.phase == "demo", 'Demo slurp', 'Free slurp'));
         [status, tr.slurps, sInfo] = kidsSlurpPhase(fl, cfg, io);
+        sceneMouse = "";
         tr.slurpT = sInfo.durationS;
         tr.shortSlurps = sInfo.shortSlurps;
         tr.flowLost = sInfo.flowLost;
@@ -449,19 +477,86 @@ end
 
     function setReference(s)
         % The child's reference slurp from every free slurp of type end or weak
-        % (kidsReferenceSlurps; plan section 3.2). kidsFlow clamps it to [0.15, 2] L.
+        % (kidsSetReference; plan section 3.2). kidsFlow clamps it to [0.15, 2] L.
         if isempty(fl), return; end
-        s = kidsReferenceSlurps(s);
-        if isempty(s)
-            [minL, fullL] = fl.setReference([]);
-            fprintf(2, ['No free slurp detected: the reference stays at %.2f L. Belly full at ' ...
-                '%.2f L; a slurp counts above %.2f L. Check the mouthpiece.\n'], fl.refVolume, fullL, minL);
-        else
-            [minL, fullL] = fl.setReference([s.volumeL]);
-            fprintf(['Reference slurp %.2f L (median of %d free slurps: %.2f L), peak %.0f slm. ' ...
-                'Belly full at %.2f L; a slurp counts above %.2f L.\n'], ...
-                fl.refVolume, numel(s), median([s.volumeL]), median([s.peakSlm]), fullL, minL);
+        [msg, found] = kidsSetReference(fl, s);
+        if found, fprintf('%s\n', msg); else, fprintf(2, '%s\n', msg); end
+    end
+
+    function aborted = tutorial(prog)
+        % The intro tutorial (kidsTutorialPlan): free play, the demos, the bridge.
+        % Its trials go to practice with phase "tutorial". true on Esc.
+        aborted = false;
+        tutPlan = kidsTutorialPlan(cfg);
+        for iStep = 1:numel(tutPlan)
+            step = tutPlan(iStep);
+            switch step.kind
+                case "freeplay"
+                    aborted = freePlay(step, prog);
+                case "demo"
+                    dInfo = struct('isCatch', step.level == 0, 'proposed', NaN, 'limited', false, 'xIndex', NaN);
+                    dPr = struct('phase', "demo", 'demo', step.name, 'marker', step.markersBefore, ...
+                        'mousePose', step.mousePose);
+                    [dTr, dStatus] = runTrial(step.level, dInfo, false, prog, dPr);
+                    if dStatus == "abort", aborted = true; return; end
+                    dTr.phase = "tutorial";
+                    dTr.answer = "demo_" + step.name;
+                    practice(end + 1) = dTr;
+                    say("reveal", struct('phase', "demo"));
+                    aborted = playBeat("reveal", prog, step.level) == "abort";
+                case "bridge"
+                    % The answer cards, no pointer: the experimenter explains them
+                    say("bridge");
+                    flipQuestion();
+                    aborted = waitGo(@flipQuestion);
+            end
+            if aborted, return; end
+            for mk = step.markersAfter, rrstMarker(char(mk)); end
         end
+    end
+
+    function aborted = freePlay(step, prog)
+        % Tutorial free play (kidsFreePlay) at level 0, after the mouse has run.
+        nRun = nRun + 1;
+        fTr = struct('n', nRun, 'phase', "tutorial", 'level', 0, 'isCatch', true, ...
+            'proposed', NaN, 'limited', false, 'answer', "freeplay", 'response', NaN, 'rt', NaN, ...
+            'moveT', NaN, 'slurpT', NaN, 'tStart', GetSecs - t0, 'slurps', [], ...
+            'shortSlurps', false, 'flowLost', false);
+        tMove = GetSecs;
+        c = beatCtx(prog);
+        say("move");
+        [s, ~, cue] = kidsBeat("move", 0, c);
+        show(scr, s, prog);
+        playCue(cue);
+        mv = stim.null();
+        fTr.moveT = mv.elapsed;
+        for mk = step.markersBefore, rrstMarker(char(mk)); end
+        aborted = animate(cfg.timing.moveMin - (GetSecs - tMove), @(p) kidsBeat("move", p, c), prog) == "abort";
+        if aborted, return; end
+        if ~isempty(fl) && fl.lost && ismethod(src, 'reconnect')
+            if src.reconnect(0.5), fprintf('Airflow stream is back.\n'); end
+        end
+        say("freeplay");
+        if isa(src, 'kidsSimFlow')                     % simulated flow: two free slurps
+            src.quiet();
+            src.breathe(25, 1.3, 2, 2.5, 0.5);
+        end
+        io = struct('draw', @(s) show(scr, s, prog), 'keys', @phaseKeys, 'now', @GetSecs, ...
+            'marker', @(label, t) rrstMarker(label, t), 'sound', @playCue, ...
+            'prompt', @(msg) fprintf('%s\n', msg), 'sim', ~isempty(sim));
+        [fStatus, fTr.slurps, fInfo] = kidsFreePlay(fl, cfg, io);
+        fTr.slurpT = fInfo.durationS;
+        fTr.flowLost = ~isempty(fl) && fl.lost;
+        if isempty(sim), waitRelease(); end
+        aborted = fStatus == "abort";
+        if ~aborted
+            practice(end + 1) = fTr;
+        end
+    end
+
+    function flipQuestion()
+        drawQuestion();
+        Screen('Flip', scr.win);
     end
 
     function tFlip = show(scrIn, s, prog)
@@ -474,6 +569,7 @@ end
         if ~isfield(s, 'flavour'), s.flavour = s.cupsDone + 1; end
         if ~isfield(s, 't'), s.t = GetSecs - t0; end
         s.text = withPrompt(s);
+        if sceneMouse ~= "", s.mousePose = sceneMouse; end
         kidsScene(scrIn, s);
         tFlip = Screen('Flip', scrIn.win);
     end

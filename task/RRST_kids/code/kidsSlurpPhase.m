@@ -15,6 +15,8 @@ function [status, slurps, info] = kidsSlurpPhase(fl, cfg, io)
 %         io.sim              true for a simulated child: Space never ends the phase
 %         io.free             (optional, default false) free slurps: the tutorial
 %                             before practice, see below
+%         io.label            (optional, default 'Free slurp') the console's name
+%                             for a free slurp
 %
 %   status   "done"   cfg.child.slurps slurps counted (or animated)
 %            "skip"   Space ended the phase early (info.shortSlurps says if short)
@@ -66,6 +68,8 @@ tStart = io.now();
 info = struct('shortSlurps', false, 'flowLost', false, 'counted', 0, 'durationS', NaN);
 breath = ~isempty(fl) && cfg.flow.feedback == "breath";
 free = isfield(io, 'free') && logical(io.free);
+freeLabel = 'Free slurp';
+if isfield(io, 'label'), freeLabel = char(io.label); end
 
 if isempty(fl)
     [status, done] = timed(1, false);
@@ -108,8 +112,8 @@ info.durationS = io.now() - tStart;
                         drain = struct('t0', io.now(), 'c', c, ...
                             'from', kidsBreathScale(e.volumeL, fl.refVolume, frac));
                         if free
-                            io.prompt(sprintf('Free slurp %d: %.2f L, peak %.0f slm (%d of %d).', ...
-                                k, e.volumeL, e.peakSlm, c, n));
+                            io.prompt(sprintf('%s %d: %.2f L, peak %.0f slm (%d of %d).', ...
+                                freeLabel, k, e.volumeL, e.peakSlm, c, n));
                         else
                             io.prompt(sprintf('Slurp %d counted: %.2f L, peak %.0f slm (%d of %d).', ...
                                 k, e.volumeL, e.peakSlm, c, n));
@@ -121,8 +125,8 @@ info.durationS = io.now() - tStart;
                             c = c + 1;
                             io.sound("bubbles");
                             drain = struct('t0', io.now(), 'c', c, 'from', from);
-                            io.prompt(sprintf(['Free slurp %d: %.2f L, peak %.0f slm (%d of %d; ' ...
-                                'small, sets the reference).'], k, e.volumeL, e.peakSlm, c, n));
+                            io.prompt(sprintf(['%s %d: %.2f L, peak %.0f slm (%d of %d; ' ...
+                                'small, sets the reference).'], freeLabel, k, e.volumeL, e.peakSlm, c, n));
                         else
                             io.sound("tryagain");
                             deflate = struct('t0', io.now(), 'from', from, 'pose', "tryagain");
