@@ -164,6 +164,37 @@ classdef TestKidsSlurpPhase < matlab.unittest.TestCase
             tc.verifyEmpty(tc.prompts(contains(tc.prompts, "No slurp seen")));
         end
 
+        function drainLastsTimingDrainNotExhale(tc)
+            % After the first real run (2026-10-30) three slurps took about 12 s; the
+            % breath path's drain has its own, shorter length (cfg.timing.drain).
+            cfg = tc.config();
+            cfg.timing.drain = 0.6;
+            cfg.timing.exhale = 2.5;                    % the timed fallback's, unused here
+            [fl, src] = tc.flow(cfg);
+            src.breathe(30, 1.5, 1, 0, 0.5);
+            tc.keyPlan = {6, "abort"};
+            kidsSlurpPhase(fl, cfg, tc.fakeIo());
+            pose = tc.poses();
+            t = tc.drawT(pose == "ahh");
+            tc.assertNotEmpty(t);
+            tc.verifyEqual(t(end) - t(1), cfg.timing.drain, 'AbsTol', 2 * tc.FRAME);
+            bubbles = tc.field('bubbles');
+            tb = tc.drawT(~isnan(bubbles));
+            tc.verifyEqual(tb(end) - tb(1), cfg.timing.drain, 'AbsTol', 2 * tc.FRAME);
+            cup = tc.field('cup');
+            tc.verifyEqual(cup(tc.drawT >= t(1) + cfg.timing.drain + 0.05), ...
+                repmat(2/3, 1, nnz(tc.drawT >= t(1) + cfg.timing.drain + 0.05)), 'AbsTol', 1e-9, ...
+                'a third drunk, within cfg.timing.drain');
+        end
+
+        function defaultDrainIsOneSecond(tc)
+            cfg = kidsConfig();
+            tc.verifyEqual(cfg.timing.drain, 1.0);
+            tc.verifyEqual(cfg.timing.exhale, 1.8, 'the timed fallback keeps its exhale');
+            cfg.timing.drain = 0;
+            tc.verifyError(@() validateKidsConfig(cfg), 'rrst:badConfig');
+        end
+
         function bellyFollowsTheBreathAndBubblesFollowTheEnd(tc)
             cfg = tc.config();
             [fl, src] = tc.flow(cfg);
