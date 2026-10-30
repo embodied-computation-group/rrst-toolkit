@@ -13,6 +13,8 @@ classdef kidsSimFlow < handle
     %   (flowInlet help: live times do, at chunk boundaries). The jitter has its own
     %   random stream, so the noise is the same with and without it.
     %   src.lost is a settable logical, to simulate a lost stream.
+    %   src.record = true keeps every sample pull() returns; src.recorded() gives them,
+    %   N-by-2 in pull order (as flowInlet; standalone recording saves them).
     %
     %   src.advance(dt)              move the clock on by dt s, generating those samples
     %   src.breathe(peak, dur)       one inhalation starting now (the clock's time in
@@ -35,6 +37,7 @@ classdef kidsSimFlow < handle
         backflowSlm = -2             % T-valve backflow after each breath (handbook/shared/airflow-sensor.md)
         backflowDur = 1.5            % s
         extra = []                   % [] or function handle t -> slm
+        record = false               % keep what pull() returns (recorded)
     end
 
     properties (SetAccess = private)
@@ -51,6 +54,7 @@ classdef kidsSimFlow < handle
         rng
         jitterRng
         clock = []
+        rec = []                     % flowRecord (task/helpers), once record has been on
     end
 
     methods
@@ -103,6 +107,20 @@ classdef kidsSimFlow < handle
             end
             s = src.buf;
             src.buf = zeros(0, 2);
+            if src.record
+                if isempty(src.rec)
+                    src.rec = flowRecord();
+                end
+                src.rec.append(s);
+            end
+        end
+
+        function x = recorded(src)
+            if isempty(src.rec)
+                x = zeros(0, 2);
+            else
+                x = src.rec.data();
+            end
         end
 
         function breathe(src, peakSlm, durS, n, intervalS, delayS)

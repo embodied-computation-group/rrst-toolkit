@@ -6,6 +6,9 @@ function file = kidsSave(cfg, vars, stim, result)
 %   slurps, NaN if none), next to the trial's shortSlurps and flowLost.
 %   Name: [MOCK_|SIM_][Aborted_|Error_|PracticeFailed_]RRSTkids_<ID>_<date>.mat, with _2, _3
 %   added if that name is taken (never overwrites).
+%   Standalone recording (kidsMain adds result.flow, N-by-2 [t flowSlm], and
+%   result.markers, a table of t and label, both on the GetSecs clock): the flow is
+%   also written to <name>_flow.csv (columns t, flow), next to the .mat.
 prefix = "";
 switch extractBefore(result.outcome + ":", ":")
     case "aborted", prefix = "Aborted_";
@@ -37,6 +40,14 @@ rows = [result.practice, result.trials];
 if ~isempty(rows)
     writetable(flatRows(rows(:)), fullfile(cfg.output.dir, name + ".csv"));
 end
+if isfield(result, 'flow')
+    flowFile = fullfile(cfg.output.dir, name + "_flow.csv");
+    writeFlow(flowFile, result.flow);
+    nMarkers = 0;
+    if isfield(result, 'markers'), nMarkers = height(result.markers); end
+    fprintf('Flow: %d samples (%.1f min) and %d markers saved; the flow also in %s\n', ...
+        size(result.flow, 1), size(result.flow, 1) / 1000 / 60, nMarkers, flowFile);
+end
 fprintf('Outcome: %s. Saved %s\n', result.outcome, file);
 if ~isnan(session.threshold)
     fprintf('Threshold %.1f %% (SE %.1f), slope %.1f, false alarms (guess) %.2f\n', ...
@@ -44,6 +55,19 @@ if ~isnan(session.threshold)
 end
 if ~isempty(result.flags) && result.flags.unusable
     fprintf(2, 'FLAG: threshold unusable: %s\n', result.flags.reason);
+end
+end
+
+function writeFlow(file, flow)
+% t (GetSecs, s) and flow (slm), one row per sample; fprintf: 1.2 million rows in seconds.
+fid = fopen(file, 'w');
+if fid < 0
+    error('rrst:saveFailed', 'Cannot write %s.', file);
+end
+closer = onCleanup(@() fclose(fid)); %#ok<NASGU>
+fprintf(fid, 't,flow\n');
+if ~isempty(flow)
+    fprintf(fid, '%.6f,%.4f\n', flow.');
 end
 end
 

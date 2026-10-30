@@ -31,6 +31,15 @@ cfg.markers.lsl = true;
 cfg.markers.requireRecorder = true;      % wait before calibration until a recorder receives the markers
 cfg.markers.liblslDir = "C:\toolbox\liblsl-Matlab";
 
+% --- Recording ---------------------------------------------------------------------
+% "physio": the Physio Recorder records flow, markers (and PLUX); start it first (RRST
+% preset); a real session waits until it receives the markers (markers.requireRecorder).
+% "standalone": no Physio Recorder. The task starts flow_lsl.py itself if no "Flow"
+% stream is running (and stops it at the end), never waits for a recorder, and saves
+% every flow sample and marker it sees: result.flow, result.markers, <name>_flow.csv.
+% Markers still go to LSL when markers.lsl is true.
+cfg.recording.mode = "physio";            % "physio" | "standalone"
+
 % --- Child safety and procedure --------------------------------------------
 cfg.child.hardCap = 100;                 % % of the adult scale; never exceeded (100 = full scale, the absolute maximum; Micah 2026-10-30: no restriction below it)
 cfg.child.rampMax = 15;                  % no level more than this above the highest level so far
@@ -110,6 +119,11 @@ cfg.flow.refVolumeDefault = 0.6;          % L, used until the free slurps have s
 cfg.flow.slurpTimeout = 8;                % s without a slurp onset: experimenter prompt
 cfg.flow.maxSlurpDur = 6;                 % s: a "slurp" longer than this is a leak/draught, not counted
 cfg.flow.smoothHz = 5;                    % low-pass before detection
+% The streamer the task starts in standalone mode: plux-lsl, next to this toolkit on
+% the stim laptop. Checked only when it has to be started. Moved? Set all three.
+cfg.flow.pluxDir = fullfile(fileparts(root), 'plux-lsl');
+cfg.flow.streamer = fullfile(cfg.flow.pluxDir, '.venv', 'Scripts', 'python.exe');
+cfg.flow.streamerScript = fullfile(cfg.flow.pluxDir, 'flow_lsl.py');
 
 % --- Output --------------------------------------------------------------------
 cfg.output.dir = fullfile(root, 'data', 'raw');

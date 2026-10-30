@@ -3,6 +3,7 @@ classdef flowInlet < handle
 %   src = flowInlet(liblslDir, timeoutS)   find the "Flow" stream (waits up to
 %                                          timeoutS, default 10) and connect to it
 %   src = flowInlet(..., Name="FlowTest")  another stream name (tests)
+%   src = flowInlet(..., BufferS=600)      keep up to 600 s in the inlet (default 5)
 %   s = src.pull()             N-by-2 [t flowSlm]: every sample since the last call,
 %                              0-by-2 if none. t is on the GetSecs clock
 %                              (src.clockBase "GetSecs"), or on the LSL clock when
@@ -14,13 +15,18 @@ classdef flowInlet < handle
 %   [ok, msg] = src.check(d)   read d s (default 1) and apply the quality rules of
 %                              plux-lsl/flow_quality.py; msg names the fix
 %   src.close()                release the inlet (also when src is deleted)
+%   src.record = true          keep every sample pull() returns from now on
+%   x = src.recorded()         those samples, N-by-2 [t flowSlm] in pull order
+%                              (0-by-2 if record was never on). Standalone recording
+%                              (runKidsRRST) saves them; open with a long BufferS
+%                              then, so nothing is dropped between pulls.
 %
 %   The stream has 3 channels [nSeq flow temp], flow in slm, positive = inhalation,
 %   about 1000 Hz pushed in chunks every ~20 ms. Gaps in nSeq (samples lost at the
 %   bridge) are counted in nGaps and nDropped. LSL times are moved onto GetSecs with
 %   the offset between the two clocks measured at each pull, as rrstMarker does.
-%   The inlet keeps 5 s of data, so a caller that pauses pulling loses nothing
-%   younger than that.
+%   The inlet keeps BufferS s of data (default 5), so a caller that pauses pulling
+%   loses nothing younger than that.
 %
 %   Times are the streamer's: flow_lsl.py stamps the newest sample of each chunk
 %   with the time it asked the bridge, and LSL spaces the earlier ones at the
@@ -30,6 +36,7 @@ classdef flowInlet < handle
 
     properties
         staleAfter (1, 1) double {mustBePositive} = 1.0   % s without samples -> lost
+        record (1, 1) logical = false                       % keep what pull() returns (recorded)
     end
 
     properties (SetAccess = private)
@@ -41,6 +48,7 @@ classdef flowInlet < handle
         nSamples double = 0         % samples received since the inlet was opened
         nGaps double = 0            % jumps in nSeq
         nDropped double = 0         % samples missing in those jumps
+        bufferS double = flowInlet.BufferS   % s of data the inlet keeps between pulls
     end
 
     properties (Access = private)
@@ -49,12 +57,13 @@ classdef flowInlet < handle
         timeCorrection double = 0   % s, added to the stream's times (0 on the same PC)
         lastSeq double = NaN
         lastDataT double            % lsl_local_clock of the last pull that got data
+        rec = []                    % flowRecord, once record has been on
     end
 
     properties (Constant)
         RangeSlm = [-10 240]        % SFM3019-240 measurement range
         MinBreathSlm = 3            % a deliberate inhalation peaks well above this
-        BufferS = 5                 % inlet buffer
+        BufferS = 5                 % inlet buffer (s), default
     end
 
     methods
@@ -63,6 +72,7 @@ classdef flowInlet < handle
                 liblslDir {mustBeTextScalar}
                 timeoutS (1, 1) double {mustBeNonnegative} = 10
                 opts.Name {mustBeTextScalar} = "Flow"
+                opts.BufferS (1, 1) double {mustBePositive} = flowInlet.BufferS
             end
             if ~isfolder(liblslDir)
                 error('rrst:noLiblsl', ['liblsl-Matlab not found at %s. Install it there ' ...
@@ -72,6 +82,7 @@ classdef flowInlet < handle
             addpath(char(liblslDir), fullfile(char(liblslDir), 'bin'));
             src.lib = lsl_loadlib();
             src.name = string(opts.Name);
+            src.bufferS = opts.BufferS;
             try
                 GetSecs;
                 src.clockBase = "GetSecs";
@@ -123,6 +134,20 @@ classdef flowInlet < handle
             src.lastSeq = seq(end);
             src.nSamples = src.nSamples + numel(t);
             s = [t, x(2, :)'];
+            if src.record
+                if isempty(src.rec)
+                    src.rec = flowRecord();
+                end
+                src.rec.append(s);
+            end
+        end
+
+        function x = recorded(src)
+            if isempty(src.rec)
+                x = zeros(0, 2);
+            else
+                x = src.rec.data();
+            end
         end
 
         function ok = reconnect(src, timeoutS)
@@ -248,7 +273,7 @@ classdef flowInlet < handle
                 error('rrst:badFlowStream', 'Stream "%s" has %d channel(s); expected [nSeq flow temp].', ...
                     src.name, info.channel_count());
             end
-            in = lsl_inlet(info, flowInlet.BufferS);
+            in = lsl_inlet(info, src.bufferS);
             try
                 in.open_stream(5);              % connect now, so no sample is missed
             catch

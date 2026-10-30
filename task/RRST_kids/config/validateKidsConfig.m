@@ -88,6 +88,23 @@ end
 if ~isfield(f, 'timeout') || ~isPositive(f.timeout)
     bad('flow.timeout (s to find the airflow stream) must be a positive number.');
 end
+if ~isfield(cfg, 'recording') || ~isstruct(cfg.recording) || ~isfield(cfg.recording, 'mode') || ...
+        ~isText(cfg.recording.mode) || ~ismember(string(cfg.recording.mode), ["physio" "standalone"])
+    bad(['recording.mode must be "physio" (the Physio Recorder records) or "standalone" ' ...
+        '(the task records flow and markers itself); start from kidsConfig().']);
+end
+if string(cfg.recording.mode) == "standalone"
+    if ~f.enabled
+        bad(['recording.mode "standalone" records the airflow sensor: it needs ' ...
+            'flow.enabled = true (and flow.feedback "breath" or "none").']);
+    end
+    % the files themselves are checked only when the streamer has to be started
+    for name = ["streamer" "streamerScript"]
+        if ~isfield(f, name) || ~isText(f.(name))
+            bad('flow.%s must be a file name (text) in standalone mode; start from kidsConfig().', name);
+        end
+    end
+end
 if ~isfield(cfg, 'sound') || ~isstruct(cfg.sound)
     bad('the sound block (cue sounds) is missing; start from kidsConfig().');
 end

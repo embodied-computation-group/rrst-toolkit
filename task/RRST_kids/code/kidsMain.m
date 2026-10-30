@@ -32,6 +32,9 @@ function result = kidsMain(cfg, stim, vars)
 %   2.5 s apart, the first 0.5 s after Space) are scheduled before each slurp phase,
 %   and two before free play (a simulated child ends it after two).
 %   Per trial: tr.slurps (every slurp the detector saw), tr.shortSlurps, tr.flowLost.
+%   Standalone recording (cfg.recording.mode, kidsStandalone): runKidsRRST sets
+%   src.record, and the result gets t0, flow (every sample pulled, [t flowSlm]) and
+%   markers (rrstMarker('log'): every marker sent, LSL or not), all on GetSecs.
 %
 %   Sound: kidsSound plays the rain and the cues: ready (Ready to slurp?, end of a
 %   rest), mouse (wedge moving, story beat 2, practice reveal of a pinch),
@@ -614,6 +617,20 @@ end
         r = struct('outcome', string(outcome), 'trials', trials, 'practice', practice, ...
             'flags', [], 'kp', kp, 'duration', GetSecs - t0);
         if ~isempty(kp.history), r.flags = kidsFlags(kp, cfg); end
+        if kidsStandalone(cfg)
+            % everything the task saw, on the GetSecs clock (t0: tStart = 0)
+            r.t0 = t0;
+            r.flow = recordedFlow();
+            r.markers = rrstMarker('log');
+        end
+    end
+
+    function x = recordedFlow()
+        % Every flow sample pulled this session, the ones still waiting included.
+        x = zeros(0, 2);
+        if isempty(src) || ~isprop(src, 'record') || ~src.record, return; end
+        try, src.pull(); catch, end          % a lost stream must not stop the save
+        x = src.recorded();
     end
 
     function finish(outcome)
