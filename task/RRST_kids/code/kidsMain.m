@@ -13,7 +13,10 @@ function result = kidsMain(cfg, stim, vars)
 %
 %   Airflow: vars.flowSrc is the flow source opened by runKidsRRST (flowInlet, or
 %   kidsSimFlow for mock and simulated runs); with cfg.flow.enabled it drives a
-%   kidsFlow. The free practice slurps set the child's reference slurp (console line).
+%   kidsFlow. The free practice slurps set the child's reference slurp (console line):
+%   every free slurp of type end or weak (kidsReferenceSlurps), since before the
+%   reference exists a small child's slurps can all be weak; free slurps are never
+%   marked weak on screen (kidsSlurpPhase, io.free).
 %   Breath-driven trials whose phase Space ends with no slurp counted are repeated
 %   later (answer "noslurp"). A lost stream is looked for again before each trial.
 %   For a simulated flow (kidsSimFlow), cfg.child.slurps breaths (25 slm, 1.3 s,
@@ -200,7 +203,7 @@ end
         end
         io = struct('draw', @(s) show(scr, s, prog), 'keys', @phaseKeys, 'now', @GetSecs, ...
             'marker', @(label, t) rrstMarker(label, t), 'sound', @playCue, ...
-            'prompt', @(msg) fprintf('%s\n', msg), 'sim', ~isempty(sim));
+            'prompt', @(msg) fprintf('%s\n', msg), 'sim', ~isempty(sim), 'free', ~ask);
         [status, tr.slurps, sInfo] = kidsSlurpPhase(fl, cfg, io);
         tr.slurpT = sInfo.durationS;
         tr.shortSlurps = sInfo.shortSlurps;
@@ -342,17 +345,19 @@ end
     end
 
     function setReference(s)
-        % The child's reference slurp from the counted free slurps (plan section 3.2).
+        % The child's reference slurp from every free slurp of type end or weak
+        % (kidsReferenceSlurps; plan section 3.2). kidsFlow clamps it to [0.15, 2] L.
         if isempty(fl), return; end
-        if ~isempty(s), s = s(logical([s.counted])); end
+        s = kidsReferenceSlurps(s);
         if isempty(s)
             [minL, fullL] = fl.setReference([]);
-            fprintf(2, ['No free slurp counted: the reference stays at %.2f L. Belly full at ' ...
+            fprintf(2, ['No free slurp detected: the reference stays at %.2f L. Belly full at ' ...
                 '%.2f L; a slurp counts above %.2f L. Check the mouthpiece.\n'], fl.refVolume, fullL, minL);
         else
             [minL, fullL] = fl.setReference([s.volumeL]);
-            fprintf('Reference slurp %.2f L, peak %.0f slm. Belly full at %.2f L; a slurp counts above %.2f L.\n', ...
-                fl.refVolume, median([s.peakSlm]), fullL, minL);
+            fprintf(['Reference slurp %.2f L (median of %d free slurps: %.2f L), peak %.0f slm. ' ...
+                'Belly full at %.2f L; a slurp counts above %.2f L.\n'], ...
+                fl.refVolume, numel(s), median([s.volumeL]), median([s.peakSlm]), fullL, minL);
         end
     end
 

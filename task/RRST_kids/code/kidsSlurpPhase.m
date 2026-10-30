@@ -13,6 +13,8 @@ function [status, slurps, info] = kidsSlurpPhase(fl, cfg, io)
 %         io.sound(name)      cue sound (kidsSound names)
 %         io.prompt(msg)      one console line for the experimenter
 %         io.sim              true for a simulated child: Space never ends the phase
+%         io.free             (optional, default false) free slurps: the tutorial
+%                             before practice, see below
 %
 %   status   "done"   cfg.child.slurps slurps counted (or animated)
 %            "skip"   Space ended the phase early (info.shortSlurps says if short)
@@ -22,7 +24,7 @@ function [status, slurps, info] = kidsSlurpPhase(fl, cfg, io)
 %            struct with the same fields when there is no flow
 %   info     shortSlurps (fewer than cfg.child.slurps counted or animated),
 %            flowLost (the stream was lost during the phase), counted (slurps counted
-%            from the breath), durationS (phase length, s)
+%            from the breath; free slurps: drunk on screen), durationS (phase length, s)
 %
 %   Breath-driven (cfg.flow.feedback "breath" and a flow): the belly follows the
 %   current slurp's volume (kidsFlow.belly, saturating); a counted slurp drains a
@@ -35,6 +37,18 @@ function [status, slurps, info] = kidsSlurpPhase(fl, cfg, io)
 %   cfg.flow.slurpTimeout s the experimenter is prompted once per quiet spell.
 %   If the stream is lost the phase warns once and finishes the remaining slurps with
 %   the timed animation (status "done", info.flowLost).
+%
+%   Free slurps (io.free): the reference does not exist yet, so a small child's slurps
+%   can be "weak" against the 0.6 L default. Nothing is marked weak on screen: a weak
+%   slurp is drunk like a counted one (drain, bubbles, sound "bubbles"); an overlong
+%   one deflates with no try-again pose or sound (the console still names the leak).
+%   The records and markers keep the detector's type; kidsMain sets the reference
+%   from them (kidsReferenceSlurps).
+%
+%   Poses (kidsScene): "slurp" while the child inhales, "ahh" while the milkshake
+%   drains with bubbles, "tryagain" while a weak or overlong slurp's belly deflates
+%   (never for free slurps), "idle" while waiting. Timed: "slurp" during each inhale,
+%   "ahh" during each exhale.
 %
 %   Timed (fl = [] or cfg.flow.feedback "none"): the animation of the timed task, per
 %   slurp the belly grows over cfg.timing.inhale s while a third drains, then shrinks
@@ -51,6 +65,7 @@ n = cfg.child.slurps;
 tStart = io.now();
 info = struct('shortSlurps', false, 'flowLost', false, 'counted', 0, 'durationS', NaN);
 breath = ~isempty(fl) && cfg.flow.feedback == "breath";
+free = isfield(io, 'free') && logical(io.free);
 
 if isempty(fl)
     [status, done] = timed(1, false);
@@ -92,22 +107,40 @@ info.durationS = io.now() - tStart;
                         io.marker(kidsMarkerLabel("slurp", k, "end", e.volumeL, e.peakSlm), e.t);
                         drain = struct('t0', io.now(), 'c', c, ...
                             'from', kidsBreathScale(e.volumeL, fl.refVolume, frac));
-                        io.prompt(sprintf('Slurp %d counted: %.2f L, peak %.0f slm (%d of %d).', ...
-                            k, e.volumeL, e.peakSlm, c, n));
-                    case {"weak", "overlong"}
-                        io.sound("tryagain");
-                        io.marker(kidsMarkerLabel("slurp", k, e.type), e.t);
-                        deflate = struct('t0', io.now(), ...
-                            'from', kidsBreathScale(e.volumeL, fl.refVolume, frac));
-                        if e.type == "weak"
+                        if free
+                            io.prompt(sprintf('Free slurp %d: %.2f L, peak %.0f slm (%d of %d).', ...
+                                k, e.volumeL, e.peakSlm, c, n));
+                        else
+                            io.prompt(sprintf('Slurp %d counted: %.2f L, peak %.0f slm (%d of %d).', ...
+                                k, e.volumeL, e.peakSlm, c, n));
+                        end
+                    case "weak"
+                        io.marker(kidsMarkerLabel("slurp", k, "weak"), e.t);
+                        from = kidsBreathScale(e.volumeL, fl.refVolume, frac);
+                        if free                     % the tutorial: drunk like a counted one
+                            c = c + 1;
+                            io.sound("bubbles");
+                            drain = struct('t0', io.now(), 'c', c, 'from', from);
+                            io.prompt(sprintf(['Free slurp %d: %.2f L, peak %.0f slm (%d of %d; ' ...
+                                'small, sets the reference).'], k, e.volumeL, e.peakSlm, c, n));
+                        else
+                            io.sound("tryagain");
+                            deflate = struct('t0', io.now(), 'from', from, 'pose', "tryagain");
                             minL = max(cfg.flow.minVolumeFrac * fl.refVolume, cfg.flow.minVolumeL);
                             io.prompt(sprintf(['Slurp %d too weak (%.2f L; a slurp counts from ' ...
                                 '%.2f L): not counted, try again.'], k, e.volumeL, minL));
-                        else
-                            io.prompt(sprintf(['Slurp %d lasted over %g s: not counted. Flow ' ...
-                                'is not returning to zero: check the circuit for a leak or ' ...
-                                'a draught at the inlet.'], k, cfg.flow.maxSlurpDur));
                         end
+                    case "overlong"
+                        io.marker(kidsMarkerLabel("slurp", k, "overlong"), e.t);
+                        deflate = struct('t0', io.now(), ...
+                            'from', kidsBreathScale(e.volumeL, fl.refVolume, frac), ...
+                            'pose', ifelse(free, "idle", "tryagain"));
+                        if ~free
+                            io.sound("tryagain");
+                        end
+                        io.prompt(sprintf(['Slurp %d lasted over %g s: not counted. Flow ' ...
+                            'is not returning to zero: check the circuit for a leak or ' ...
+                            'a draught at the inlet.'], k, cfg.flow.maxSlurpDur));
                 end
             end
             if fl.lost
@@ -132,7 +165,7 @@ info.durationS = io.now() - tStart;
 
             % Scene
             now = io.now();
-            s = struct('belly', 0, 'cup', 1 - c / n, 'bubbles', NaN, 'text', txt.inhale);
+            s = struct('belly', 0, 'cup', 1 - c / n, 'bubbles', NaN, 'text', txt.inhale, 'pose', "idle");
             pDrain = NaN;
             if ~isempty(drain)
                 pDrain = progress(now, drain.t0, exDur);
@@ -140,15 +173,18 @@ info.durationS = io.now() - tStart;
                 s.bubbles = pDrain;
                 s.belly = drain.from * (1 - pDrain);
                 s.text = txt.exhale;
+                s.pose = "ahh";
             end
             pDeflate = NaN;
             if ~isempty(deflate)
                 pDeflate = progress(now, deflate.t0, exDur);
                 s.belly = deflate.from * (1 - pDeflate);
+                if isempty(drain), s.pose = deflate.pose; end
             end
             if fl.inSlurp
                 s.belly = fl.belly;
                 s.text = txt.inhale;
+                s.pose = "slurp";
             end
             io.draw(s);
             if pDrain >= 1, drain = []; end
@@ -175,9 +211,9 @@ info.durationS = io.now() - tStart;
         done = first - 1;
         for j = first:n
             left = 1 - (j - 1) / n;           % milkshake left before this slurp
-            st = animate(cfg.timing.inhale, @(p) struct('belly', p, 'cup', left - p / n, 'text', txt.inhale));
+            st = animate(cfg.timing.inhale, @(p) struct('belly', p, 'cup', left - p / n, 'text', txt.inhale, 'pose', "slurp"));
             if st == ""
-                st = animate(cfg.timing.exhale, @(p) struct('belly', 1 - p, 'cup', left - 1 / n, 'bubbles', p, 'text', txt.exhale));
+                st = animate(cfg.timing.exhale, @(p) struct('belly', 1 - p, 'cup', left - 1 / n, 'bubbles', p, 'text', txt.exhale, 'pose', "ahh"));
             end
             if st ~= ""
                 status = st;
@@ -206,6 +242,10 @@ info.durationS = io.now() - tStart;
             end
         end
     end
+end
+
+function v = ifelse(c, a, b)
+if c, v = a; else, v = b; end
 end
 
 function p = progress(now, t0, dur)
