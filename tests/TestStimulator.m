@@ -158,9 +158,48 @@ classdef TestStimulator < matlab.unittest.TestCase
             tc.verifyEqual(numel(sm.calibrations), 1);
             tc.verifyNotEmpty(sm.transcript);
         end
+
+        function whileWaitingReachesEveryMove(tc)
+            % present, null, rest and park pass 'WhileWaiting' to the device: the
+            % task animates while the firmware moves (2026-10-30: 1.3-2.8 s per move).
+            port = rrst.MockPort('MaxPosition', 45000, 'MoveDelay', 0.15);
+            rec = rrst.loadDeviceRecord("0123456789ABCDEF", devicesDir());
+            s = rrst.Stimulator(rrst.Device(port), rec, 'Unit', "percent", 'RestRange', [20 80]);
+            s.calibrate();
+            m = containers.Map({'n'}, {0});
+            f = @() bump(m);
+            s.present(50, 'WhileWaiting', f);
+            n1 = m('n');
+            tc.verifyGreaterThan(n1, 0, 'present');
+            s.null('WhileWaiting', f);
+            n2 = m('n');
+            tc.verifyGreaterThan(n2, n1, 'null');
+            [level, mv] = s.rest('WhileWaiting', f);
+            n3 = m('n');
+            tc.verifyGreaterThan(n3, n2, 'rest');
+            tc.verifyTrue(mv.ok);
+            tc.verifyGreaterThanOrEqual(level, 20);
+            s.park('WhileWaiting', f);
+            tc.verifyGreaterThan(m('n'), n3, 'park');
+            tc.verifyEqual(string({s.Log.kind}), ["stim" "null" "rest" "park"]);
+            tc.verifyEqual(port.Position, s.ParkStep);
+        end
+
+        function presentKeepsItsKindArgument(tc)
+            tc.Stim.calibrate();
+            tc.Stim.present(30, 'probe');
+            m = containers.Map({'n'}, {0});
+            tc.Stim.present(40, 'probe', 'WhileWaiting', @() bump(m));
+            tc.verifyEqual(string({tc.Stim.Log.kind}), ["probe" "probe"]);
+            tc.verifyEqual([tc.Stim.Log.level], [30 40]);
+        end
     end
 end
 
 function d = devicesDir()
     d = fullfile(fileparts(fileparts(mfilename('fullpath'))), 'devices');
+end
+
+function bump(m)
+m('n') = m('n') + 1; %#ok<NASGU> a handle: the caller's map changes
 end

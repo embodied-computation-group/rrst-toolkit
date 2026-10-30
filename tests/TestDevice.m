@@ -252,7 +252,95 @@ classdef TestDevice < matlab.unittest.TestCase
             tc.verifyTrue(mv.ok);
             tc.verifyTrue(any([dev.Transcript.direction] == "unsolicited"));
         end
+
+        % --- WhileWaiting: work done while the firmware moves (2026-10-30) -------
+        function mockMoveDelayHoldsTheConfirmation(tc)
+            % MoveDelay: "Moving to" at once, "Move complete" and the prompt only
+            % after the delay, as the real firmware (1.3-2.8 s per trial on 2E44...).
+            port = rrst.MockPort('MaxPosition', 45123, 'MoveDelay', 0.3);
+            writeline(port, 'c');
+            read(port, port.NumBytesAvailable, 'char');
+            t0 = tic;
+            writeline(port, 'a');
+            writeline(port, '32500');
+            first = read(port, port.NumBytesAvailable, 'char');
+            tc.verifyTrue(contains(first, 'Moving to absolute position: 32500'));
+            tc.verifyFalse(contains(first, 'Move complete'));
+            while port.NumBytesAvailable == 0 && toc(t0) < 2
+                pause(0.01);
+            end
+            tc.verifyGreaterThanOrEqual(toc(t0), 0.3);
+            rest = read(port, port.NumBytesAvailable, 'char');
+            tc.verifyEqual([first rest], readFixture('move_ok.txt'));
+        end
+
+        function whileWaitingRunsDuringAMove(tc)
+            port = rrst.MockPort('MaxPosition', 45123, 'MoveDelay', 0.3);
+            dev = rrst.Device(port);
+            dev.calibrate();
+            [nTick, n] = counter();
+            mv = dev.moveTo(32500, 'WhileWaiting', nTick);
+            tc.verifyTrue(mv.ok);
+            tc.verifyEqual(mv.target, 32500);
+            tc.verifyGreaterThanOrEqual(mv.elapsed, 0.3);
+            tc.verifyGreaterThanOrEqual(n('n'), 10, 'called on every poll while the firmware moves');
+            tc.verifyEqual(port.Written, ["c"; "a"; "32500"], 'nothing else sent');
+        end
+
+        function whileWaitingWithATimeout(tc)
+            port = rrst.MockPort('MaxPosition', 45123, 'MoveDelay', 0.2);
+            dev = rrst.Device(port);
+            dev.calibrate();
+            [nTick, n] = counter();
+            mv = dev.moveTo(32500, 30, 'WhileWaiting', nTick);
+            tc.verifyTrue(mv.ok);
+            tc.verifyGreaterThan(n('n'), 0);
+            port.Fault = "silent";
+            [n2Tick, n2] = counter();
+            tc.verifyError(@() dev.moveTo(30000, 0.2, 'WhileWaiting', n2Tick), 'rrst:timeout');
+            tc.verifyGreaterThan(n2('n'), 0, 'called until the timeout');
+        end
+
+        function whileWaitingDoesNotReplaceTheFirmwareCheck(tc)
+            % The firmware reply stays the source of truth: a refused move still fails.
+            port = rrst.MockPort('MaxPosition', 45123, 'MoveDelay', 0.1);
+            dev = rrst.Device(port);
+            dev.calibrate();
+            port.Fault = "moveSafetyDisable";
+            [nTick, n] = counter();
+            tc.verifyError(@() dev.moveTo(32500, 'WhileWaiting', nTick), 'rrst:moveFailed');
+            tc.verifyGreaterThan(n('n'), 0);
+        end
+
+        function whileWaitingOnCommand(tc)
+            port = rrst.MockPort('MaxPosition', 45123);
+            dev = rrst.Device(port);
+            [nTick, n] = counter();
+            lines = dev.command("s", 10, 'WhileWaiting', nTick);
+            tc.verifyTrue(any(startsWith(lines, "Device ID")));
+        end
+
+        function badWhileWaitingSendsNothing(tc)
+            port = rrst.MockPort('MaxPosition', 45123);
+            dev = rrst.Device(port);
+            dev.calibrate();
+            nBefore = numel(port.Written);
+            tc.verifyError(@() dev.moveTo(32500, 'WhileWaiting', 5), 'rrst:badArgument');
+            tc.verifyError(@() dev.moveTo(32500, 'Whilst', @() 1), 'rrst:badArgument');
+            tc.verifyEqual(numel(port.Written), nBefore);
+        end
     end
+end
+
+function [tick, m] = counter()
+% A WhileWaiting callback for the tests: tick() adds one to m('n') (a
+% containers.Map, so the count is shared by handle).
+m = containers.Map({'n'}, {0});
+tick = @() bump(m);
+end
+
+function bump(m)
+m('n') = m('n') + 1; %#ok<NASGU> a handle: the caller's map changes
 end
 
 function txt = readFixture(name)
