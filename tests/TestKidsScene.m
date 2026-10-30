@@ -174,7 +174,7 @@ classdef TestKidsScene < matlab.unittest.TestCase
             for k = 1:numel(t)
                 g = kidsPose(struct('pose', "idle", 't', t(k)), tc.Win);
                 closed(k) = g.blink;
-                tc.assertEqual([g.monster.eyes.state] == "closed", [1 1] * closed(k));
+                tc.assertEqual([g.monster.eyes.state] == "closed", [closed(k) closed(k)]);
             end
             tc.verifyFalse(closed(1), 'eyes open at t = 0');
             tc.verifyEqual(nnz(diff([false closed]) == 1), 3, 'one blink every 3 s');
@@ -428,7 +428,7 @@ m = g.monster;
 a.body = m.body; a.belly = m.belly; a.feet = m.feet; a.R = m.R;
 a.eyes = vertcat(m.eyes.rect); a.pupils = vertcat(m.eyes.pupil);
 a.mouth = m.mouth.rect; a.brows = m.brows; a.arms = m.arms; a.hands = m.hands;
-a.puffs = m.puffs; a.hollows = m.hollows; a.motion = m.motion;
+a.puffs = m.puffs; a.hollows = m.hollows; a.motion = m.motion; a.sweat = m.sweat;
 if isempty(m.zees), a.zees = []; else, a.zees = m.zees(:, 1:3); end
 a.ground = g.ground; a.tableTop = g.table.top; a.legs = g.table.legs;
 a.cup = g.cup.poly; a.fill = g.cup.fill;
