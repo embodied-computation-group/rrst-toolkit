@@ -65,8 +65,8 @@ closeMarkers = kidsOpenMarkers(cfg); %#ok<NASGU>   closes the stream when this f
 
 %% Airflow (breath feedback): the sensor is checked before anything else happens
 [flowSrc, flowSource, streamer] = openFlow(cfg);
-stopStreamer = onCleanup(@() stopFlowStreamer(streamer)); %#ok<NASGU>   only if the task started it
-closeFlow = onCleanup(@() closeFlowSource(flowSrc)); %#ok<NASGU>
+% the inlet first, then the streamer if the task started it (normal end, Esc, error)
+closeFlow = onCleanup(@() closeFlowSource(flowSrc, streamer)); %#ok<NASGU>
 
 %% Child
 if isempty(cfg.debug.simulateChild)
@@ -207,8 +207,9 @@ if ~isempty(streamer)
 end
 end
 
-function closeFlowSource(src)
+function closeFlowSource(src, streamer)
 if ~isempty(src) && ismethod(src, 'close')
     src.close();
 end
+stopFlowStreamer(streamer);
 end
