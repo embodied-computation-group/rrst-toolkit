@@ -134,6 +134,49 @@ about 35 slm: the obstruction limits the flow however hard the person pulls.
     by the flow, which needs a pressure sensor near the mouth as well.
     `TODO(pressure)`: the lab's pressure sensor.
 
+## Live feedback check
+
+The kids task can drive the screen from the flow stream (breath feedback). Before a
+pilot, `bench/flowFeedbackCheck.m` checks that the stream reaches MATLAB quickly
+enough. It needs only the `Flow` stream: **no device, no calibration**, the wedge
+does not move.
+
+```matlab
+cd <repo>/bench
+flowFeedbackCheck              % 20 s in a small window
+flowFeedbackCheck(60, SmallWindow=false)   % 60 s, full screen on the task screen
+```
+
+It checks the sensor at rest (nobody breathing for the first second), then shows a
+bar that follows the flow from 0 to 60 slm. Breathe through the circuit and watch
+the bar rise with each inhalation. Esc stops early. Every second the console prints
+the **lag**: the time from the newest flow sample to the screen refresh that first
+showed it. At the end it prints the median and 95th-percentile lag, the sample rate,
+any gaps (lost samples) and the flow at rest.
+
+| Number | Expected | If not |
+|---|---|---|
+| Sensor check | `Airflow sensor OK: 0.0 slm at rest` | See the messages in Troubleshooting |
+| Sample rate | about 1005 Hz | Under 900 Hz: the bridge or USB is struggling; restart the flow stream |
+| Gaps | 0 | A few in a long run are harmless; many: unplug and replug the SensorBridge |
+| Flow at rest | 0.0 ± 0.1 slm | A steady offset above 1 slm: leak or draught at the inlet |
+| Lag, median | `TODO(measure)`: about 20 to 40 ms full screen | Over 60 ms: check the flow stream runs on this PC and nothing else is busy |
+
+First smoke test, 2026-10-30 (stim laptop, flow stream from `flow_lsl.py`, nobody on
+the circuit, no window): 1005 Hz, no gaps, flow at rest 0.02 slm (SD 0.03), and the
+newest sample was **4 ms old** (median; 95th percentile 8 ms) when MATLAB read the
+stream at 60 Hz. The screen adds the wait for the next refresh and the refresh itself,
+so the full lag is expected at one to two frames more. The lag on screen is still to
+be measured with someone breathing. In a small window, Windows' compositor adds about
+a frame; measure the task's lag full screen on the task screen.
+
+!!! note "Stream times can step back by up to 1 ms"
+    `flow_lsl.py` stamps the newest sample of each chunk when it asks the bridge, and
+    the earlier samples are spaced at the nominal 1 ms while the bridge runs at about
+    1005 Hz. At chunk boundaries a timestamp can be up to about 1 ms earlier than the
+    one before. Compute breath volume from the samples and the sample rate, not from
+    the timestamp differences.
+
 ## Troubleshooting
 
 | Problem | What to do |
