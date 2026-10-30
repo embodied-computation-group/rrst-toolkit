@@ -79,6 +79,21 @@ cfg.noise.file = fullfile(root, 'task', 'helpers', 'audio', 'rain_loop_30s.wav')
 cfg.noise.volume = 0.6;                  % lower than the adult pilot's 1 for small ears; check by ear
 cfg.text.language = "en";                % child-facing text must be translated before use
 
+% --- Breath feedback (SFM3019 "Flow" LSL stream; pilot values, tune on the rig) ----
+cfg.flow.enabled = true;                  % false: today's timed animation, no inlet
+cfg.flow.feedback = "breath";             % "breath" | "none"   {{FLOW_FEEDBACK_MODE}}
+cfg.flow.timeout = 10;                    % s to find the "Flow" stream at launch
+cfg.flow.onsetSlm = 3;                    % flow above this starts a slurp (flow_quality uses 3 slm)
+cfg.flow.onsetHold = 0.05;                % s above threshold before it counts (noise guard)
+cfg.flow.offsetHold = 0.15;               % s below threshold before the slurp ends
+cfg.flow.minVolumeFrac = 0.25;            % slurp counts if volume >= this x reference volume
+cfg.flow.minVolumeL = 0.10;               % ...and at least this (absolute floor, children)
+cfg.flow.bellyFraction = 0.40;            % belly is full at this x reference volume (saturation)
+cfg.flow.refVolumeDefault = 0.6;          % L, used until the free slurps have set the reference
+cfg.flow.slurpTimeout = 8;                % s without a slurp onset: experimenter prompt
+cfg.flow.maxSlurpDur = 6;                 % s: a "slurp" longer than this is a leak/draught, not counted
+cfg.flow.smoothHz = 5;                    % low-pass before detection
+
 % --- Output --------------------------------------------------------------------
 cfg.output.dir = fullfile(root, 'data', 'raw');
 cfg.devicesDir = fullfile(root, 'devices');
