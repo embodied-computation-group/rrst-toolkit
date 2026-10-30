@@ -134,6 +134,23 @@ classdef TestKidsFlow < matlab.unittest.TestCase
             tc.verifyEqual(max(abs(src.pull())), [15 0], 'AbsTol', 1e-9);
         end
 
+        function simJitterKeepsSampleOrderButNotTimeOrder(tc)
+            src = kidsSimFlow('Jitter', 0.8e-3, 'Seed', 3);
+            ref = kidsSimFlow('Seed', 3);
+            for s = {src, ref}
+                s{1}.breathe(30, 1.5);
+            end
+            src.advance(3);
+            ref.advance(3);
+            a = src.pull();
+            b = ref.pull();
+            tc.assertSize(a, size(b));
+            tc.verifyEqual(a(:, 2), b(:, 2), 'flow values are those of the unjittered times');
+            tc.verifyLessThanOrEqual(abs(a(:, 1) - b(:, 1)), 0.8e-3 + 1e-12);
+            tc.verifyTrue(any(diff(a(:, 1)) < 0), 'some times step back, as live LSL times do');
+            tc.verifyEqual(median(diff(a(:, 1))), 1e-3, 'AbsTol', 1e-4);
+        end
+
         % --- kidsFlow: detection ----------------------------------------------------
         function cleanBreathGivesOneOnsetAndOneEnd(tc)
             [f, src] = tc.started();
@@ -150,6 +167,21 @@ classdef TestKidsFlow < matlab.unittest.TestCase
             tc.verifyEqual(f.counted, 1);
             tc.verifyFalse(f.inSlurp);
             tc.verifyEqual(f.lastSampleT, src.t, 'AbsTol', 1.5e-3);
+        end
+
+        function jitteredTimesGiveTheSameVolume(tc)
+            % Live times step back up to ~1 ms at chunk boundaries (flowInlet help):
+            % volume must come from the sample count, not from diff(t).
+            vols = zeros(1, 2);
+            jit = [0 0.8e-3];
+            for j = 1:2
+                [f, src] = tc.started('Jitter', jit(j));
+                src.breathe(30, 1.5);
+                ev = tc.feed(f, src, 4);
+                tc.assertEqual([ev.type], ["onset" "end"]);
+                vols(j) = ev(2).volumeL;
+            end
+            tc.verifyEqual(vols(2), vols(1), 'RelTol', 0.01);
         end
 
         function slurpRecordHoldsTheBreath(tc)
