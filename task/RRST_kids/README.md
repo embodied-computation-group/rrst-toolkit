@@ -34,6 +34,18 @@ child's yes-bias absorbed by the guess rate, not a bias-free sensitivity measure
 
 ## Run
 
+**First, start the Physio Recorder** (desktop shortcut), fill in Participant and
+Session, pick the **RRST** preset, tick the devices and click **Check signals**, as for
+the adult task ([Running the 2.0 task](../../handbook/v2/running.md),
+[Recording physiology and airflow](../../handbook/shared/recording.md)). The task opens
+the LSL marker stream `RRST` at launch and the Physio Recorder starts recording by
+itself when it appears. With `cfg.markers.requireRecorder = true` (the default) a real
+session holds before calibration with **NOTHING IS RECORDING** until a recorder is
+connected; click **Start recording** in the app if it hasn't started. Mock-device
+(`cfg.device.mock = true`) and simulated-child runs never wait (the adult task has no
+such exception). `cfg.markers.lsl = false` runs without LSL; liblsl-Matlab
+(`C:\toolbox\liblsl-Matlab`, `cfg.markers.liblslDir`) is then not needed.
+
 ```matlab
 cd <repo>/task/RRST_kids
 addpath('config');
@@ -63,6 +75,25 @@ slurps and 6 practice trials with feedback (80, 0, 80, 0, 75, 0; pass: 5 of 6 an
 outcome) -> up to 40 main trials with a 45-s break every 10 -> sticker. About 15-20 s per
 trial, so about 15-20 minutes in all.
 
+**Markers** (stream `RRST`; names match the adult task where the event exists). `n`
+counts every trial run, free slurps and repeats included, so each `n` is unique; it is
+`n` in the saved trials.
+
+| Marker | Event |
+|---|---|
+| `RRST_ready` | stream opened at launch |
+| `calibration_start`, `calibration_end` | calibration (nobody on the tube) |
+| `story` | story screen appears |
+| `practice_start` | each practice round |
+| `main_start` | "Ready" screen before the main trials appears |
+| `trial_<n>_level_<x>` | wedge move confirmed; catch trials `level_0` |
+| `trial_<n>_go` | experimenter's Space: slurps start |
+| `question` | answer screen appears (flip onset) |
+| `answer_yes`, `answer_no`, `bad_breath`, `no_answer`, `pause` | experimenter's entry (`no_answer`: none in time) |
+| `trial_<n>_correct` / `trial_<n>_wrong` | answered trials: "yes" on a load or "no" on a catch trial is correct |
+| `rest_start`, `rest_end` | break; `rest_end` at the Space that resumes the trials |
+| `aborted` / `done` | end of the run (`aborted`: Esc or an error; `done`: complete or practice failed) |
+
 **Saved** to `data/raw/` (never committed): `RRSTkids_<ID>_<date>.mat` with the result
 (every trial including repeats, practice, Psi posterior, bias flags, outcome), the
 configuration, and the device's full move log and transcript; and a `.csv` with one
@@ -83,13 +114,15 @@ row per trial. Prefixes: `MOCK_`, `SIM_`, `Aborted_`, `Error_`, `PracticeFailed_
 
 ## Files
 
-- `runKidsRRST.m`: entry point (configuration, device, calibration prompt).
+- `runKidsRRST.m`: entry point (configuration, markers, device, recorder check, calibration prompt).
 - `config/kidsConfig.m`, `config/validateKidsConfig.m`.
 - `code/kidsProcedure.m`, `kidsNextLevel.m`, `kidsRecord.m`, `kidsRequeue.m`,
   `kidsShouldStop.m`, `kidsSchedule.m`, `kidsFlags.m`, `kidsCheckLevel.m`: the
   procedure, tested in `tests/TestKids.m` with a simulated child.
 - `code/kidsMain.m` (session), `kidsScene.m`, `kidsQuestion.m` (drawing, simple shapes
   only), `kidsText.m`, `kidsSave.m`.
+- `code/kidsOpenMarkers.m`, `kidsWaitsForRecorder.m`, `kidsMarkerLabel.m`: LSL markers
+  through the shared `task/helpers/rrstMarker.m`, tested in `tests/TestKidsMarkers.m`.
 - `simulateKids.m`: precision across simulated children, no screen or device.
 - `qcKids.m`: QC figure for one saved session.
 - Masking sound: the adult task's rain loop at volume 0.6; check the level for small
