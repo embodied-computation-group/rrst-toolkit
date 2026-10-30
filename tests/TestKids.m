@@ -150,6 +150,23 @@ classdef TestKids < matlab.unittest.TestCase
             tc.verifyFalse(f.unusable);
         end
 
+        function highThresholdChildIsNotFlaggedForFewHitsAtHighLevels(tc)
+            % Micah, 2026-10-30: the hit-rate rule is dropped. A child (or adult) whose
+            % threshold is near or above flagHighLevel says "yes" to few trials there,
+            % which is expected, not a sign of a bad session. Only false alarms flag.
+            cfg = kidsConfig();
+            kp = kidsProcedure(cfg, 1);
+            kp.history = struct('level', num2cell([0 0 0 0 0 80 80 80 85 90]), ...
+                'response', num2cell([0 0 0 0 0 0 0 1 0 1]), ...
+                'isCatch', num2cell([true true true true true false false false false false]));
+            f = kidsFlags(kp, cfg);
+            tc.verifyEqual(f.faRate, 0);
+            tc.verifyEqual(f.hitRateHigh, 0.4, 'AbsTol', 1e-12, 'still reported, no longer a flag');
+            tc.verifyFalse(f.unusable);
+            tc.verifyEqual(f.reason, "");
+            tc.verifyFalse(isfield(cfg.child, 'flagHitMin'), 'the rule and its setting are gone');
+        end
+
         % --- trial structure ----------------------------------------------------
         function eachTrialIsThreeSlurps(tc)
             cfg = kidsConfig();
