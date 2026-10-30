@@ -13,6 +13,15 @@ at the same level, the monster drinks when the child slurps (airflow sensor), an
 child says whether the mouse pinched. Every answer earns a star; ten stars
 finish a milkshake and earn a real sticker from the experimenter.
 
+**Stars** are one per answer, right or wrong: progress toward a cup and a sticker, not
+a score. They are not feedback, so they are shown in every run, feedback on or off.
+
+**Tutorial** (before the practice): free play at level 0 (the child slurps as often as
+they like and watches the belly fill; every slurp sets the reference), two demos with
+no question (the mouse pinching the straw during three slurps at 80 %, then asleep
+during three at 0, each followed by its reveal), and a bridge screen with the two
+answer cards for the experimenter to explain ("Now you say: did the mouse pinch?").
+
 ## Why it differs from the adult task
 
 | | Adult RRST 2.0 | Kids |
@@ -26,9 +35,9 @@ finish a milkshake and earn a real sticker from the experimenter.
 | Start | Psi's choice | forced 70 % (just perceptible for an adult) |
 | Jumps | any | at most 15 % above the highest level so far |
 | Trials | 100 | 30 Psi + 10 catch; stops early when SE < 8 after 20 Psi trials |
-| Breathing | 0.8 s timed inhale | experimenter presses Space when the child is ready; then the child's own breath drives the monster (airflow sensor): the belly fills with the slurp's volume, each counted slurp drains a third of the milkshake with bubbles, and the trial goes on when `cfg.child.slurps` (3) slurps have counted. No pacing. One timed breath was too hard to catch for a 4.5-year-old (first try, 2026-10-28). Without the sensor: the old timed animation (1.2 s in, 1.8 s out, x3). |
+| Breathing | 0.8 s timed inhale | experimenter presses Space when the child is ready; then the child's own breath drives the monster (airflow sensor): the belly fills with the slurp's volume, each counted slurp drains a third of the milkshake with bubbles (`cfg.timing.drain`, 1.0 s), and the trial goes on when `cfg.child.slurps` (3) slurps have counted. No pacing. One timed breath was too hard to catch for a 4.5-year-old (first try, 2026-10-28). Without the sensor: the old timed animation (1.2 s in, 1.8 s out, x3). |
 | Answer | participant clicks | **experimenter clicks** what the child says or points at |
-| Feedback | none | practice only: the truth after every answer, shown (the mouse pinching the straw, or asleep); main trials: a star flies into its slot for every answer |
+| Feedback | none | practice only: the truth after every answer, shown (the mouse pinching the straw, or asleep); main trials: none, but a star flies into its slot for every answer (progress, not feedback) |
 
 The threshold is the Weibull alpha for p("yes"): a detection threshold with the
 child's yes-bias absorbed by the guess rate, not a bias-free sensitivity measure.
@@ -87,12 +96,22 @@ trial; a mock device uses the live stream if one appears within 2 s, else synthe
 airflow. Both print `*** SIMULATED FLOW ***`. `cfg.flow.feedback = "none"` with the
 sensor on keeps the timed animation but still records every slurp.
 
+**Experimenter line.** Every screen carries one short line for the experimenter,
+small at the bottom left (`kidsPrompt`), and the console prints it (`>>`) whenever it
+changes: what is happening and which key goes on, e.g.
+`PRACTICE 3 of 6. Space starts the slurps. The truth is shown after the answer.` or
+`Trial 5. Space starts the slurps. No feedback; one star per answer.` (a main trial's
+line never names the level). The story's sentences follow on a second line.
+
 **Console during the session** (the experimenter's view; the child sees none of it):
 
 ```
-Free slurp 1: 0.42 L, peak 18 slm (1 of 3).
-Free slurp 2: 0.12 L, peak 11 slm (2 of 3; small, sets the reference).
+>> Free slurps: let them breathe. Space when done.
+Free slurp 1: 0.42 L, peak 18 slm.
+Free slurp 2: 0.12 L, peak 11 slm (small; sets the reference).
 Reference slurp 0.42 L (median of 6 free slurps: 0.42 L), peak 18 slm. Belly full at 0.17 L; a slurp counts above 0.11 L.
+Practice 3 of 6: level 80, answered easy (no): wrong.
+Practice round 1 NOT PASSED: 4 of 6 correct; only 4 correct, 5 needed; level 80 wrong (practice 3). Practice runs again.
 Slurp 1 counted: 0.35 L, peak 25 slm (1 of 3).
 Slurp 2 too weak (0.05 L; a slurp counts from 0.11 L): not counted, try again.
 No slurp seen for 8 s: mouthpiece in? Space = go on, x = repeat, Esc = abort
@@ -101,9 +120,10 @@ Airflow stream lost: this trial finishes with the timed animation (flowLost). ..
 Airflow stream is back.
 ```
 
-The reference line comes after the two free trials (three slurps each, no question):
-the reference volume is the median of every free slurp the detector saw, counted or
-weak (`kidsReferenceSlurps`: type `end` or `weak`, never `overlong` or `interrupted`),
+The reference line comes at the end of free play (`kidsFreePlay`; with the tutorial
+off, after the `cfg.practice.nFree` free trials): the reference volume is the median
+of every free slurp the detector saw, counted or weak (`kidsSetReference`,
+`kidsReferenceSlurps`: type `end` or `weak`, never `overlong` or `interrupted`),
 clamped to 0.15-2 L. Before it exists a slurp counts only from 25 % of the 0.6 L
 default, so a small child's free slurps can all be weak; they still set the reference,
 and free slurps are never marked weak on screen (no try-again pose or sound: they are
@@ -120,29 +140,41 @@ the answer screen, a white ring marks the face under it, and clicks in the middl
 ignored), or Left arrow / `n` = "easy" (no), Right arrow / `y` = "squishy" (yes). The chosen
 face lights up for half a second so you can see what was recorded. `x` = bad breath (trial repeated later). Space = pause
 (wedge to 0) and continue. Esc = abort (wedge parked open, data saved as `Aborted_`).
-Space also moves on from each of the three story beats, from "Ready to slurp?" and
-from the ready screen after a nap. **During the
+Space also moves on from each of the three story beats, from "Ready to slurp?", from
+the tutorial's bridge (answer cards), from the cup tip (after the sticker) and from the
+ready screen after a nap. **Free play:** Space ends it once at least one slurp was
+seen; before that, hold Space for 1 s to go on anyway (no sensor, or a child who will
+not breathe yet). **During the
 slurps:** Space = go on to the question with the slurps so far (flagged
 `shortSlurps`; with no slurp counted the trial is repeated later instead, answer
 `noslurp`), `x` = bad breath (trial repeated later), Esc = abort.
 
 **Session:** calibration with nobody on the tube (about 0.5 min) -> story (three beats)
--> 2 free trials (three slurps, no question; they set the reference slurp) and 6
-practice trials, each followed by the reveal (80, 0, 80, 0, 75, 0; pass: 5 of 6 and
-both 80s right; one retry, then the session ends as `PracticeFailed_`, which is itself
-an outcome) -> up to 40 main trials with a 45-s nap every 10 -> sticker. About 15-20 s per
+-> tutorial (`cfg.tutorial`: free play at 0, sets the reference slurp; demo of the
+mouse pinching at `cfg.tutorial.pinchLevel` (80) and asleep at 0, three slurps each,
+no question, each followed by the reveal; the answer cards explained) -> 6 practice
+trials, each followed by the reveal (80, 0, 80, 0, 75, 0; pass: 5 of 6 and both 80s
+right; one retry, then the session ends as `PracticeFailed_`, which is itself an
+outcome) -> up to 40 main trials with a 45-s nap every 10 -> sticker. About 15-20 s per
 trial with the timed animation, so about 15-20 minutes in all; three real slurps take
-6-8 s, so breath-driven trials are a little shorter.
+6-8 s, so breath-driven trials are a little shorter. `cfg.tutorial.enabled = false`
+brings back the two free trials instead (`cfg.practice.nFree = 2`,
+`cfg.practice.levels = [0 0 80 0 80 0 75 0]`); the tutorial and free trials are one
+or the other.
 
 **Markers** (stream `RRST`; names match the adult task where the event exists). `n`
-counts every trial run, free slurps and repeats included, so each `n` is unique; it is
-`n` in the saved trials.
+counts every trial run, free play, demos, free slurps and repeats included, so each
+`n` is unique; it is `n` in the saved trials.
 
 | Marker | Event |
 |---|---|
 | `RRST_ready` | stream opened at launch |
 | `calibration_start`, `calibration_end` | calibration (nobody on the tube) |
 | `story` | first story beat appears |
+| `tutorial_start`, `freeplay_start` | free play starts (wedge at 0 confirmed) |
+| `freeplay_end` | free play ends (Space) |
+| `demo_pinch_level_<x>`, `demo_sleep_level_0` | a demo's wedge move confirmed (in place of `trial_<n>_level_<x>`); `trial_<n>_go` and the slurp markers follow |
+| `tutorial_end` | Space on the bridge (answer cards) |
 | `practice_start` | each practice round |
 | `main_start` | "Ready" screen before the main trials appears |
 | `trial_<n>_level_<x>` | wedge move confirmed; catch trials `level_0` |
@@ -157,7 +189,9 @@ counts every trial run, free slurps and repeats included, so each `n` is unique;
 | `aborted` / `done` | end of the run (`aborted`: Esc or an error; `done`: complete or practice failed) |
 
 **Saved** to `data/raw/` (never committed): `RRSTkids_<ID>_<date>.mat` with the result
-(every trial including repeats, practice, Psi posterior, bias flags, outcome), the
+(every trial including repeats, practice, Psi posterior, bias flags, outcome; the
+tutorial's free play and demos are in `result.practice` with `phase` "tutorial" and
+`answer` "freeplay", "demo_pinch" or "demo_sleep"), the
 configuration, and the device's full move log and transcript; and a `.csv` with one
 row per trial. Prefixes: `MOCK_`, `SIM_`, `Aborted_`, `Error_`, `PracticeFailed_`.
 Airflow per trial: in the `.mat`, `tr.slurps` holds every slurp the detector saw
@@ -176,12 +210,13 @@ while waiting; `ready` (looks at the child, eyebrows up, mouth open on a wigglin
 straw) on "Ready to slurp?"; `slurp` (cheeks in, happy eyes, lines along the straw)
 while the child inhales; `ahh` (eyes closed, smiling, bubbles) while a counted slurp
 drains; `tryagain` (head tilt, one eyebrow up, never sad) while a weak or overlong
-slurp's belly goes down (never in the free trials); `celebrate` (arms up, grin) for a
+slurp's belly goes down (never in free play, the free trials or the demos); `celebrate` (arms up, grin) for a
 full cup, the stretch after a nap and the sticker; `sleep` (Z's) during the nap;
 `strain` (cheeks puffed, sweat drop) only in story beat 2, where the mouse pinches the
-straw. The mouse runs (`run`) while the wedge moves, pinches (`pinch`) in the story and
-in the practice reveal of a loaded trial, and sleeps (`sleep`) in the reveal of a catch
-trial. `kidsBeat` gives the scene, length and cue of each moment (story beats, move,
+straw. Free play waits in `ready`. The mouse runs (`run`) while the wedge moves,
+pinches (`pinch`) in the story, during the tutorial's pinch demo (the only time it is
+seen pinching while the child breathes) and in the reveal of a loaded trial, and sleeps
+(`sleep`) during the sleep demo and in the reveal of a catch trial. `kidsBeat` gives the scene, length and cue of each moment (story beats, move,
 ready, reveal, star flight, cup tip and celebrate, nap, stretch, sticker);
 `kidsSlurpPhase` the poses during the slurps. Every frame gets `t` (seconds since the
 session started) and `flavour = cupsDone + 1` (pink, chocolate, mint, blueberry).
@@ -216,6 +251,10 @@ shows every pose.
   `kidsText.m`, `kidsSave.m`.
 - `code/kidsOpenMarkers.m`, `kidsWaitsForRecorder.m`, `kidsMarkerLabel.m`: LSL markers
   through the shared `task/helpers/rrstMarker.m`, tested in `tests/TestKidsMarkers.m`.
+- `code/kidsPrompt.m`: the experimenter's line per moment (pure;
+  `tests/TestKidsPrompt.m`).
+- `code/kidsTutorialPlan.m` (the tutorial's steps, pure), `kidsFreePlay.m` (free
+  play), `kidsSetReference.m`, tested in `tests/TestKidsTutorial.m`.
 - `code/kidsSlurpPhase.m`: one trial's slurps, breath-driven or timed, and
   `kidsReferenceSlurps.m` (the free slurps that set the reference), tested in
   `tests/TestKidsSlurpPhase.m`; `code/kidsFlow.m` (breath detector), `kidsSimFlow.m`
@@ -285,14 +324,18 @@ ever exceeded the cap. Two problems:
 
 ## Not done or not checked
 
-- Never run with a child; one adult run on the real device, before the breath
-  feedback and the poses. Next: `docs/kids_pilot_protocol_2026-10-30.md`.
+- Never run with a child. Two adult runs on the real device: 2026-10-28 (timed
+  animation) and 2026-10-30 (breath feedback; every slurp detected, aborted in the
+  second practice round, which led to the tutorial and the experimenter line). The
+  tutorial has run only in unattended mock sessions. Next:
+  `docs/kids_pilot_protocol_2026-10-30.md`.
 - Cue sounds have run without error on the stim PC (2026-10-30, nobody listening);
   not heard by a child, and their timing and loudness over the rain have not been
   checked by ear.
-- Breath-driven trials have run only with synthetic airflow (unattended mock sessions)
-  and the live launch check; not yet with a person breathing (plan step 6: adult
-  pilot, feedback on versus off, which also checks the fill-speed leak).
+- Breath-driven trials have run with one adult breathing (2026-10-30, practice
+  only: 3 of 3 slurps detected on every trial, no weak, no false onset); the feedback
+  on versus off comparison (plan step 6, which also checks the fill-speed leak) is
+  still to do.
 - The lag from breath to screen is not measured yet (`TODO(measure)` in
   `handbook/shared/airflow-sensor.md`; `bench/flowFeedbackCheck`).
 - The monster and the mouse are drawn from shapes in code (`kidsPose`/`kidsScene`), not

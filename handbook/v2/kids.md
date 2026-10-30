@@ -2,8 +2,10 @@
 
 !!! warning "In development: not for use with children yet"
     RRST-Kids ("Milkshake Monster") has run on the real device with one adult tester
-    only, before the breath-driven version. The breath feedback has run only with
-    synthetic airflow, the cue sounds have not been checked by ear, the child-facing
+    only: once before the breath-driven version, once with it (aborted in practice,
+    see [First real run with feedback](#first-real-run-with-feedback-2026-10-30-adult)).
+    The tutorial has run only in mock sessions, the cue sounds have not been checked
+    by ear, the child-facing
     text is English only, and the 85 % cap has not been checked on a flow rig (see
     [Open questions](#open-questions)). It lives on the `kids-variant` branch, in
     `task/RRST_kids/`. The next step is the pilot protocol in
@@ -24,6 +26,17 @@ the airflow sensor sees each slurp, the belly fills, and the milkshake drains a 
 per slurp. Nothing is paced, so there is no timed cue to catch. Every answer earns a
 star; ten stars finish a milkshake and earn a real sticker from the experimenter.
 
+**Stars are progress, not feedback:** one per answer, right or wrong, toward a cup and
+a sticker. Because they say nothing about the answer they are shown in every run,
+feedback on or off.
+
+**The tutorial** comes between the story and the practice: free play (the child slurps
+as often as they like and watches the belly fill), two demos with no question (three
+slurps with the mouse pinching the straw at 80 %, then three with it asleep at 0, each
+followed by its reveal), and a bridge screen with the two answer cards, "Now you say:
+did the mouse pinch?", for the experimenter to explain. Only then does the practice
+ask.
+
 | | Adult RRST 2.0 | Kids |
 |---|---|---|
 | Judgement | 2 breaths, which was harder (2AFC) | 3 breaths at one level, yes/no ("did the mouse pinch?") |
@@ -35,7 +48,7 @@ star; ten stars finish a milkshake and earn a real sticker from the experimenter
 | Trials | set by the study | 30 Psi + 10 catch; stops early when SE < 8 after 20 Psi trials |
 | Breathing | timed inhale cue | experimenter starts the trial; the **child's breath drives the screen** (airflow sensor): the belly fills with the slurp, each slurp that counts drains a third of the milkshake. The trial goes on after 3 counted slurps; Space ends them early. Without the sensor: a timed animation (1.2 s in, 1.8 s out, x3) |
 | Answer | participant clicks | **experimenter clicks** one of two equally nice scene cards ("easy": the mouse asleep; "squishy": the mouse pinching), the one the child names or points at |
-| Feedback | none | practice: the truth after every trial, shown (the mouse pinching or asleep); main trials: a star flies into its slot for every answer |
+| Feedback | none | tutorial demos and practice: the truth after every trial, shown (the mouse pinching or asleep); main trials: none (a star flies into its slot for every answer, right or wrong) |
 
 Why yes/no: a 4-year-old struggles to hold two breaths in memory and compare them.
 The cost is that the threshold is a detection threshold that absorbs the child's
@@ -56,25 +69,32 @@ T-valve's small backflow after each breath is negative and never starts a slurp.
 - **The milkshake** drains a fixed third per counted slurp, on the slurp's end, with
   bubbles. Never in proportion to the flow.
 - **A slurp counts** when its volume is at least 25 % of the reference slurp and at
-  least 0.10 L. A smaller one is "weak": the belly goes down, nothing drains, the
+  least 0.10 L. A counted slurp drains over 1 s (`cfg.timing.drain`); the next one
+  can start at once. A smaller one is "weak": the belly goes down, nothing drains, the
   monster tilts its head ("hmm?", never sad) with a soft two-note sound, and the
   child simply slurps again. A "slurp" longer than 6 s is a leak or draught, not
   counted.
-- **The reference slurp** is set by the two free trials at the start of practice
-  (three slurps each, no question): the median volume of every free slurp the sensor
-  saw (counted or weak), clamped to 0.15-2 L. Before it exists the default is 0.6 L, so a small child's free slurps can
-  all be weak against it; they still set the reference, and the free slurps never show
-  the "try again" pose: they are the tutorial.
+- **The reference slurp** is set by the tutorial's free play: the median volume of
+  every slurp the sensor saw there (counted or weak), clamped to 0.15-2 L. Before it
+  exists the default is 0.6 L, so a small child's free slurps can all be weak against
+  it; they still set the reference, and free play never shows the "try again" pose.
+  When the glass is empty a new one stands there; Space ends free play once the child
+  has slurped (hold Space 1 s to go on without a slurp).
 
 ## A trial, frame by frame
 
 The child's screen has no text to read: every state has a pose and a sound. The
-sentence in the bottom-left corner is for the experimenter.
+small bottom-left line is for the experimenter: first what is happening and which key
+goes on (`PRACTICE 3 of 6. Space starts the slurps. ...`, `Trial 5. Space starts the
+slurps. No feedback; one star per answer.`), then the story's sentence. The console
+prints the same line.
 
 | | |
 |---|---|
 | ![Story, beat 1](../assets/img/kids/01_story.png) | **Story, beat 1.** Shown once, in three beats; Space moves on from each, so the experimenter tells the story over them. The monster slurps happily, the milkshake drains, then "ahh" with bubbles. Stars (top) and cups (top right) show progress. |
 | ![Story, beat 2](../assets/img/kids/14_story2.png) | **Story, beat 2.** The mouse pinches the straw (scamper sound); the monster strains, cheeks puffed. Beat 3: the mouse runs off and the monster relaxes. |
+| ![Free play](../assets/img/kids/15_freeplay.png) | **Tutorial, free play.** Wedge at 0. The monster waits in its ready pose; every slurp fills the belly and drinks a third of the glass, and an empty glass is replaced at once. The child slurps as often as they like; Space ends it after at least one slurp. Every slurp sets the reference. |
+| ![Demo, mouse pinching](../assets/img/kids/16_demo_pinch.png) | **Tutorial, demo 1.** The wedge at 80 % and the mouse pinching the straw *while* the child slurps three times: the only time the pinch is seen during breathing. Then the reveal. Demo 2 is the same at 0 with the mouse asleep. Then the two answer cards, explained, and the practice. |
 | ![Mouse running](../assets/img/kids/02_mouse.png) | **Mouse.** The mouse scampers along the bottom (scamper sound) while the wedge moves, at least 1.5 s. On catch trials the wedge moves to 0; the screen is the same. |
 | ![Ready](../assets/img/kids/03_cue.png) | **Ready to slurp?** The monster looks at the child, eyebrows up, mouth open on a wiggling straw, with a chime. When the child has the mouthpiece in and is ready, the experimenter presses Space. |
 | ![Slurp](../assets/img/kids/04_inhale.png) | **Slurp.** As soon as the child inhales, the monster slurps (cheeks in, happy eyes, lines running up the straw) and the belly fills with the breath. |
@@ -83,8 +103,8 @@ sentence in the bottom-left corner is for the experimenter.
 | ![Answer registered](../assets/img/kids/07_answered.png) | **Answer registered.** The chosen card is framed and the other fades for 0.5 s. |
 | ![Practice reveal, pinch](../assets/img/kids/08_feedback.png) | **Practice reveal.** Practice only, after every answer: the truth for 1.5 s. On a loaded trial the mouse is shown pinching the straw, in a spotlight, with the scamper sound... |
 | ![Practice reveal, asleep](../assets/img/kids/13_reveal.png) | **...and on a catch trial it is asleep under the table.** |
-| ![Star](../assets/img/kids/09_star.png) | **Star.** Main trials: for every answer, right or wrong, a star flies from the monster's belly into the next slot, with a sparkle. |
-| ![Cup finished](../assets/img/kids/10_cupdone.png) | **Cup finished.** The tenth star: the empty glass tips into the done row at the top right (fanfare), then the monster dances with its arms up and a new milkshake in the next flavour (pink, chocolate, mint, blueberry). Give a sticker. |
+| ![Star](../assets/img/kids/09_star.png) | **Star.** Main trials: for every answer, right or wrong, a star flies from the monster's belly into the next slot, with a sparkle. Stars count answers, not correct answers, so they are shown in every run. |
+| ![Cup finished](../assets/img/kids/10_cupdone.png) | **Cup finished.** The tenth star: the empty glass tips into the done row at the top right (fanfare), then the monster dances with its arms up and a new milkshake in the next flavour (pink, chocolate, mint, blueberry). Give a sticker, then Space. |
 | ![Rest](../assets/img/kids/11_rest.png) | **Rest.** Every 10 trials the monster naps (Z's) for 45 s while a bar drains; then it stretches, and "Ready to slurp?" comes back. Space goes on. |
 | ![Done](../assets/img/kids/12_done.png) | **Done.** The monster celebrates. |
 
@@ -97,13 +117,17 @@ the console.
 
 1. **Calibration**, before the child sits down: tube in, nobody on the mouthpiece. The
    wedge closes fully once (about 0.5 min).
-2. **Story** (three beats), then **practice**: 2 free trials of three slurps without a
-   question (they set the reference slurp), then 6 trials (80, 0, 80, 0, 75, 0), each followed by
-   the reveal. Pass: 5 of 6 right, including both 80s. One retry; a second failure ends
-   the session as `PracticeFailed_`, which is itself a result.
-3. **Main trials**: up to 40, a nap every 10. With breath-driven slurps a trial is
+2. **Story** (three beats), then the **tutorial**: free play (sets the reference
+   slurp), the pinch demo at 80 and the sleep demo at 0 (three slurps each, no
+   question, each followed by the reveal), the answer cards explained.
+3. **Practice**: 6 trials (80, 0, 80, 0, 75, 0), each followed by the reveal, marked
+   `PRACTICE k of 6` on the experimenter line. Pass: 5 of 6 right, including both 80s.
+   The console prints every practice answer and, after each round, whether it passed
+   and why not. One retry; a second failure ends the session as `PracticeFailed_`,
+   which is itself a result.
+4. **Main trials**: up to 40, a nap every 10. With breath-driven slurps a trial is
    about 12-15 s.
-4. **Sticker.** About 12-20 minutes in all.
+5. **Sticker.** About 12-20 minutes in all.
 
 ## Running it
 
@@ -218,6 +242,33 @@ Timed animation (before the breath feedback). Practice 6/6 right. Threshold 79.2
 on hits at 80 % (1 of 3), the misfire described below.
 
 ![QC figure of the first adult pilot](../assets/img/kids/pilot_qc_2026-10-28_1712.png)
+
+## First real run with feedback (2026-10-30, adult)
+
+The experimenter, real device, breath feedback on, sensor live. "Very cute, huge
+improvement." Every slurp was detected: 3 of 3 on every trial, 1.2 to 2.0 L and 83 to
+137 slm per slurp, no weak slurp, no false onset. The run never reached the main
+trials: practice round 1 failed at 80 % ("easy" answered twice at 80, both must-pass
+trials), round 2 started, and the run was aborted from boredom. What went wrong was the
+framing, not the detector:
+
+- The experimenter did not know they were in practice, so the reveal ("the mouse was
+  present / absent") made no sense: "it was not clear why it was telling me the mouse
+  was present or absent if this is a no-feedback run".
+- "It should say press space to continue when needed."
+- "It's not clear what the stars represent or if they need to be shown on no-feedback
+  runs."
+- "We should build a quick intro tutorial."
+- Three slurps took about 12 s per trial: the drain-and-bubbles animation after each
+  slurp (1.8 s, the timed fallback's exhale) plus the breaths.
+
+Changed in response: the experimenter line on every screen and the console
+(`PRACTICE k of n`, `Trial n`, which key goes on), the tutorial (free play, the two
+demos, the answer cards), stars explained above, and a 1.0 s drain
+(`cfg.timing.drain`). Not changed: the practice levels, the pass rule and the cap.
+An adult failing practice at 80 % is a design question (the first adult pilot's
+threshold was 79 %, so 80 % is near threshold for an adult), now visible on the
+console with the reason.
 
 ## Open questions
 

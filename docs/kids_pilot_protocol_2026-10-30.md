@@ -51,13 +51,19 @@ cfg.child.numPsiTrials = 20; cfg.child.numCatchTrials = 8;   % shorter than the 
 ```
 
 **Run A1, feedback on** (`cfg.flow.feedback = "breath"`, the default). Start the Physio
-Recorder recording when the task asks for it. Go through calibration, story, the two free
-slurps and the practice, then the main trials until the early stop or 28 trials. While
-running, note on paper:
+Recorder recording when the task asks for it. Go through calibration, story, the tutorial
+(free play, the pinch and sleep demos, the answer cards) and the practice, then the main
+trials until the early stop or 28 trials. The experimenter line at the bottom left (and
+the console) says where you are: `PRACTICE k of 6` or `Trial n`. **The reveal (the mouse
+shown pinching or asleep) appears only in the tutorial demos and the practice**; main
+trials have no feedback, only a star per answer, right or wrong. The console prints each
+practice answer and, after each round, whether it passed and why not. While running,
+note on paper:
 
 | What to watch | Note |
 |---|---|
-| Free slurps | The console's reference line (volume, belly-full and counts-above thresholds). Does the belly fill in step with your breath, or late? (Free slurps are never marked weak on screen; the console says "small, sets the reference".) |
+| Free play | The console's reference line at its end (volume, belly-full and counts-above thresholds). Does the belly fill in step with your breath, or late? (Free play never marks a slurp weak on screen; the console says "small; sets the reference".) |
+| Demos | Did the pinch at 80 feel clearly different from the sleep demo at 0? |
 | Every slurp | Did the belly start to rise as soon as you began inhaling? Did the drain happen on the breath's end? |
 | False onsets | Any slurp counted when you had not inhaled (the T-valve backflow must never trigger one)? |
 | Weak slurps | Did any real breath come out as "weak"? At which level? |
@@ -67,7 +73,7 @@ running, note on paper:
 | Trial length | Rough seconds per trial from Space to the answer. |
 
 **Run A2, feedback off** (`cfg.flow.feedback = "none"`; keep `cfg.flow.enabled = true`
-so the flow is still recorded and the free slurps still set the reference). Same
+so the flow is still recorded and free play still sets the reference). Same
 procedure. Note the same things where they apply, and whether the fixed pacing now feels
 slow or fast compared with A1.
 
@@ -101,7 +107,8 @@ cfg.child.hardCap = 75;                      % first child: well below the adult
 cfg.child.startLevel = 60;
 cfg.psi.stimRange = 0:5:75;
 cfg.psi.priorAlphaRange = linspace(30, 75, 46);
-cfg.practice.levels = [0 0 70 0 70 0 65 0];  % two free slurps, then 6 practice trials
+cfg.tutorial.pinchLevel = 70;                % the pinch demo, at the practice's top level
+cfg.practice.levels = [70 0 70 0 65 0];      % 6 practice trials (free play is in the tutorial)
 cfg.practice.mustPass = [70 70];
 cfg.child.numPsiTrials = 15; cfg.child.numCatchTrials = 5;
 cfg.child.stopMinTrials = 10;
@@ -120,19 +127,30 @@ cfg.timing.pause = 30;
 - A second adult or a phone on a stand filming the screen and her face is the most
   useful record of all (your call as her parent; it stays with you, not in the repo).
 
-**Structure**
-1. **Free play (2 min, wedge at 0).** Before the story: "Can you make the monster's
-   belly big?" Let her breathe through the mouthpiece and watch the belly. This is where
-   you learn whether the feedback is self-explanatory. The two free trials in the task
-   (three slurps each) repeat this and set her reference volume from every slurp the
-   sensor saw, however small; read the console line and write it down.
-2. **Story.** Tell it in your own words over the screens. Press Space to move on when
+**Structure** (the experimenter line at the bottom left and the console say which step
+you are in and which key goes on)
+1. **Story.** Tell it in your own words over the screens. Press Space to move on when
    she looks ready, not before.
+2. **Tutorial, inside the task.**
+   - *Free play (wedge at 0, about 2 min).* "Can you make the monster's belly big?" Let
+     her breathe through the mouthpiece as often as she likes and watch the belly; the
+     milkshake refills when it is empty. This is where you learn whether the feedback
+     is self-explanatory. Space ends it once she has slurped (hold Space 1 s if she will
+     not). Every slurp sets her reference volume, however small: read the console line
+     and write it down.
+   - *Demo 1, the mouse pinching (wedge at 70).* "Look, the mouse is pinching the
+     straw! Slurp and feel it." Three slurps with the mouse on the straw, then the
+     reveal. No question.
+   - *Demo 2, the mouse asleep (wedge at 0).* "Now it is asleep. Slurp again." Three
+     slurps, then the reveal.
+   - *The answer cards.* "Now you say: did the mouse pinch?" Show her the two cards
+     (easy: the mouse asleep; squishy: the mouse pinching), then Space.
 3. **Practice (6 trials with the reveal).** Let the screen do the explaining: after each
    answer the mouse is shown pinching or asleep. Only add words if she asks.
-4. **Main trials: at most two cups (20 answers).** One rest in between. Stop with Esc the
+4. **Main trials: at most two cups (20 answers).** No reveal; a star for every answer,
+   right or wrong (progress, not a score). One rest in between. Stop with Esc the
    moment she wants to stop; a stopped session is a result.
-5. **Sticker.**
+5. **Sticker** at each full cup (the cup tip waits for Space) and at the end.
 
 **Observation sheet** (one line per trial or event; a phone voice memo is fine):
 
@@ -140,7 +158,8 @@ cfg.timing.pause = 30;
 |---|---|
 | Ready cue | Did she put the mouthpiece in and breathe without a verbal prompt? Count prompts per trial. |
 | Breathing | Did she breathe before Space, on the cue, or only after being told? Any blowing instead of sucking? |
-| Weak / timeout | How many "weak" slurps (console) and whether the try-again pose and sound registered with her (they never come in the free trials). |
+| Weak / timeout | How many "weak" slurps (console) and whether the try-again pose and sound registered with her (they never come in free play or the demos). |
+| Demos | Did she notice the mouse on the straw while slurping? Any comment on the feeling? |
 | Belly | Did she look at the belly while breathing? Any comment ("it's getting big")? |
 | Question | Did she answer by speaking, pointing, or both? Any preference for one card regardless of the trial? Did she understand "squishy"? |
 | Reveal (practice) | Did she react to the mouse being shown? Did the idea of the pinch land? |
