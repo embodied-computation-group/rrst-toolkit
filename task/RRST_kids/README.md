@@ -94,6 +94,34 @@ row per trial. Prefixes: `MOCK_`, `SIM_`, `Aborted_`, `Error_`, `PracticeFailed_
 - `qcKids.m`: QC figure for one saved session.
 - Masking sound: the adult task's rain loop at volume 0.6; check the level for small
   headphones by ear.
+- `code/kidsSound.m`, `code/kidsCueWave.m`: rain loop and cue sounds (below), tested
+  in `tests/TestKidsSound.m`.
+
+## Sounds
+
+`kidsSound` opens one PsychPortAudio master device (playback, mode 1+8) at the rain
+file's sample rate and keeps it running for the session. Two slave devices are mixed
+into it: one loops the rain at `cfg.noise.volume`, the other plays short cue sounds at
+`cfg.sound.volume`, so a cue never interrupts the masking. The cues are generated in
+code by `kidsCueWave` (no sound files): `ready` (rising two-note chime), `slurp`,
+`bubbles`, `star` (sparkle), `cup` (fanfare), `mouse` (scamper ticks) and `tryagain`
+(soft two notes a whole tone down, neutral, never sad). Usage:
+
+```matlab
+snd = kidsSound(cfg.noise, cfg.sound);   % replaces startMaskingNoise(cfg.noise)
+snd.play("ready");                       % returns at once; cuts off a cue still playing
+snd.stop();                              % stop the cue; the rain keeps going
+snd.close();                             % replaces stopMaskingNoise; also on error paths
+```
+
+`cfg.sound.enabled = false` turns the cues off (the rain still follows
+`cfg.noise.enabled`). Without Psychtoolbox or an audio device, `kidsSound` prints one
+`rrst:soundOff` warning and every call is a silent no-op, so a sound problem never
+stops the session; check the console for that warning. `snd.active` (cues) and
+`snd.rainOn` (rain) say what is playing. Not yet wired into `kidsMain`, which still
+calls `startMaskingNoise`; use one or the other, never both. A cue at its peak over a
+loud rain droplet can clip briefly (0.6 + 0.72 > 1); lower `cfg.sound.volume` if that
+is audible.
 
 ## Simulated precision (`simulateKids`, 100 runs per profile, slope 8, lapse 0.1)
 
@@ -123,8 +151,9 @@ ever exceeded the cap. Two problems:
 ## Not done or not checked
 
 - Never run with a child; one adult run on the real device.
-- No cue sounds (ding, slurp): a second sound stream next to the rain needs
-  PsychPortAudio master/slave devices. Visual cues only.
+- Cue sounds exist (`kidsSound`) but are not yet played by `kidsMain`. They have run
+  without error on the stim PC (2026-10-30, nobody listening); not heard by a child,
+  and their loudness over the rain has not been checked by ear.
 - Esc is checked during animations, answers and rests, not while the wedge is moving.
 - Translations; the colours and drawings have not been seen by a child.
 - Design questions from the spec: the cap, what to report when a child's threshold
