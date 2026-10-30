@@ -99,9 +99,39 @@ session so a fresh session can continue from the files.
   - Handbook page `handbook/v2/running.md` (how to run the 2.0 task), merged into
     `main` 2026-10-28. mkdocs isn't installed on the stim laptop, so the strict build
     hasn't run; links were checked by hand.
-  - Branch `kids-variant`: RRST-Kids ("Milkshake Monster"), parked. Tried once by a
-    4.5-year-old; trials are now experimenter-started with 3 slurps. Not for children
-    yet (see `handbook/v2/kids.md` open questions).
+  - Branch `kids-variant`: RRST-Kids ("Milkshake Monster"), state 2026-10-30: the
+    flow feedback and UX plan (`docs/kids_flow_feedback_and_ux_plan_2026-10-30.md`)
+    is implemented except sprites (U3) and the Physio Recorder figures. Merged, one
+    slice each:
+    1. LSL markers (`RRST` stream) and the recorder guard.
+    2. Breath detector `kidsFlow`, synthetic flow `kidsSimFlow`, `kidsBreathScale`,
+       `cfg.flow`.
+    3. Cue sounds `kidsSound`/`kidsCueWave` (rain and cues on one PsychPortAudio master).
+    4. Shared `task/helpers/flowInlet.m` and the two-card answer screen.
+    5. `bench/flowFeedbackCheck` (live airflow bar and display lag).
+    6. Breath-driven slurp phase `kidsSlurpPhase`, airflow check at launch, the pose
+       scene `kidsPose`/`kidsScene`.
+    7. Poses wired into the session (`kidsBeat`: story beats, practice reveal, star
+       flight, cup tip, nap), reference slurp from every detected free slurp, free
+       slurps never marked weak, flowInlet's resolve stepped clear of 0.5 s.
+    Tests: 340 pass (whole suite, 2026-10-30); an unattended mock session with the
+    simulated child completes on the breath path (3 counted slurps every trial). Next:
+    the pilot protocol `docs/kids_pilot_protocol_2026-10-30.md` (experimenter self-test
+    with feedback on and off, then one child as a usability check). Not for children
+    before that. Open:
+    - Lag from breath to screen: `TODO(measure)` in `handbook/shared/airflow-sensor.md`
+      (`bench/flowFeedbackCheck(60, SmallWindow=false)`).
+    - Cue sounds not checked by ear (loudness over the rain, timing).
+    - Level leak through the belly's fill speed: adult feedback on/off comparison
+      (protocol Session A) decides `{{FLOW_FEEDBACK_MODE}}`.
+    - liblsl 1.18 on the stim laptop overruns resolve timeouts of 0.495-0.5 s by
+      about 5 s (flowInlet now uses 0.52 s); other timeouts were on time. Watch for
+      slow resolves on the kids site's PC.
+    - `kidsQuestion.m` duplicates drawing helpers of `kidsScene.m` (monster face,
+      mouse poses); share them.
+    - Physio Recorder figures for one-interval kids trials (`rrst_figures.py` in
+      plux-lsl: slurp gallery, volume and peak by level and catch).
+    - Sprites (U3): the characters are still shapes in code.
   - Still open: `task/RRST_2-0/README.md` describes generated pink noise (the code loops
     the rain file); session number is the visit number, not the dose (keeps the run
     blind; confirm with Zurich).
