@@ -2,10 +2,12 @@
 
 !!! warning "In development: not for use with children yet"
     RRST-Kids ("Milkshake Monster") has run on the real device with one adult tester
-    only: once before the breath-driven version, once with it (aborted in practice,
-    see [First real run with feedback](#first-real-run-with-feedback-2026-10-30-adult)).
-    The tutorial has run only in mock sessions, the cue sounds have not been checked
-    by ear, the child-facing
+    only: once before the breath-driven version, twice with it (aborted in practice,
+    see [First real run with feedback](#first-real-run-with-feedback-2026-10-30-adult);
+    then 20 main trials, see
+    [Second run with feedback](#second-run-with-feedback-2026-10-30-adult-20-main-trials)).
+    The feedback cards and the mouse's run to the cup have run only in mock sessions,
+    the cue sounds have not been checked by ear, the child-facing
     text is English only, and the 85 % cap has not been checked on a flow rig (see
     [Open questions](#open-questions)). It lives on the `kids-variant` branch, in
     `task/RRST_kids/`. The next step is the pilot protocol in
@@ -45,10 +47,10 @@ ask.
 | Levels | 0-100 % | 0-100 % in 5 % steps; a configurable cap (`cfg.child.hardCap`, default 100) is enforced at launch and before every move |
 | Start | Psi's choice | 70 % |
 | Jumps | any | at most 15 % above the highest level so far |
-| Trials | set by the study | 30 Psi + 10 catch; stops early when SE < 8 after 20 Psi trials |
+| Trials | set by the study | 30 Psi + 10 catch, so up to 40 (plus repeats); stops early when SE < 8 after 20 *Psi* trials, so with catch trials a run goes past trial 20. The experimenter line counts them: `Trial 21 of up to 28 (Psi 15/20, catch 6/8)` |
 | Breathing | timed inhale cue | experimenter starts the trial; the **child's breath drives the screen** (airflow sensor): the belly fills with the slurp, each slurp that counts drains a third of the milkshake. The trial goes on after 3 counted slurps; Space ends them early. Without the sensor: a timed animation (1.2 s in, 1.8 s out, x3) |
 | Answer | participant clicks | **experimenter clicks** one of two equally nice scene cards ("easy": the mouse asleep; "squishy": the mouse pinching), the one the child names or points at |
-| Feedback | none | tutorial demos and practice: the truth after every trial, shown (the mouse pinching or asleep); main trials: none (a star flies into its slot for every answer, right or wrong) |
+| Feedback | none | practice: after every answer, the two answer cards for 2.5 s with the **correct card in a thick gold frame and a star badge**; right: a gold tick and a sparkle; wrong: the chosen card fades and the mouse on the correct card squeezes the straw (or a Z floats up from it asleep), soft two notes. Main trials: none by default (`cfg.feedback.main = true` turns the cards on), but a star flies into its slot for every answer, right or wrong. Tutorial demos: the reveal (the mouse pinching or asleep) |
 
 Why yes/no: a 4-year-old struggles to hold two breaths in memory and compare them.
 The cost is that the threshold is a detection threshold that absorbs the child's
@@ -85,9 +87,10 @@ T-valve's small backflow after each breath is negative and never starts a slurp.
 
 The child's screen has no text to read: every state has a pose and a sound. The
 small bottom-left line is for the experimenter: first what is happening and which key
-goes on (`PRACTICE 3 of 6. Space starts the slurps. ...`, `Trial 5. Space starts the
-slurps. No feedback; one star per answer.`), then the story's sentence. The console
-prints the same line.
+goes on (`PRACTICE 3 of 6. Space starts the slurps. ...`, `Trial 21 of up to 28 (Psi
+15/20, catch 6/8). Space starts the slurps. No feedback; one star per answer.`; the
+counts are of the trials done), then the story's sentence or the truth after a
+practice answer. The console prints the same line.
 
 | | |
 |---|---|
@@ -95,14 +98,15 @@ prints the same line.
 | ![Story, beat 2](../assets/img/kids/14_story2.png) | **Story, beat 2.** The mouse pinches the straw (scamper sound); the monster strains, cheeks puffed. Beat 3: the mouse runs off and the monster relaxes. |
 | ![Free play](../assets/img/kids/15_freeplay.png) | **Tutorial, free play.** Wedge at 0. The monster waits in its ready pose; every slurp fills the belly and drinks a third of the glass, and an empty glass is replaced at once. The child slurps as often as they like; Space ends it after at least one slurp. Every slurp sets the reference. |
 | ![Demo, mouse pinching](../assets/img/kids/16_demo_pinch.png) | **Tutorial, demo 1.** The wedge at 90 % and the mouse pinching the straw *while* the child slurps three times: the only time the pinch is seen during breathing. Then the reveal. Demo 2 is the same at 0 with the mouse asleep. Then the two answer cards, explained, and the practice. |
-| ![Mouse running](../assets/img/kids/02_mouse.png) | **Mouse.** The mouse scampers along the bottom (scamper sound) while the wedge moves, at least 1.5 s. On catch trials the wedge moves to 0; the screen is the same. |
+| ![Mouse by the cup](../assets/img/kids/02_mouse.png) | **Mouse.** While the wedge moves, the mouse runs from the left along the ground to the cup (scamper sound), stops by it with a cheeky face (upright, eyes wide, a grin, one paw waving; a squeak), then hops behind the cup. It animates for the whole move: the frames are drawn while the firmware moves, at least 1.5 s and until 0.5 s after the move is confirmed, and the mouse hides only once the wedge is in place. On catch trials the wedge moves to 0; the screen is the same. |
 | ![Ready](../assets/img/kids/03_cue.png) | **Ready to slurp?** The monster looks at the child, eyebrows up, mouth open on a wiggling straw, with a chime. When the child has the mouthpiece in and is ready, the experimenter presses Space. |
 | ![Slurp](../assets/img/kids/04_inhale.png) | **Slurp.** As soon as the child inhales, the monster slurps (cheeks in, happy eyes, lines running up the straw) and the belly fills with the breath. |
 | ![Ahh](../assets/img/kids/05_exhale.png) | **Ahhh.** When the slurp ends and counts, a third of the milkshake drains, bubbles rise and the belly goes down. After the third counted slurp the question comes; the child takes them at their own pace (6-8 s for three). |
 | ![Question](../assets/img/kids/06_question.png) | **Question.** "Did the mouse pinch the straw?" Two equally bright scene cards: the mouse asleep ("easy") and the mouse pinching ("squishy"), a cheerful monster on both. The child says or points; the experimenter clicks that card. A white ring marks the card under the pointer. |
 | ![Answer registered](../assets/img/kids/07_answered.png) | **Answer registered.** The chosen card is framed and the other fades for 0.5 s. |
-| ![Practice reveal, pinch](../assets/img/kids/08_feedback.png) | **Practice reveal.** Practice only, after every answer: the truth for 1.5 s. On a loaded trial the mouse is shown pinching the straw, in a spotlight, with the scamper sound... |
-| ![Practice reveal, asleep](../assets/img/kids/13_reveal.png) | **...and on a catch trial it is asleep under the table.** |
+| ![Practice feedback, right](../assets/img/kids/08_feedback.png) | **Practice feedback, right.** After every practice answer, for 2.5 s: the two cards stay, the correct card gets a thick gold frame and a big star badge, the chosen card keeps its white frame. Right: a big gold tick pops up on it, with a sparkle. Here the child said "squishy" and the mouse did pinch. |
+| ![Practice feedback, wrong](../assets/img/kids/17_feedback_wrong.png) | **Practice feedback, wrong.** The child said "squishy" on a catch trial: the gold frame and star go to "easy", the chosen card fades, and on the correct card a Z floats up from the sleeping mouse (on a loaded trial the mouse squeezes the straw twice), with soft two notes. No red or green, no sad face. The experimenter line says `Practice: not right. The gold card shows the truth.` and the truth sentence. Main trials get the same with `cfg.feedback.main = true`. |
+| ![Demo reveal, asleep](../assets/img/kids/13_reveal.png) | **Demo reveal.** After each tutorial demo (there is no answer to mark) the mouse is shown pinching the straw or, as here, asleep under the table, in a spotlight, for 1.5 s. `cfg.feedback.style = "reveal"` uses this for the practice too, as before 2026-10-30. |
 | ![Star](../assets/img/kids/09_star.png) | **Star.** Main trials: for every answer, right or wrong, a star flies from the monster's belly into the next slot, with a sparkle. Stars count answers, not correct answers, so they are shown in every run. |
 | ![Cup finished](../assets/img/kids/10_cupdone.png) | **Cup finished.** The tenth star: the empty glass tips into the done row at the top right (fanfare), then the monster dances with its arms up and a new milkshake in the next flavour (pink, chocolate, mint, blueberry). Give a sticker, then Space. |
 | ![Rest](../assets/img/kids/11_rest.png) | **Rest.** Every 10 trials the monster naps (Z's) for 45 s while a bar drains; then it stretches, and "Ready to slurp?" comes back. Space goes on. |
@@ -120,13 +124,16 @@ the console.
 2. **Story** (three beats), then the **tutorial**: free play (sets the reference
    slurp), the pinch demo at 90 and the sleep demo at 0 (three slurps each, no
    question, each followed by the reveal), the answer cards explained.
-3. **Practice**: 6 trials (90, 0, 90, 0, 85, 0), each followed by the reveal, marked
-   `PRACTICE k of 6` on the experimenter line. Pass: 5 of 6 right, including both 80s.
+3. **Practice**: 6 trials (90, 0, 90, 0, 85, 0), each followed by the feedback cards,
+   marked `PRACTICE k of 6` on the experimenter line. Pass: 5 of 6 right, including both 90s.
    The console prints every practice answer and, after each round, whether it passed
    and why not. One retry; a second failure ends the session as `PracticeFailed_`,
    which is itself a result.
-4. **Main trials**: up to 40, a nap every 10. With breath-driven slurps a trial is
-   about 12-15 s.
+4. **Main trials**: up to 40 (30 Psi + 10 catch), a nap every 10. The run stops early
+   once the threshold's SE is below 8 after 20 *Psi* trials; catch trials do not count,
+   so it usually goes past trial 20. The console prints the plan at the start, after
+   every answer the threshold, its SE and where the early stop stands, and at the end
+   why the run stopped. With breath-driven slurps a trial is about 12-15 s.
 5. **Sticker.** About 12-20 minutes in all.
 
 ## Running it
@@ -191,6 +198,9 @@ No slurp seen for 8 s: mouthpiece in? Space = go on, x = repeat, Esc = abort
 Slurp 3 lasted over 6 s: not counted. Flow is not returning to zero: check the circuit for a leak or a draught at the inlet.
 Airflow stream lost: this trial finishes with the timed animation (flowLost). ...
 Airflow stream is back.
+Main trials: up to 28 (20 Psi + 8 catch). Early stop: SE < 8 after 20 Psi trials.
+Trial 21: squishy (yes). Threshold 86.9 %, SE 7.1. Early stop: SE < 8 after 20 Psi trials; now SE 7.1 after 15 (5 more Psi trials needed).
+Stopped early: SE 7.1 < 8 after 20 Psi trials (27 of up to 28 trials run). Threshold 86.9 %.
 ```
 
 If no free slurp was seen at all, the reference stays at 0.6 L and the console says
@@ -278,6 +288,35 @@ demos, the answer cards), stars explained above, and a 1.0 s drain
 An adult failing practice at 80 % was near threshold (the first adult pilot's
 threshold was 79 %); practice is now 90/90/85 and the cap is full scale. The round outcome is visible on the
 console with the reason.
+
+## Second run with feedback (2026-10-30, adult, 20 main trials)
+
+The experimenter again, real device, breath feedback on, the tutorial and 20 Psi + 8
+catch trials configured. Threshold 86.9 % (SE 7.1), slope 5.8, yes-bias 0.11, 0 of 5
+false alarms on catch trials, practice 11 of 12 right, 13.5 minutes in all. Peak flow
+fell from about 85 slm at 0 to 35 slm at 95 %. Three reports:
+
+- **"The mouse is not animating during the wedge move; it should run over to the drink
+  and make a cheeky face and noise during this period and actually animate."** The
+  move waited for the firmware (1.3 to 2.8 s per trial) before the mouse's 1.5 s
+  animation, so almost none of it was left and the mouse jumped to the end. Now the
+  device layer calls back on every poll while the firmware moves (`'WhileWaiting'` on
+  `rrst.Device.moveTo` and `rrst.Stimulator.present`/`null`/`rest`/`park`; the
+  firmware's reply stays the source of truth), and the mouse runs to the cup, stops
+  with a cheeky face and a squeak, and hides behind the cup, for as long as the move
+  takes and at least 1.5 s; it hides only after the move is confirmed.
+- **"The feedback in the training is super weird and only in the text given to the
+  experimenter; there should be clear, easy-to-understand visual feedback for the
+  participant."** The reveal (the mouse in a spotlight, the cup empty) did not say
+  which answer was right. Now the practice shows the two answer cards with the correct
+  one in gold, a star badge, a tick when right, the chosen card faded when wrong (see
+  the frames above). `cfg.feedback.main` gives the same in the main trials;
+  `cfg.feedback.style = "reveal"` keeps the old scene.
+- **"It said trial 21 and ran a 3rd break block when it should have ended after 20
+  trials."** Not a bug: 20 Psi + 8 catch is up to 28 trials, and the early stop needs
+  20 *Psi* trials (15 had run by trial 21). The experimenter could not see that; now
+  the line says `Trial 21 of up to 28 (Psi 15/20, catch 6/8)` and the console prints
+  the plan, the estimate after every answer and why the run stopped.
 
 ## Open questions
 

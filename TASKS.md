@@ -126,6 +126,11 @@ session so a fresh session can continue from the files.
        reusable by the adult task), never waits for a recorder, saves `result.flow`,
        `result.markers` and `<name>_flow.csv`; 394 tests pass, checked live on the stim
        laptop (mock device); not yet run with the real device and a person.
+    10. After the second real run with feedback (2026-10-30, adult, 20 main trials; branch
+       `kids-feedback`): the mouse runs, looks cheeky and hides during the whole move
+       (device `'WhileWaiting'` callback), practice feedback the child can see (answer
+       cards, the correct one in gold), and trial counts on the experimenter line and
+       console; mock session only, not yet on the real device.
     Tests: 366 pass (whole suite, 2026-10-30); an unattended mock session with the
     simulated child completes through the tutorial and on the breath path (3 counted
     slurps every trial). Next: the pilot protocol

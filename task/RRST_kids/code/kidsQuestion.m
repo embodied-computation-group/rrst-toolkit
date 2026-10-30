@@ -1,8 +1,15 @@
-function kidsQuestion(scr, text, hover, chosen)
+function kidsQuestion(scr, text, hover, chosen, truth, p)
 %KIDSQUESTION Draw the answer screen (no Flip): "easy" on the left, "squishy" on the right.
 %   kidsQuestion(scr, text)                  plain
 %   kidsQuestion(scr, text, "no"|"yes")      white frame round the card under the pointer
 %   kidsQuestion(scr, text, answer, true)    the answer given: thick frame, other card faded
+%   kidsQuestion(scr, text, answer, true, truth, p)   the child's feedback at progress p
+%       (0-1; truth "yes" when the mouse pinched, "no" on a catch trial): both cards as
+%       above, the correct card in a thick gold frame with a big star badge, the chosen
+%       card keeps its white frame. Right: a gold tick pops up on it. Wrong: it fades
+%       (its frame stays). The mouse on the correct card shows the truth: squeezing the
+%       straw twice, or asleep with a Z floating up. Never red/green, never a sad face.
+%       Sequence and sound: kidsFeedbackBeat; geometry: kidsFeedbackLayout.
 %   Two equally nice scene cards, same size and brightness, the same cheerful monster
 %   drinking on both: on "easy" the straw is open and the mouse is asleep in the corner;
 %   on "squishy" the mouse sits on the straw and squeezes it narrow. No red/green, no
@@ -12,34 +19,79 @@ function kidsQuestion(scr, text, hover, chosen)
 %   LeftArrow / n = easy, RightArrow / y = squishy.
 if nargin < 3, hover = ""; end
 if nargin < 4, chosen = false; end
+feedback = nargin >= 6;
 w = scr.win; H = scr.winRect(4) - scr.winRect(2);
 c = cardColours(scr.colours);
 g = kidsQuestionLayout(scr.winRect);
+anim = struct('no', struct('squeeze', 0, 'zRise', NaN), 'yes', struct('squeeze', 0, 'zRise', NaN));
+if feedback
+    fb = kidsFeedbackBeat(hover, truth, p);
+    gf = kidsFeedbackLayout(scr.winRect, fb);
+    anim.(fb.truth) = struct('squeeze', fb.squeeze, 'zRise', fb.zRise);
+end
 Screen('FillRect', w, c.background);
 
 textSize = Screen('TextSize', w);
 setSize(w, textSize, 0.65);
 DrawFormattedText(w, text.question, 'center', g.questionY, c.text);
 
+rad = g.radius + 0.02 * H;
+if feedback                                 % thick gold frame round the correct card
+    lw = gf.goldWidth;
+    roundRect(w, gf.goldColour, gf.gold, rad + lw);
+    roundRect(w, c.background, gf.gold + [lw lw -lw -lw], rad);
+end
 hovering = ismember(hover, ["no" "yes"]);   % "" or "none" (pointer in the middle strip): no frame
 if hovering
     lw = g.lineWidth; if chosen, lw = g.chosenWidth; end
-    f = g.frame.(hover); rad = g.radius + 0.02 * H;
+    f = g.frame.(hover);
     roundRect(w, [1 1 1], f, rad);
     roundRect(w, c.background, f + [lw lw -lw -lw], rad - lw);
 end
 
 setSize(w, textSize, 0.85);
-drawCard(w, c, g.card.no, c.cardEasy, g.radius, false);
-drawCard(w, c, g.card.yes, c.cardSquishy, g.radius, true);
+drawCard(w, c, g.card.no, c.cardEasy, g.radius, false, anim.no);
+drawCard(w, c, g.card.yes, c.cardSquishy, g.radius, true, anim.yes);
 DrawFormattedText(w, text.easy, 'center', 'center', c.text, [], [], [], [], [], g.labelRect.no);
 DrawFormattedText(w, text.squishy, 'center', 'center', c.text, [], [], [], [], [], g.labelRect.yes);
 setSize(w, textSize, 1);
 
-if hovering && chosen
+if feedback
+    if gf.fadeChosen.active && gf.fadeChosen.alpha > 0          % wrong: the chosen card fades
+        Screen('FillRect', w, [c.background gf.fadeChosen.alpha], gf.fadeChosen.rect);
+    end
+    b = gf.badge;                                                % star badge, correct card
+    Screen('FillOval', w, [1 1 1], disc(b(1), b(2), 1.08 * b(3)));
+    Screen('FillPoly', w, gf.goldColour, star(b(1), b(2), b(3)), 0);
+    Screen('FramePoly', w, 0.75 * gf.goldColour, star(b(1), b(2), b(3)), max(1, 0.06 * b(3)));
+    if gf.tick.active && fb.tick > 0                             % right: a big gold tick
+        pts = gf.tick.points; tw = gf.tick.width;
+        polyline(w, 0.75 * gf.goldColour, pts, 1.35 * tw);
+        polyline(w, gf.goldColour, pts, tw);
+    end
+elseif hovering && chosen
     other = setdiff(["no" "yes"], hover);
     Screen('FillRect', w, [c.background 0.7], g.fade.(other));   % fade the other card
 end
+end
+
+function polyline(w, colour, pts, width)
+% A thick line through pts with round joints and ends.
+for k = 1:size(pts, 1) - 1
+    a = pts(k, :); b = pts(k + 1, :); d = b - a; L = norm(d);
+    if L == 0, continue; end
+    n = [-d(2) d(1)] / L * width / 2;
+    Screen('FillPoly', w, colour, [a + n; b + n; b - n; a - n], 1);
+end
+for k = 1:size(pts, 1)
+    Screen('FillOval', w, colour, disc(pts(k, 1), pts(k, 2), width / 2));
+end
+end
+
+function p = star(x, y, r)
+a = (0:9)' * pi / 5 - pi / 2;
+rr = repmat([r; 0.45 * r], 5, 1);
+p = [x + rr .* cos(a), y + rr .* sin(a)];
 end
 
 function c = cardColours(c)
@@ -56,10 +108,13 @@ if ~isempty(base) && base > 0
 end
 end
 
-function drawCard(w, c, r, colour, rad, pinched)
+function drawCard(w, c, r, colour, rad, pinched, anim)
 % One scene card: a wall and a floor, the monster drinking from its cup, and the
 % mouse either asleep in the corner or squeezing the straw. Card units: x and y in
-% card widths from the top-left corner (the card is 0.8 widths tall).
+% card widths from the top-left corner (the card is 0.8 widths tall). anim (the
+% feedback, optional): squeeze 0-1 squeezes the straw harder; zRise 0-1 floats an
+% extra Z up from the sleeping mouse (NaN: none).
+if nargin < 7, anim = struct('squeeze', 0, 'zRise', NaN); end
 L = r(3) - r(1);
 X = @(a) r(1) + a * L; Y = @(b) r(2) + b * L;
 floorY = Y(0.66);
@@ -95,20 +150,29 @@ Screen('FrameRect', w, c.background, cupRect, max(1, 0.01 * L));
 sw = 0.04 * L; px = X(0.7);
 Screen('FillRect', w, c.straw, [ux - sw / 2, my - sw / 2, ux + sw / 2, cupRect(4) - 0.03 * L]);
 if pinched
-    k = 0.05 * L; n = 0.12 * sw;                    % pinch half-length, half-width at the pinch
+    sq = anim.squeeze;
+    k = 0.05 * L; n = 0.12 * sw * (1 - 0.75 * sq);  % pinch half-length, half-width at the pinch
     Screen('FillPoly', w, c.straw, [mx, my - sw / 2; px - k, my - sw / 2; px, my - n; px + k, my - sw / 2; ...
         ux + sw / 2, my - sw / 2; ux + sw / 2, my + sw / 2; px + k, my + sw / 2; px, my + n; ...
         px - k, my + sw / 2; mx, my + sw / 2], 0);
-    squeezingMouse(w, c, px, my, sw, 0.07 * L);
+    squeezingMouse(w, c, px, my, sw, 0.07 * L, sq);
 else
     Screen('FillRect', w, c.straw, [mx, my - sw / 2, ux + sw / 2, my + sw / 2]);
-    sleepingMouse(w, c, X(0.16), Y(0.73), 0.06 * L);
+    s = 0.06 * L; x = X(0.16); y = Y(0.73);
+    sleepingMouse(w, c, x, y, s);
+    z = anim.zRise;
+    if ~isnan(z)                                    % the feedback: one more Z floats up
+        zee(w, [c.text, 1 - 0.6 * z], x - 1.3 * s - 0.5 * s * z, y - 2.9 * s - 2.4 * s * z, ...
+            0.8 * s * (1 + 0.5 * z), max(1, 0.14 * s));   % up and left, clear of the monster
+    end
 end
 end
 
-function squeezingMouse(w, c, px, py, sw, s)
-% Mouse sitting on the straw at px, eye open, front paws squeezing it from both sides.
-by = py - sw / 2 - 0.55 * s;                        % body rests on the straw
+function squeezingMouse(w, c, px, py, sw, s, sq)
+% Mouse sitting on the straw at px, eye open, front paws squeezing it from both sides;
+% sq (0-1, the feedback) presses it down and closes the paws.
+if nargin < 7, sq = 0; end
+by = py - sw / 2 - 0.55 * s + 0.15 * s * sq;        % body rests on the straw
 dark = 0.75 * c.mouse;
 Screen('DrawLine', w, c.mouse, px - 0.9 * s, by + 0.1 * s, px - 1.35 * s, by - 0.5 * s, max(1, 0.12 * s));   % tail, curling up
 Screen('DrawLine', w, c.mouse, px - 1.35 * s, by - 0.5 * s, px - 1.1 * s, by - 0.95 * s, max(1, 0.12 * s));
@@ -119,13 +183,15 @@ Screen('FillOval', w, [0.1 0.1 0.1], disc(px + 0.88 * s, by - 0.82 * s, 0.13 * s
 Screen('FillOval', w, [1 1 1], disc(px + 0.92 * s, by - 0.87 * s, 0.045 * s));
 Screen('FillOval', w, c.mouseEar, disc(px + 1.3 * s, by - 0.68 * s, 0.11 * s));           % nose
 Screen('DrawLine', w, c.mouse, px - 0.2 * s, by + 0.3 * s, px - 0.1 * s, py + 0.62 * sw, max(1, 0.18 * s));   % arm round the straw
+pd = 0.62 * sw * (1 - 0.45 * sq);                    % paws closer when squeezing
 for dy = [-1 1]                                     % paws clamping the pinch from above and below
-    Screen('FillOval', w, c.mouseEar, [px - 0.38 * s, py + dy * 0.62 * sw - 0.2 * s, px + 0.38 * s, py + dy * 0.62 * sw + 0.2 * s]);
+    Screen('FillOval', w, c.mouseEar, [px - 0.38 * s, py + dy * pd - 0.2 * s, px + 0.38 * s, py + dy * pd + 0.2 * s]);
 end
-for dx = [-1 1]                                     % squeeze marks
+m = 1 + 0.8 * sq;                                   % squeeze marks grow
+for dx = [-1 1]
     x0 = px + dx * 0.75 * s;
-    Screen('DrawLine', w, dark, x0, py + 0.9 * sw, x0 + dx * 0.3 * s, py + 1.6 * sw, max(1, 0.09 * s));
-    Screen('DrawLine', w, dark, x0 + dx * 0.25 * s, py + 0.7 * sw, x0 + dx * 0.65 * s, py + 1.2 * sw, max(1, 0.09 * s));
+    Screen('DrawLine', w, dark, x0, py + 0.9 * sw, x0 + dx * 0.3 * s * m, py + (0.9 + 0.7 * m) * sw, max(1, 0.09 * s));
+    Screen('DrawLine', w, dark, x0 + dx * 0.25 * s, py + 0.7 * sw, x0 + dx * (0.25 + 0.4 * m) * s, py + (0.7 + 0.5 * m) * sw, max(1, 0.09 * s));
 end
 end
 

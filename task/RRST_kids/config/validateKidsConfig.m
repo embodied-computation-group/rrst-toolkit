@@ -56,6 +56,21 @@ end
 if ~isfield(cfg.timing, 'drain') || ~isPositive(cfg.timing.drain)
     bad('timing.drain (s, the milkshake draining after a slurp) must be a positive number.');
 end
+if ~isfield(cfg, 'feedback') || ~isstruct(cfg.feedback)
+    bad('the feedback block (the child''s feedback after an answer) is missing; start from kidsConfig().');
+end
+fbk = cfg.feedback;
+for name = ["practice" "main"]
+    if ~isfield(fbk, name) || ~isLogicalScalar(fbk.(name))
+        bad('feedback.%s must be true or false.', name);
+    end
+end
+if ~isfield(fbk, 'style') || ~isText(fbk.style) || ~ismember(string(fbk.style), ["cards" "reveal"])
+    bad('feedback.style must be "cards" (the answer cards, the correct one in gold) or "reveal" (the earlier scene).');
+end
+if ~isfield(cfg.timing, 'feedback') || ~isPositive(cfg.timing.feedback)
+    bad('timing.feedback (s, the child''s feedback screen) must be a positive number.');
+end
 if numel(cfg.practice.levels) <= cfg.practice.nFree
     bad('practice.levels must include questioned trials after the %d free ones.', cfg.practice.nFree);
 end

@@ -8,8 +8,11 @@ classdef MockPort < handle
     %   strings in RRST_Teensy_4_version_TMC2209.ino (Msnejbjerg/RRST c298eed; 'f', 'g',
     %   't' and the Git Commit status line from 8720abc),
     %   including its mixed CRLF/LF line endings and the trailing "Valve>" prompt.
-    %   Replies are available as soon as the command is written: there is no motion
-    %   time.
+    %   Replies are available as soon as the command is written, except a move's
+    %   with MoveDelay > 0 (s): "Moving to absolute position" comes at once, the rest
+    %   of the reply (warnings, "Move complete." or the error, and the prompt) only
+    %   MoveDelay seconds after the target line, as the motor takes time on a real
+    %   device (1.3-2.8 s per kids trial, 2026-10-30). Default 0: no motion time.
     %
     %   Fault injection (set the Fault property):
     %     "calibrateMinMissing"  'c' fails: min endstop not found
@@ -45,6 +48,7 @@ classdef MockPort < handle
         % and that command's reply only follows on a later read: the race seen when a
         % move is sent within milliseconds of the previous one.
         StrayPromptAfterMove = false
+        MoveDelay = 0                  % s from the target line to the end of a move's reply
     end
 
     properties (SetAccess = private)
@@ -61,6 +65,8 @@ classdef MockPort < handle
         StrayPending = false           % a stray prompt goes out with the next write
         Deferring = false              % output held back until the stray has been read
         Delayed = ''
+        Moving = ''                    % the rest of a move's reply, held for MoveDelay
+        MoveClock = []
     end
 
     properties (Constant, Access = private)
@@ -75,6 +81,11 @@ classdef MockPort < handle
         end
 
         function n = get.NumBytesAvailable(obj)
+            if ~isempty(obj.Moving) && toc(obj.MoveClock) >= obj.MoveDelay
+                held = obj.Moving;
+                obj.Moving = '';
+                obj.emit(held);
+            end
             if isempty(obj.OutBuffer) && obj.Deferring
                 obj.OutBuffer = obj.Delayed;
                 obj.Delayed = '';
@@ -263,7 +274,15 @@ classdef MockPort < handle
                         obj.Position = target;
                 end
             end
-            obj.emit([out, obj.PROMPT]);
+            out = [out, obj.PROMPT];
+            first = sprintf('Moving to absolute position: %d\n', target);
+            if obj.MoveDelay > 0 && startsWith(out, first)
+                obj.emit(first);                     % at once; the rest when the motor stops
+                obj.Moving = out(numel(first) + 1:end);
+                obj.MoveClock = tic;
+            else
+                obj.emit(out);
+            end
             obj.StrayPending = obj.StrayPromptAfterMove;
         end
 

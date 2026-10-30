@@ -82,7 +82,8 @@ vars.flowSrc = flowSrc;                     % the source itself (kidsMain; not s
 
 %% Device
 if cfg.device.mock
-    port = rrst.MockPort('MaxPosition', 45000);
+    % each move takes 2 s (the real device: 1.3-2.8 s), times cfg.debug.timeScale
+    port = rrst.MockPort('MaxPosition', 45000, 'MoveDelay', 2 * cfg.debug.timeScale);
     fprintf(2, '\n*** MOCK DEVICE: no hardware is moved. ***\n\n');
 else
     portName = rrst.choosePort(cfg.device.port, serialportlist("available"));

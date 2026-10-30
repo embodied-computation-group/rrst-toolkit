@@ -8,7 +8,9 @@ function line = kidsPrompt(moment, info)
 %   names = kidsPrompt()              the moments (string array)
 %
 %   English and for the experimenter only: the child does not read. A main trial's
-%   line never names its level (the experimenter must not know a catch trial).
+%   line never names its level (the experimenter must not know a catch trial); its
+%   counts are of the trials done so far. Every line is under 90 characters except
+%   the main trial's line with its counts (up to about 115).
 %
 %   Moments and info fields:
 %     calibrating
@@ -16,17 +18,20 @@ function line = kidsPrompt(moment, info)
 %     freeplay                        tutorial: free slurps, Space ends them
 %     demo       demo "pinch"|"sleep" tutorial demo, before its slurps
 %     bridge                          tutorial: the answer cards, explained
-%     mainStart                       practice passed, main trials next
+%     mainStart  feedback (optional)  practice passed, main trials next
 %     move                            the mouse runs while the wedge moves
 %     ready      phase "practice" (k, n: questioned trial k of n), "main" (n: trial
-%                number), "free" (k, n: free slurp trial k of n; tutorial off)
+%                number; with nMax, psiDone, psiN, catchDone, catchN and feedback the
+%                line carries the counts: "Trial 21 of up to 28 (Psi 15/20, catch
+%                6/8). ..."), "free" (k, n: free slurp trial k of n; tutorial off)
 %     slurps     phase as ready, or "demo" (demo); slurps: slurps per trial
-%     question, reveal (phase "practice"|"demo"), reward, cup, rest (restS), pause,
-%     thanks, done
+%     question, reveal (phase "practice"|"demo"|"main"), reward, cup, rest (restS),
+%     pause, thanks, done
+%     feedback   phase "practice"|"main", correct   the child's feedback (the cards)
 %   Plan: docs/kids_flow_feedback_and_ux_plan_2026-10-30.md, section 5.3 (U9).
 
 names = ["calibrating" "story" "freeplay" "demo" "bridge" "mainStart" "move" "ready" "slurps" ...
-    "question" "reveal" "reward" "cup" "rest" "pause" "thanks" "done"];
+    "question" "reveal" "feedback" "reward" "cup" "rest" "pause" "thanks" "done"];
 if nargin == 0
     line = names;
     return
@@ -50,7 +55,8 @@ switch moment
     case "bridge"
         line = 'Now you say: did the mouse pinch? Explain both cards, then Space.';
     case "mainStart"
-        line = 'Practice passed. Main trials: no feedback, one star per answer. Space.';
+        if isfield(info, 'feedback') && info.feedback, fbWord = 'feedback on'; else, fbWord = 'no feedback'; end
+        line = sprintf('Practice passed. Main trials: %s, one star per answer. Space.', fbWord);
     case "move"
         line = 'The mouse runs: the wedge is moving. Wait.';
     case "ready"
@@ -59,7 +65,15 @@ switch moment
                 line = sprintf(['PRACTICE %d of %d. Space starts the slurps. ' ...
                     'The truth is shown after the answer.'], info.k, info.n);
             case "main"
-                line = sprintf('Trial %d. Space starts the slurps. No feedback; one star per answer.', info.n);
+                counts = ["nMax" "psiDone" "psiN" "catchDone" "catchN"];
+                if all(isfield(info, counts))
+                    if isfield(info, 'feedback') && info.feedback, fbWord = 'Feedback on'; else, fbWord = 'No feedback'; end
+                    line = sprintf(['Trial %d of up to %d (Psi %d/%d, catch %d/%d). Space starts the slurps. ' ...
+                        '%s; one star per answer.'], info.n, info.nMax, info.psiDone, info.psiN, ...
+                        info.catchDone, info.catchN, fbWord);
+                else
+                    line = sprintf('Trial %d. Space starts the slurps. No feedback; one star per answer.', info.n);
+                end
             case "free"
                 line = sprintf('Free slurps %d of %d. Space starts the slurps.', info.k, info.n);
         end
@@ -76,9 +90,18 @@ switch moment
     case "reveal"
         if isfield(info, 'phase') && string(info.phase) == "demo"
             line = 'Demo: this is what the mouse did.';
+        elseif isfield(info, 'phase') && string(info.phase) == "main"
+            line = 'Feedback: this is the truth.';
         else
             line = 'Practice: this is the truth.';
         end
+    case "feedback"
+        if ~isfield(info, 'correct')
+            bad('The feedback moment needs info.correct (true or false).');
+        end
+        if phaseOf(info) == "main", head = 'Feedback'; else, head = 'Practice'; end
+        if info.correct, how = 'right'; else, how = 'not right'; end
+        line = sprintf('%s: %s. The gold card shows the truth.', head, how);
     case "reward"
         line = 'Star: one per answer, right or wrong.';
     case "cup"

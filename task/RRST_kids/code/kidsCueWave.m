@@ -16,6 +16,8 @@ function x = kidsCueWave(name, fs)
 %   "cup"       1.2 s     short fanfare (G5 C6 E6, then a held C major chord)
 %   "mouse"     0.8 s     quick high scamper ticks in two runs
 %   "tryagain"  0.5 s     neutral soft two-note (E5, D5): a whole tone down, not "sad"
+%   "squeak"    0.3 s     the cheeky mouse by the cup: two short rising chirps
+%                         (1.7-2.6 kHz, then 2.3-3.4 kHz)
 %
 %   Unknown names error with rrst:badCue. kidsSound plays these over the rain loop.
 
@@ -77,12 +79,15 @@ switch name
         soft = [1 0.15];
         y = note(659.25, 0.00, 0.12, fs, dur, soft, 0.03) + ...
             note(587.33, 0.24, 0.12, fs, dur, soft, 0.03);
+    case "squeak"
+        dur = 0.3;
+        y = chirp(1700, 2600, 0.02, 0.09, fs, dur) + chirp(2300, 3400, 0.15, 0.10, fs, dur);
 end
 x = finish(y, fs);
 end
 
 function names = kidsCueNames()
-names = ["ready" "slurp" "bubbles" "star" "cup" "mouse" "tryagain"];
+names = ["ready" "slurp" "bubbles" "star" "cup" "mouse" "tryagain" "squeak"];
 end
 
 % --- building blocks ---------------------------------------------------------
@@ -125,6 +130,19 @@ f = f0 * (1 + 2.5 * tt / 0.05);                       % pitch rises as the bubbl
 phase = 2 * pi * cumsum(f) / fs;
 env = (t >= 0) .* min(tt / 0.003, 1) .* exp(-tt / tau);
 y = sin(phase) .* env;
+end
+
+function y = chirp(f0, f1, t0, len, fs, dur)
+%CHIRP A short squeak from t0 s, len s long: the pitch rises linearly from f0 to f1
+% under a smooth arch, with a little second harmonic.
+n = round(dur * fs);
+t = (0:n - 1)' / fs - t0;
+on = t >= 0 & t <= len;
+tt = min(max(t, 0), len);
+f = f0 + (f1 - f0) * tt / len;
+phase = 2 * pi * cumsum(f .* on) / fs;
+env = on .* sin(pi * tt / len) .^ 0.6;
+y = (sin(phase) + 0.2 * sin(2 * phase)) .* env;
 end
 
 function y = tickSound(f, t0, fs, dur)

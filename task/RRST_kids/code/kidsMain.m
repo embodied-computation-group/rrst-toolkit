@@ -4,7 +4,9 @@ function result = kidsMain(cfg, stim, vars)
 %
 %   Flow: calibrate (nobody on the tube) -> story -> tutorial -> practice with
 %   feedback -> main yes/no trials with stars, cups and breaks -> sticker. Each trial: the
-%   mouse scampers while the wedge moves (catch trials: level 0), the monster waits
+%   mouse runs to the cup, looks cheeky (squeak) and hides behind it while the wedge
+%   moves (catch trials: level 0; frames are drawn while the firmware moves, through
+%   the device's 'WhileWaiting' callback, timed by kidsMoveProgress), the monster waits
 %   ("Ready to slurp?") until the experimenter presses Space, then cfg.child.slurps
 %   slurps at that level (kidsSlurpPhase: with the airflow sensor the monster drinks
 %   when the child breathes, each counted slurp drains a third of the milkshake;
@@ -36,9 +38,21 @@ function result = kidsMain(cfg, stim, vars)
 %   src.record, and the result gets t0, flow (every sample pulled, [t flowSlm]) and
 %   markers (rrstMarker('log'): every marker sent, LSL or not), all on GetSecs.
 %
+%   Feedback (cfg.feedback): after every practice answer (feedback.practice) and,
+%   with feedback.main, every main answer, the child sees it for cfg.timing.feedback
+%   s: style "cards" (default) shows the two answer cards, the correct one in a thick
+%   gold frame with a star badge, the chosen one in its white frame; right: a gold
+%   tick and the star cue; wrong: the chosen card fades, the mouse on the correct
+%   card squeezes twice (or a Z floats up) and the tryagain cue (kidsQuestion's
+%   feedback state, kidsFeedbackBeat, kidsFeedbackLayout). Style "reveal": the
+%   earlier scene (the mouse pinching or asleep in a spotlight). The experimenter's
+%   line says right or not, then the truth sentence. The tutorial demos keep the
+%   reveal (there is no answer to mark).
+%
 %   Sound: kidsSound plays the rain and the cues: ready (Ready to slurp?, end of a
-%   rest), mouse (wedge moving, story beat 2, practice reveal of a pinch),
-%   slurp/bubbles/tryagain (slurp phase), star, cup.
+%   rest), mouse (wedge moving, story beat 2, the reveal of a pinch), squeak (the
+%   mouse's cheeky face by the cup), slurp/bubbles/tryagain (slurp phase), star
+%   (star flight; right answer), tryagain (wrong answer), cup.
 %
 %   Screens: kidsBeat gives the scene, length and cue of every moment (story in three
 %   beats, each held until Space; move; ready; practice reveal; star flight; cup tip
@@ -48,6 +62,10 @@ function result = kidsMain(cfg, stim, vars)
 %   kidsPrompt's line for the moment (what is happening, which key goes on; also
 %   printed on the console, once per change), then the scene's own sentence. Each
 %   practice answer and each round's outcome (passed, or why not) go to the console.
+%   Main trials: the experimenter line counts them ("Trial 21 of up to 28 (Psi 15/20,
+%   catch 6/8). ..."; the counts are of trials done); the console prints the plan at
+%   main start, after every answer the threshold, its SE and where the early stop
+%   stands, and at the end why the run stopped (kidsRunReport).
 %   The tenth star's cup tip is held until Space (the sticker).
 %
 %   Experimenter: click the face the child chose, or Left/n = easy (no),
@@ -167,9 +185,10 @@ try
                 mustOk = false;
                 missed(end + 1) = sprintf('level %g wrong (practice %d)', level, pr.k); %#ok<AGROW>
             end
-            % the truth, every time: the mouse pinching (load) or asleep (catch)
-            say("reveal", struct('phase', "practice"));
-            if playBeat("reveal", progress, level) == "abort", finish("aborted"); return; end
+            % the truth, every time (cfg.feedback): the answer cards, the correct one in gold
+            if cfg.feedback.practice && showFeedback(tr, level, "practice", progress) == "abort"
+                finish("aborted"); return
+            end
         end
         passed = nCorrect >= cfg.practice.passMin && mustOk;
         if passed
@@ -189,14 +208,19 @@ try
         finish("practiceFailed"); return
     end
 
-    % Main trials
-    say("mainStart");
+    % Main trials: the plan on the console, the counts on the experimenter line
+    say("mainStart", struct('feedback', cfg.feedback.main));
+    fprintf('%s\n', kidsRunReport(kp, cfg, "plan"));
     if readyScreen(progress, 'main_start'), finish("aborted"); return; end
     nAnswered = 0;
     while ~kidsShouldStop(kp, cfg)
         [level, info] = kidsNextLevel(kp, cfg);
         nMain = nMain + 1;
-        [tr, status] = runTrial(level, info, true, progress, struct('phase', "main", 'n', nMain));
+        mainPr = struct('phase', "main", 'n', nMain, 'nMax', numel(kp.schedule), ...
+            'psiDone', kp.nPsiDone, 'psiN', cfg.child.numPsiTrials, ...
+            'catchDone', nnz([kp.history.isCatch]), 'catchN', cfg.child.numCatchTrials, ...
+            'feedback', cfg.feedback.main);
+        [tr, status] = runTrial(level, info, true, progress, mainPr);
         switch status
             case "abort"
                 finish("aborted"); return
@@ -205,6 +229,11 @@ try
                 trials(end + 1) = tr; %#ok<AGROW>
                 kp = kidsRecord(kp, level, tr.response, info);
                 nAnswered = nAnswered + 1;
+                % the estimate and where the early stop stands (console only)
+                fprintf('Trial %d: %s. %s\n', nMain, answerWord(tr.response), kidsRunReport(kp, cfg, "progress"));
+                if cfg.feedback.main && showFeedback(tr, level, "main", progress) == "abort"
+                    finish("aborted"); return
+                end
                 % the star flies to its slot, then it counts; the tenth tips the cup
                 say("reward");
                 if playBeat("star", progress) == "abort", finish("aborted"); return; end
@@ -222,15 +251,17 @@ try
                     if rest(progress), finish("aborted"); return; end
                 end
             otherwise   % no answer, bad breath or pause: repeat this trial type later
+                fprintf('Trial %d: no usable answer (%s); this trial type is repeated later.\n', nMain, tr.answer);
                 tr.phase = "repeat";
                 trials(end + 1) = tr; %#ok<AGROW>
                 kp = kidsRequeue(kp);
         end
         stim.rest();
     end
+    [~, why] = kidsShouldStop(kp, cfg);
+    fprintf('%s\n', kidsRunReport(kp, cfg, "end", why));
     say("done");
     playBeat("sticker", progress);
-    [~, why] = kidsShouldStop(kp, cfg);
     finish("complete:" + why);
 catch err
     try, rrstMarker('aborted'); catch, end
@@ -253,22 +284,16 @@ end
             'isCatch', info.isCatch, 'proposed', info.proposed, 'limited', info.limited, ...
             'answer', "", 'response', NaN, 'rt', NaN, 'moveT', NaN, 'slurpT', NaN, 'tStart', GetSecs - t0, ...
             'slurps', [], 'shortSlurps', false, 'flowLost', false);
-        % Move: the mouse scampers while the wedge goes to the level (the same
-        % picture for catch and load trials: kidsBeat "move" has no level)
-        tMove = GetSecs;
-        c = beatCtx(prog);
-        say("move");
-        [s, ~, cue] = kidsBeat("move", 0, c);
-        show(scr, s, prog);
-        playCue(cue);
-        if level == 0, mv = stim.null(); else, mv = stim.present(level); end
+        % Move: the mouse runs, looks cheeky and hides while the wedge goes to the
+        % level (the same picture for catch and load trials: kidsBeat "move" has no
+        % level); the level marker as soon as the firmware confirms (as the adult task)
         if isfield(pr, 'marker')                           % tutorial demo: demo_<name>_level_<x>
-            rrstMarker(char(pr.marker));
+            levelMarker = char(pr.marker);
         else
-            rrstMarker(kidsMarkerLabel("level", tr.n, level));   % move confirmed (as the adult task)
+            levelMarker = kidsMarkerLabel("level", tr.n, level);
         end
+        [mv, status] = moveWithMouse(level, prog, @() rrstMarker(levelMarker));
         tr.moveT = mv.elapsed;
-        status = animate(cfg.timing.moveMin - (GetSecs - tMove), @(p) kidsBeat("move", p, c), prog);
         if status ~= "", return; end
         % A lost airflow stream: look for it again before the child is asked to slurp
         if ~isempty(fl) && fl.lost && ismethod(src, 'reconnect')
@@ -333,14 +358,102 @@ end
             case "no",  tr.response = 0; status = "answered";
             case "abort", status = "abort";
             case "pause"
-                stim.null();
+                % wedge to 0 while the pause screen stays up (redrawn, Esc noted)
                 say("pause");
-                show(scr, kidsBeat("pause", 0, beatCtx(prog)), prog);
-                if waitGo(), status = "abort"; else, status = "repeat"; end
+                if nullShowing(kidsBeat("pause", 0, beatCtx(prog)), prog) || waitGo()
+                    status = "abort";
+                else
+                    status = "repeat";
+                end
             otherwise, status = "repeat";            % "bad" or "none"
         end
         if status == "answered"
             rrstMarker(kidsMarkerLabel("outcome", tr.n, level, tr.response), tAnswer);
+        end
+    end
+
+    function status = showFeedback(tr, level, phase, prog)
+        % The child's feedback after an answer (cfg.feedback.style): "cards", the two
+        % answer cards with the correct one in gold (kidsQuestion's feedback state,
+        % kidsFeedbackBeat: star or tryagain cue, cfg.timing.feedback s), or "reveal",
+        % the earlier scene. The experimenter's line says right or not, then the truth.
+        % status "abort" on Esc.
+        if cfg.feedback.style == "reveal"
+            say("reveal", struct('phase', phase));
+            status = playBeat("reveal", prog, level);
+            return
+        end
+        isRight = tr.response == (level > 0);
+        say("feedback", struct('phase', phase, 'correct', isRight));
+        if level > 0, truth = "yes"; sentence = txt.yesFeedback; else, truth = "no"; sentence = txt.noFeedback; end
+        fb = kidsFeedbackBeat(tr.answer, truth, 0, cfg.timing);
+        drawQuestionWith(sentence, tr.answer, true, truth, 0);
+        Screen('Flip', scr.win);
+        playCue(fb.cue);
+        status = "";
+        dur = fb.dur * ts; tStart = GetSecs;
+        while true
+            p = min((GetSecs - tStart) / max(dur, eps), 1);
+            drawQuestionWith(sentence, tr.answer, true, truth, p);
+            Screen('Flip', scr.win);
+            [down, ~, code] = KbCheck;
+            if down && any(code(keys.abort)), status = "abort"; return; end
+            if p >= 1, return; end
+        end
+    end
+
+    function [mv, status] = moveWithMouse(level, prog, onConfirmed)
+        % The wedge goes to level (stim.null for 0) while the mouse runs to the cup,
+        % looks cheeky (squeak) and hides (kidsBeat "move"): frames are drawn on
+        % every poll while the firmware moves ('WhileWaiting'), timed by
+        % kidsMoveProgress, then until at least moveMin has passed and the sequence
+        % has finished. onConfirmed() runs as soon as the firmware has confirmed the
+        % move (the level marker). Esc during the move is noted and aborts once the
+        % move is confirmed (the firmware's reply is always read); status "abort".
+        c = beatCtx(prog);
+        say("move");
+        [s, ~, cue, marks] = kidsBeat("move", 0, c);
+        tMove = GetSecs;
+        moveS = NaN; pPrev = 0; escHit = false;
+        show(scr, s, prog);
+        playCue(cue);
+        if level == 0
+            mv = stim.null('WhileWaiting', @frame);
+        else
+            mv = stim.present(level, 'WhileWaiting', @frame);
+        end
+        moveS = GetSecs - tMove;
+        if nargin > 2 && ~isempty(onConfirmed), onConfirmed(); end
+        while ~escHit && pPrev < 1
+            frame();
+        end
+        status = "";
+        if escHit, status = "abort"; end
+
+        function frame()
+            % the next frame of the move beat, its marks (the squeak) and Esc
+            p = kidsMoveProgress(GetSecs - tMove, moveS, cfg.timing.moveMin * ts, 0.5 * ts);
+            show(scr, kidsBeat("move", p, c), prog);
+            for mk = marks(:)'
+                if pPrev < mk.p && p >= mk.p, playCue(mk.cue); end
+            end
+            pPrev = p;
+            [down, ~, code] = KbCheck;
+            if down && any(code(keys.abort)), escHit = true; end
+        end
+    end
+
+    function aborted = nullShowing(sceneS, prog)
+        % Wedge to 0 while sceneS stays on screen, redrawn on every poll; true if Esc
+        % was pressed during the move (acted on after the firmware's confirmation).
+        aborted = false;
+        show(scr, sceneS, prog);
+        stim.null('WhileWaiting', @redraw);
+
+        function redraw()
+            show(scr, sceneS, prog);
+            [down, ~, code] = KbCheck;
+            if down && any(code(keys.abort)), aborted = true; end
         end
     end
 
@@ -459,12 +572,23 @@ end
 
     function drawQuestion(varargin)
         % The answer screen (kidsQuestion) with the experimenter's line; no Flip.
+        drawQuestionWith('', varargin{:});
+    end
+
+    function drawQuestionWith(sentence, varargin)
+        % kidsQuestion(scr, txt, varargin{:}) with the experimenter's line and, on a
+        % second line, sentence (the truth after an answer; '' for none); no Flip.
         kidsQuestion(scr, txt, varargin{:});
-        if isempty(expLine), return; end
+        line = expLine;
+        if ~isempty(sentence)
+            if isempty(line), line = sentence; else, line = [line '\n' sentence]; end
+        end
+        if isempty(line), return; end
         base = Screen('TextSize', scr.win);
         H = scr.winRect(4) - scr.winRect(2); W = scr.winRect(3) - scr.winRect(1);
+        nLines = numel(strfind(line, '\n')) + 1;
         Screen('TextSize', scr.win, max(10, round(0.6 * base)));
-        DrawFormattedText(scr.win, expLine, 0.02 * W, 0.975 * H - 0.7 * base, ...
+        DrawFormattedText(scr.win, line, 0.02 * W, 0.975 * H - 0.7 * base * nLines, ...
             0.55 * scr.colours.text + 0.45 * [0.85 0.85 0.85]);
         Screen('TextSize', scr.win, base);
     end
@@ -525,16 +649,9 @@ end
             'proposed', NaN, 'limited', false, 'answer', "freeplay", 'response', NaN, 'rt', NaN, ...
             'moveT', NaN, 'slurpT', NaN, 'tStart', GetSecs - t0, 'slurps', [], ...
             'shortSlurps', false, 'flowLost', false);
-        tMove = GetSecs;
-        c = beatCtx(prog);
-        say("move");
-        [s, ~, cue] = kidsBeat("move", 0, c);
-        show(scr, s, prog);
-        playCue(cue);
-        mv = stim.null();
+        [mv, mStatus] = moveWithMouse(0, prog, @() sendMarkers(step.markersBefore));
         fTr.moveT = mv.elapsed;
-        for mk = step.markersBefore, rrstMarker(char(mk)); end
-        aborted = animate(cfg.timing.moveMin - (GetSecs - tMove), @(p) kidsBeat("move", p, c), prog) == "abort";
+        aborted = mStatus == "abort";
         if aborted, return; end
         if ~isempty(fl) && fl.lost && ismethod(src, 'reconnect')
             if src.reconnect(0.5), fprintf('Airflow stream is back.\n'); end
@@ -555,6 +672,10 @@ end
         if ~aborted
             practice(end + 1) = fTr;
         end
+    end
+
+    function sendMarkers(labels)
+        for lb = string(labels(:))', rrstMarker(char(lb)); end
     end
 
     function flipQuestion()
