@@ -77,6 +77,9 @@ cfg.noise.enabled = true;
 root = fileparts(fileparts(fileparts(fileparts(mfilename('fullpath')))));
 cfg.noise.file = fullfile(root, 'task', 'helpers', 'audio', 'rain_loop_30s.wav');
 cfg.noise.volume = 0.6;                  % lower than the adult pilot's 1 for small ears; check by ear
+cfg.sound.enabled = true;                % cue sounds (kidsSound), mixed over the rain
+cfg.sound.volume = 0.8;                  % cue loudness in (0, 1]; check by ear with the rain
+cfg.sound.fs = 48000;                    % Hz, used only when the rain is off (else the rain's rate)
 cfg.text.language = "en";                % child-facing text must be translated before use
 
 % --- Breath feedback (SFM3019 "Flow" LSL stream; pilot values, tune on the rig) ----
