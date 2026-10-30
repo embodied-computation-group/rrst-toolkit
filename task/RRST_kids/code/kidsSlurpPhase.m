@@ -3,7 +3,7 @@ function [status, slurps, info] = kidsSlurpPhase(fl, cfg, io)
 %   [status, slurps, info] = kidsSlurpPhase(fl, cfg, io)
 %
 %   fl    kidsFlow on the session's flow source, or [] (no sensor: timed animation)
-%   cfg   kids configuration (child.slurps, timing.inhale/exhale, flow.*, text.language,
+%   cfg   kids configuration (child.slurps, timing.drain/inhale/exhale, flow.*, text.language,
 %         debug.timeScale if present)
 %   io    the session's handles:
 %         io.draw(scene)      draw the scene and flip; returns the flip time
@@ -30,8 +30,9 @@ function [status, slurps, info] = kidsSlurpPhase(fl, cfg, io)
 %
 %   Breath-driven (cfg.flow.feedback "breath" and a flow): the belly follows the
 %   current slurp's volume (kidsFlow.belly, saturating); a counted slurp drains a
-%   third of the milkshake with bubbles over cfg.timing.exhale s; a weak or overlong
-%   one deflates the belly and nothing drains. Per slurp k (counted or not, so k
+%   third of the milkshake with bubbles over cfg.timing.drain s (1.0; the next onset
+%   is detected meanwhile); a weak or overlong one deflates the belly over the same
+%   time and nothing drains. cfg.timing.exhale is the timed path's. Per slurp k (counted or not, so k
 %   indexes slurps): sound "slurp" and marker slurp_<k>_onset at the onset; sound
 %   "bubbles" and marker slurp_<k>_end_<volumeL>_<peakSlm> for a counted end;
 %   sound "tryagain" and marker slurp_<k>_weak or slurp_<k>_overlong otherwise, with
@@ -89,7 +90,7 @@ info.durationS = io.now() - tStart;
     function [status, done] = breathDriven()
         fl.start();
         frac = cfg.flow.bellyFraction;
-        exDur = max(cfg.timing.exhale, 0) * ts;
+        exDur = max(cfg.timing.drain, 0) * ts;      % drain (and a weak slurp's deflate)
         c = 0;                           % counted
         k = 0;                           % slurps seen (onsets)
         drain = [];                      % struct t0, c, from: a counted slurp draining
