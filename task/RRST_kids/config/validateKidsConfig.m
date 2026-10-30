@@ -45,6 +45,39 @@ end
 if ~isfield(cfg.markers, 'liblslDir') || ~isText(cfg.markers.liblslDir)
     bad('markers.liblslDir must be a folder name (text).');
 end
+if ~isfield(cfg, 'flow') || ~isstruct(cfg.flow)
+    bad('the flow block (breath feedback) is missing; start from kidsConfig().');
+end
+f = cfg.flow;
+if ~isfield(f, 'enabled') || ~isLogicalScalar(f.enabled)
+    bad('flow.enabled must be true or false.');
+end
+if ~isfield(f, 'feedback') || ~isText(f.feedback) || ~ismember(string(f.feedback), ["breath" "none"])
+    bad('flow.feedback must be "breath" or "none".');
+end
+if f.feedback == "breath" && ~f.enabled
+    bad(['flow.feedback "breath" needs the airflow sensor (flow.enabled = true); ' ...
+        'to run without it set flow.enabled = false and flow.feedback = "none".']);
+end
+if ~isfield(f, 'timeout') || ~isPositive(f.timeout)
+    bad('flow.timeout (s to find the airflow stream) must be a positive number.');
+end
+if ~isfield(cfg, 'sound') || ~isstruct(cfg.sound)
+    bad('the sound block (cue sounds) is missing; start from kidsConfig().');
+end
+if ~isfield(cfg.sound, 'enabled') || ~isLogicalScalar(cfg.sound.enabled)
+    bad('sound.enabled must be true or false.');
+end
+if ~isfield(cfg.sound, 'volume') || ~(isPositive(cfg.sound.volume) && cfg.sound.volume <= 1)
+    bad('sound.volume must be in (0, 1].');
+end
+if ~isfield(cfg.sound, 'fs') || ~isPositive(cfg.sound.fs)
+    bad('sound.fs must be a positive sample rate (Hz).');
+end
+end
+
+function tf = isPositive(x)
+tf = isnumeric(x) && isreal(x) && isscalar(x) && isfinite(x) && x > 0;
 end
 
 function tf = isLogicalScalar(x)

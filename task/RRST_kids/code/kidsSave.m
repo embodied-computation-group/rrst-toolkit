@@ -1,6 +1,9 @@
 function file = kidsSave(cfg, vars, stim, result)
 %KIDSSAVE Save an RRST-Kids session: .mat with everything, .csv with one row per trial.
 %   file = kidsSave(cfg, vars, stim, result)
+%   The per-slurp records (tr.slurps) are in the .mat only; the .csv has them as
+%   nSlurps (counted slurps), slurpVolumeL and slurpPeakSlm (means over the counted
+%   slurps, NaN if none), next to the trial's shortSlurps and flowLost.
 %   Name: [MOCK_|SIM_][Aborted_|Error_|PracticeFailed_]RRSTkids_<ID>_<date>.mat, with _2, _3
 %   added if that name is taken (never overwrites).
 prefix = "";
@@ -32,7 +35,7 @@ save(file, '-struct', 'session');
 
 rows = [result.practice, result.trials];
 if ~isempty(rows)
-    writetable(struct2table(rows(:)), fullfile(cfg.output.dir, name + ".csv"));
+    writetable(flatRows(rows(:)), fullfile(cfg.output.dir, name + ".csv"));
 end
 fprintf('Outcome: %s. Saved %s\n', result.outcome, file);
 if ~isnan(session.threshold)
@@ -42,4 +45,28 @@ end
 if ~isempty(result.flags) && result.flags.unusable
     fprintf(2, 'FLAG: threshold unusable: %s\n', result.flags.reason);
 end
+end
+
+function t = flatRows(rows)
+% One row per trial: the slurp records become summary columns.
+if ~isfield(rows, 'slurps')
+    t = struct2table(rows);
+    return
+end
+nSlurps = zeros(numel(rows), 1);
+[vol, peak] = deal(nan(numel(rows), 1));
+for k = 1:numel(rows)
+    s = rows(k).slurps;
+    if isempty(s), continue; end
+    ok = logical([s.counted]);
+    nSlurps(k) = nnz(ok);
+    if any(ok)
+        vol(k) = mean([s(ok).volumeL]);
+        peak(k) = mean([s(ok).peakSlm]);
+    end
+end
+t = struct2table(rmfield(rows, 'slurps'), 'AsArray', true);
+t.nSlurps = nSlurps;
+t.slurpVolumeL = vol;
+t.slurpPeakSlm = peak;
 end

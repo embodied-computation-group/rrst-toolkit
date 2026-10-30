@@ -6,8 +6,22 @@ function result = kidsMain(cfg, stim, vars)
 %   main yes/no trials with stars, cups and breaks -> sticker. Each trial: the
 %   mouse scampers while the wedge moves (catch trials: level 0), the monster waits
 %   ("Ready to slurp?") until the experimenter presses Space, then cfg.child.slurps
-%   slurps at that level (belly grows, milkshake drains a share, bubbles out; Space
-%   ends them early), then the experimenter clicks the child's answer.
+%   slurps at that level (kidsSlurpPhase: with the airflow sensor the monster drinks
+%   when the child breathes, each counted slurp drains a third of the milkshake;
+%   without it a timed animation; Space ends them early, x marks a bad breath), then
+%   the experimenter clicks the child's answer.
+%
+%   Airflow: vars.flowSrc is the flow source opened by runKidsRRST (flowInlet, or
+%   kidsSimFlow for mock and simulated runs); with cfg.flow.enabled it drives a
+%   kidsFlow. The free practice slurps set the child's reference slurp (console line).
+%   Breath-driven trials whose phase Space ends with no slurp counted are repeated
+%   later (answer "noslurp"). A lost stream is looked for again before each trial.
+%   For a simulated flow (kidsSimFlow), cfg.child.slurps breaths (25 slm, 1.3 s,
+%   2.5 s apart, the first 0.5 s after Space) are scheduled before each slurp phase.
+%   Per trial: tr.slurps (every slurp the detector saw), tr.shortSlurps, tr.flowLost.
+%
+%   Sound: kidsSound plays the rain and the cues: ready (Ready to slurp?, end of a
+%   rest), mouse (wedge moving), slurp/bubbles/tryagain (slurp phase), star, cup.
 %
 %   Experimenter: click the face the child chose, or Left/n = easy (no),
 %   Right/y = squishy (yes); the chosen face lights up for 0.5 s, x = bad breath (trial repeated later), Space = pause (wedge to
@@ -19,7 +33,8 @@ function result = kidsMain(cfg, stim, vars)
 %   LSL markers (rrstMarker; no-ops unless runKidsRRST opened the stream):
 %   calibration_start/end, story, practice_start (each round), main_start, and per
 %   trial trial_<n>_level_<x> (move confirmed; catch trials level_0), trial_<n>_go
-%   (Space), question (screen onset), answer_yes|answer_no|bad_breath|no_answer|pause,
+%   (Space), slurp_<k>_onset / slurp_<k>_end_<L>_<slm> / slurp_<k>_weak|overlong
+%   (kidsSlurpPhase), question (screen onset), answer_yes|answer_no|bad_breath|no_answer|pause,
 %   trial_<n>_correct|wrong (answered trials: "yes" on a load or "no" on a catch is
 %   correct); rest_start/end; aborted (Esc or error) or done. n counts every trial
 %   run, free slurps and repeats included, so each n is unique; it is tr.n.
@@ -28,10 +43,24 @@ ts = cfg.debug.timeScale;
 txt = kidsText(cfg.text.language);
 result = struct('outcome', "", 'trials', [], 'practice', [], 'flags', [], 'kp', []);
 trials = struct('n', {}, 'phase', {}, 'level', {}, 'isCatch', {}, 'proposed', {}, 'limited', {}, ...
-    'answer', {}, 'response', {}, 'rt', {}, 'moveT', {}, 'slurpT', {}, 'tStart', {});
+    'answer', {}, 'response', {}, 'rt', {}, 'moveT', {}, 'slurpT', {}, 'tStart', {}, ...
+    'slurps', {}, 'shortSlurps', {}, 'flowLost', {});
 practice = trials;
 kp = kidsProcedure(cfg, vars.seed);
-noise = [];
+src = [];
+if isfield(vars, 'flowSrc')
+    src = vars.flowSrc;
+    vars = rmfield(vars, 'flowSrc');                  % a handle: not saved with the data
+end
+fl = [];
+if cfg.flow.enabled
+    if isempty(src)
+        error('rrst:noFlowSource', ['cfg.flow.enabled is true but no airflow source was ' ...
+            'passed (vars.flowSrc). Start the task with runKidsRRST.']);
+    end
+    fl = kidsFlow(src, cfg.flow);
+end
+snd = [];
 KbName('UnifyKeyNames');
 keys = struct('no', KbName({'LeftArrow', 'n'}), 'yes', KbName({'RightArrow', 'y'}), ...
     'bad', KbName('x'), 'pause', KbName('space'), 'abort', KbName('ESCAPE'), 'go', KbName('space'));
@@ -49,9 +78,7 @@ try
     stim.calibrate();
     rrstMarker('calibration_end');
     stim.rest();
-    if cfg.noise.enabled
-        noise = startMaskingNoise(cfg.noise);
-    end
+    snd = kidsSound(cfg.noise, cfg.sound);           % rain loop and cue sounds
 
     % Story
     rrstMarker('story', show(scr, struct('mouseX', 0.9, 'text', txt.story), progress));
@@ -62,13 +89,19 @@ try
     for round = 1:cfg.practice.maxRounds
         rrstMarker('practice_start');
         nCorrect = 0; mustOk = true;
+        freeSlurps = [];
         for i = 1:numel(cfg.practice.levels)
             level = cfg.practice.levels(i);
             free = i <= cfg.practice.nFree;
             info = struct('isCatch', level == 0, 'proposed', NaN, 'limited', false, 'xIndex', NaN);
             [tr, status] = runTrial(level, info, ~free, progress);
             if status == "abort", finish("aborted"); return; end
-            if free || status ~= "answered", continue; end
+            if free
+                if status == "free", freeSlurps = [freeSlurps; tr.slurps(:)]; end %#ok<AGROW>
+                if i == cfg.practice.nFree, setReference(freeSlurps); end
+                continue
+            end
+            if status ~= "answered", continue; end
             tr.phase = "practice";
             practice(end + 1) = tr; %#ok<AGROW>
             correct = tr.response == (level > 0);
@@ -88,6 +121,7 @@ try
 
     % Main trials
     rrstMarker('main_start', show(scr, struct('mouseX', 0.9, 'text', txt.ready), progress));
+    playCue("ready");
     if waitGo(), finish("aborted"); return; end
     nAnswered = 0;
     while ~kidsShouldStop(kp, cfg)
@@ -124,7 +158,7 @@ try
 catch err
     try, rrstMarker('aborted'); catch, end
     try, stim.park(); catch, end
-    stopMaskingNoise(noise); noise = [];
+    closeSound();
     sca; ShowCursor; Priority(0);
     result = pack("error");
     result.error = getReport(err, 'extended', 'hyperlinks', 'off');
@@ -139,30 +173,56 @@ end
         nRun = nRun + 1;
         tr = struct('n', nRun, 'phase', "", 'level', level, ...
             'isCatch', info.isCatch, 'proposed', info.proposed, 'limited', info.limited, ...
-            'answer', "", 'response', NaN, 'rt', NaN, 'moveT', NaN, 'slurpT', NaN, 'tStart', GetSecs - t0);
+            'answer', "", 'response', NaN, 'rt', NaN, 'moveT', NaN, 'slurpT', NaN, 'tStart', GetSecs - t0, ...
+            'slurps', [], 'shortSlurps', false, 'flowLost', false);
         % Move: the mouse scampers while the wedge goes to the level
         tMove = GetSecs;
         show(scr, struct('mouseX', 0.1, 'straw', false), prog);
+        playCue("mouse");
         if level == 0, mv = stim.null(); else, mv = stim.present(level); end
         rrstMarker(kidsMarkerLabel("level", tr.n, level));   % move confirmed (as the adult task)
         tr.moveT = mv.elapsed;
         status = animate(cfg.timing.moveMin - (GetSecs - tMove), @(p) struct('mouseX', 0.1 + 0.8 * p, 'straw', false), prog);
         if status ~= "", return; end
+        % A lost airflow stream: look for it again before the child is asked to slurp
+        if ~isempty(fl) && fl.lost && ismethod(src, 'reconnect')
+            if src.reconnect(0.5), fprintf('Airflow stream is back.\n'); end
+        end
         % The experimenter starts the slurps when the child is ready (Space)
         show(scr, struct('text', txt.cue), prog);
+        playCue("ready");
         if waitGo(), status = "abort"; return; end
         rrstMarker(kidsMarkerLabel("go", tr.n));
-        % Slurps at this level: each drinks a share of the milkshake. Pacing only; the
-        % experimenter can end them early with Space once the child has slurped enough.
-        n = cfg.child.slurps; tr.slurpT = GetSecs;
-        for k = 1:n
-            left = 1 - (k - 1) / n;           % milkshake left before this slurp
-            status = animate(cfg.timing.inhale, @(p) struct('belly', p, 'cup', left - p / n, 'text', txt.inhale), prog, true);
-            if status == "", status = animate(cfg.timing.exhale, @(p) struct('belly', 1 - p, 'cup', left - 1 / n, 'bubbles', p, 'text', txt.exhale), prog, true); end
-            if status == "skip", break; end
-            if status ~= "", return; end
+        % Slurps at this level (kidsSlurpPhase): breath-driven with the sensor, else timed
+        if isa(src, 'kidsSimFlow')                     % simulated flow: the child breathes
+            src.quiet();
+            src.breathe(25, 1.3, cfg.child.slurps, 2.5, 0.5);
         end
-        tr.slurpT = GetSecs - tr.slurpT;
+        io = struct('draw', @(s) show(scr, s, prog), 'keys', @phaseKeys, 'now', @GetSecs, ...
+            'marker', @(label, t) rrstMarker(label, t), 'sound', @playCue, ...
+            'prompt', @(msg) fprintf('%s\n', msg), 'sim', ~isempty(sim));
+        [status, tr.slurps, sInfo] = kidsSlurpPhase(fl, cfg, io);
+        tr.slurpT = sInfo.durationS;
+        tr.shortSlurps = sInfo.shortSlurps;
+        tr.flowLost = sInfo.flowLost;
+        if isempty(sim) && status ~= "done", waitRelease(); end
+        switch status
+            case "abort"
+                return
+            case "bad"                                  % x: repeat this trial type later
+                tr.answer = "bad";
+                rrstMarker(kidsMarkerLabel("answer", "bad"));
+                status = "repeat";
+                return
+            case "skip"
+                breathDriven = ~isempty(fl) && cfg.flow.feedback == "breath" && ~sInfo.flowLost;
+                if breathDriven && sInfo.counted == 0 && ask
+                    fprintf('No slurp counted: this trial is repeated later.\n');
+                    tr.answer = "noslurp";
+                    status = "repeat";
+                    return
+                end
+        end
         status = "";
         if ~ask
             status = "free"; return
@@ -188,10 +248,8 @@ end
         end
     end
 
-    function status = animate(dur, sceneAt, prog, skippable)
-        % Frame loop for dur seconds; returns "abort" if Esc is pressed, and "skip" if
-        % skippable and Space is pressed (simulated child: never).
-        if nargin < 4, skippable = false; end
+    function status = animate(dur, sceneAt, prog)
+        % Frame loop for dur seconds; returns "abort" if Esc is pressed.
         status = "";
         dur = max(dur, 0) * ts;
         tStart = GetSecs;
@@ -200,7 +258,6 @@ end
             show(scr, sceneAt(p), prog);
             [down, ~, code] = KbCheck;
             if down && any(code(keys.abort)), status = "abort"; return; end
-            if skippable && isempty(sim) && down && any(code(keys.go)), status = "skip"; waitRelease(); return; end
             if p >= 1, return; end
         end
     end
@@ -241,10 +298,12 @@ end
     end
 
     function status = reward(prog)
+        playCue("star");
         status = animate(cfg.timing.reward, @(p) struct('cup', 0, 'wiggle', 15 * sin(p * 4 * pi), 'text', txt.star), prog);
     end
 
     function status = dance(prog)
+        playCue("cup");
         status = animate(cfg.timing.dance, @(p) struct('cup', 0, 'wiggle', 40 * sin(p * 8 * pi), 'belly', 0.5 + 0.5 * sin(p * 6 * pi), 'text', txt.cupDone), prog);
     end
 
@@ -257,8 +316,44 @@ end
             if down && any(code(keys.abort)), aborted = true; return; end
         end
         show(scr, struct('mouseX', 0.9, 'text', txt.ready), prog);
+        playCue("ready");
         aborted = waitGo();
         if ~aborted, rrstMarker('rest_end'); end    % experimenter's Space: trials resume
+    end
+
+    function k = phaseKeys()
+        % Keys during the slurp phase: Esc abort, x bad breath, Space skip.
+        k = "";
+        [down, ~, code] = KbCheck;
+        if ~down, return; end
+        if any(code(keys.abort)), k = "abort";
+        elseif any(code(keys.bad)), k = "bad";
+        elseif any(code(keys.go)), k = "skip";
+        end
+    end
+
+    function playCue(name)
+        if ~isempty(snd), snd.play(name); end
+    end
+
+    function closeSound()
+        if ~isempty(snd), snd.close(); end
+        snd = [];
+    end
+
+    function setReference(s)
+        % The child's reference slurp from the counted free slurps (plan section 3.2).
+        if isempty(fl), return; end
+        if ~isempty(s), s = s(logical([s.counted])); end
+        if isempty(s)
+            [minL, fullL] = fl.setReference([]);
+            fprintf(2, ['No free slurp counted: the reference stays at %.2f L. Belly full at ' ...
+                '%.2f L; a slurp counts above %.2f L. Check the mouthpiece.\n'], fl.refVolume, fullL, minL);
+        else
+            [minL, fullL] = fl.setReference([s.volumeL]);
+            fprintf('Reference slurp %.2f L, peak %.0f slm. Belly full at %.2f L; a slurp counts above %.2f L.\n', ...
+                fl.refVolume, median([s.peakSlm]), fullL, minL);
+        end
     end
 
     function tFlip = show(scrIn, s, prog)
@@ -302,7 +397,7 @@ end
     function finish(outcome)
         if outcome == "aborted", rrstMarker('aborted'); else, rrstMarker('done'); end
         stim.park();
-        stopMaskingNoise(noise); noise = [];
+        closeSound();
         sca; ShowCursor; Priority(0);
         result = pack(outcome);
         kidsSave(cfg, vars, stim, result);
@@ -315,7 +410,7 @@ scr.colours = struct('background', [0.55 0.82 0.95], 'monster', [150 80 200] / 2
     'monsterDark', [110 55 160] / 255, 'belly', [200 160 235] / 255, 'mouth', [0.25 0.05 0.2], ...
     'shake', [1 0.6 0.75], 'straw', [1 0.95 0.5], 'bubble', [1 1 1], 'mouse', [0.6 0.6 0.62], ...
     'mouseEar', [1 0.7 0.75], 'star', [1 0.82 0.1], 'slot', [1 1 1], 'text', [0.1 0.1 0.25], ...
-    'easy', [0.3 0.75 0.4], 'squishy', [0.9 0.35 0.35]);
+    'cardEasy', [1 0.96 0.88], 'cardSquishy', [0.94 0.88 1]);
 PsychImaging('PrepareConfiguration');
 if cfg.smallWindow
     r = Screen('Rect', scr.screenID);
