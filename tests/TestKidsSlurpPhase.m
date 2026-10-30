@@ -19,13 +19,15 @@ classdef TestKidsSlurpPhase < matlab.unittest.TestCase
 
     properties (Constant)
         FRAME = 1 / 60
+        ANIM_TOL = 2 / 60    % a timed animation lasts its duration plus up to 2 frames
         MAX_FRAMES = 60 * 90 % a phase that runs longer than 90 s is a bug
     end
 
     methods (TestClassSetup)
         function addKidsPath(tc)
             root = fileparts(fileparts(mfilename('fullpath')));
-            p = fullfile(root, 'task', 'RRST_kids', {'config', 'code'});
+            p = [fullfile(root, 'task', 'RRST_kids', {'config', 'code'}), ...
+                {fullfile(root, 'task', 'RRST_2-0', 'code')}];     % uniqueFileName (kidsSave)
             tc.applyFixture(matlab.unittest.fixtures.PathFixture(p));
         end
     end
@@ -271,7 +273,7 @@ classdef TestKidsSlurpPhase < matlab.unittest.TestCase
             tc.verifyEqual(tc.markers, ["slurp_1_onset"; tc.markers(2)]);
             tc.verifyTrue(startsWith(tc.markers(2), "slurp_1_end_"));
             tc.verifyEqual(info.durationS, 2.8 + 2 * (cfg.timing.inhale + cfg.timing.exhale), ...
-                'AbsTol', 0.1, 'two timed slurps after the loss');
+                'AbsTol', 4 * tc.ANIM_TOL + tc.FRAME, 'two timed slurps after the loss');
             tc.verifyCupPasses([1 2/3 1/3 0]);
             tc.verifyEqual(tc.scenes{end}.cup, 0, 'AbsTol', 1e-12);
         end
@@ -287,7 +289,7 @@ classdef TestKidsSlurpPhase < matlab.unittest.TestCase
             tc.verifyEmpty(tc.markers);
             tc.verifyEmpty(tc.sounds);
             tc.verifyFalse(info.flowLost);
-            tc.verifyEqual(info.durationS, 3 * (cfg.timing.inhale + cfg.timing.exhale), 'AbsTol', 0.1);
+            tc.verifyEqual(info.durationS, 3 * (cfg.timing.inhale + cfg.timing.exhale), 'AbsTol', 6 * tc.ANIM_TOL);
         end
 
         % --- timed fallback (no flow) ---------------------------------------------------
@@ -303,7 +305,7 @@ classdef TestKidsSlurpPhase < matlab.unittest.TestCase
             tc.verifyEmpty(tc.prompts);
             n = cfg.child.slurps;
             cycle = cfg.timing.inhale + cfg.timing.exhale;
-            tc.verifyEqual(info.durationS, n * cycle, 'AbsTol', 0.1);
+            tc.verifyEqual(info.durationS, n * cycle, 'AbsTol', 2 * n * tc.ANIM_TOL);
             txt = kidsText(cfg.text.language);
             % Replay the old frame loop on the recorded clock: same scenes, same order.
             k = 1;
@@ -348,7 +350,7 @@ classdef TestKidsSlurpPhase < matlab.unittest.TestCase
             cfg = tc.config();
             cfg.debug.timeScale = 0.2;
             [~, ~, info] = kidsSlurpPhase([], cfg, tc.fakeIo(true));
-            tc.verifyEqual(info.durationS, 0.2 * 3 * (cfg.timing.inhale + cfg.timing.exhale), 'AbsTol', 0.1);
+            tc.verifyEqual(info.durationS, 0.2 * 3 * (cfg.timing.inhale + cfg.timing.exhale), 'AbsTol', 6 * tc.ANIM_TOL);
         end
 
         function slurpRecordsHaveTheSameFieldsWithAndWithoutFlow(tc)

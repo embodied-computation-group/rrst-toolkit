@@ -15,10 +15,12 @@ classdef kidsSimFlow < handle
     %   src.lost is a settable logical, to simulate a lost stream.
     %
     %   src.advance(dt)              move the clock on by dt s, generating those samples
-    %   src.breathe(peak, dur)       one inhalation starting now: half-sine flow of the
+    %   src.breathe(peak, dur)       one inhalation starting now (the clock's time in
+    %                                'Clock' mode, even before the next pull): half-sine flow of the
     %                                given peak (slm) and duration (s), then the T-valve
     %                                backflow (backflowSlm for backflowDur s)
     %   src.breathe(peak, dur, n, interval)   n such breaths, onsets interval s apart
+    %   src.breathe(peak, dur, n, interval, delay)   ...the first one delay s from now
     %   src.quiet()                  cancel every scheduled breath: flow is 0 (plus
     %                                noise and extra) from now on
     %   src.extra = @(t) ...         optional extra flow (slm) at sample times t, e.g. a
@@ -103,14 +105,20 @@ classdef kidsSimFlow < handle
             src.buf = zeros(0, 2);
         end
 
-        function breathe(src, peakSlm, durS, n, intervalS)
+        function breathe(src, peakSlm, durS, n, intervalS, delayS)
             if nargin < 4, n = 1; end
             if nargin < 5, intervalS = 0; end
+            if nargin < 6, delayS = 0; end
             if ~(isscalar(peakSlm) && peakSlm > 0 && isscalar(durS) && durS > 0 && ...
-                    isscalar(n) && n >= 1 && isscalar(intervalS) && intervalS >= 0)
+                    isscalar(n) && n >= 1 && isscalar(intervalS) && intervalS >= 0 && ...
+                    isscalar(delayS) && delayS >= 0)
                 error('rrst:outOfRange', 'breathe needs a positive peak, duration and count.');
             end
-            onsets = src.t + (0:n-1)' * intervalS;
+            now = src.t;                                % with a clock: its time, pulled or not
+            if ~isempty(src.clock)
+                now = max(src.clock(), src.t);
+            end
+            onsets = now + delayS + (0:n-1)' * intervalS;
             src.breaths = [src.breaths; onsets, repmat([durS peakSlm], n, 1)];
         end
 
