@@ -155,7 +155,7 @@ end
 % Z's rising from the sleeping head
 m.zees = zeros(0, 4);
 if s.pose == "sleep"
-    m.zees = zees([cx + 0.45 * R, cy - 0.95 * R], 0.9 * R, s.t, 0.08 * H);
+    m.zees = zees([cx + 0.45 * R, cy - 0.95 * R], 1.05 * R, s.t, 0.065 * H);
 end
 
 % --- straw -----------------------------------------------------------------------
