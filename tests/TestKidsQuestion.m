@@ -179,7 +179,9 @@ classdef TestKidsQuestion < matlab.unittest.TestCase
             tc.verifyFalse(hasColour(ring(hover, g.frame.no), [1 1 1]), 'hover frame on "no"');
 
             chosen = grab(scr, txt, "yes", true);
-            tc.verifyEqual(region(chosen, g.card.yes), yes, 'AbsTol', 1 / 255, 'chosen card changed');
+            inset = [1 1 -1 -1] * g.radius;             % inside the rounded corners
+            tc.verifyEqual(region(chosen, g.card.yes + inset), region(plain, g.card.yes + inset), ...
+                'AbsTol', 1 / 255, 'chosen card changed');
             faded = region(chosen, g.card.no);
             tc.verifyGreaterThan(mean(abs(faded(:) - no(:))), 0.05, 'other card not faded');
         end
