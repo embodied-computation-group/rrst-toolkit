@@ -79,6 +79,18 @@ cfg.practice.passMin = 5;                % correct of the questioned trials...
 cfg.practice.mustPass = [90 90];         % ...and both trials at 90 correct
 cfg.practice.maxRounds = 2;
 
+% --- Feedback to the child after an answer ------------------------------------------
+% "cards" (default): the two answer cards, the correct one in a thick gold frame with a
+% star badge, the chosen one keeps its white frame; right: a gold tick and the star
+% sound; wrong: the chosen card fades, the mouse on the correct card squeezes the
+% straw twice (or a Z floats up from it asleep) and the soft "tryagain" sound; for
+% timing.feedback s. "reveal": the earlier scene (the mouse pinching or asleep in a
+% spotlight, 1.5 s). Second real run (2026-10-30): the reveal was not clear to the
+% child; the truth was only in the experimenter's line.
+cfg.feedback.practice = true;            % after every practice answer
+cfg.feedback.main = false;               % after every main answer too (stars are always shown)
+cfg.feedback.style = "cards";            % "cards" | "reveal"
+
 % --- Timing (s) --------------------------------------------------------------
 cfg.timing.moveMin = 1.5;                % mouse animation while the wedge moves
 cfg.timing.inhale = 1.2;                 % per slurp: belly grows, a third of the milkshake goes
@@ -88,6 +100,7 @@ cfg.timing.exhale = 1.8;                 % belly shrinks, bubbles rise. Pacing o
 cfg.timing.drain = 1.0;                  % breath-driven: a third of the milkshake drains with
                                          % bubbles after each counted slurp (and in free play)
 cfg.timing.response = 8;                 % experimenter clicks the child's answer
+cfg.timing.feedback = 2.5;               % the child's feedback (cfg.feedback, style "cards")
 cfg.timing.reward = 1.0;
 cfg.timing.dance = 2.0;                  % a cup is full
 cfg.timing.pause = 45;

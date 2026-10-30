@@ -21,12 +21,13 @@ function line = kidsPrompt(moment, info)
 %     ready      phase "practice" (k, n: questioned trial k of n), "main" (n: trial
 %                number), "free" (k, n: free slurp trial k of n; tutorial off)
 %     slurps     phase as ready, or "demo" (demo); slurps: slurps per trial
-%     question, reveal (phase "practice"|"demo"), reward, cup, rest (restS), pause,
-%     thanks, done
+%     question, reveal (phase "practice"|"demo"|"main"), reward, cup, rest (restS),
+%     pause, thanks, done
+%     feedback   phase "practice"|"main", correct   the child's feedback (the cards)
 %   Plan: docs/kids_flow_feedback_and_ux_plan_2026-10-30.md, section 5.3 (U9).
 
 names = ["calibrating" "story" "freeplay" "demo" "bridge" "mainStart" "move" "ready" "slurps" ...
-    "question" "reveal" "reward" "cup" "rest" "pause" "thanks" "done"];
+    "question" "reveal" "feedback" "reward" "cup" "rest" "pause" "thanks" "done"];
 if nargin == 0
     line = names;
     return
@@ -76,9 +77,18 @@ switch moment
     case "reveal"
         if isfield(info, 'phase') && string(info.phase) == "demo"
             line = 'Demo: this is what the mouse did.';
+        elseif isfield(info, 'phase') && string(info.phase) == "main"
+            line = 'Feedback: this is the truth.';
         else
             line = 'Practice: this is the truth.';
         end
+    case "feedback"
+        if ~isfield(info, 'correct')
+            bad('The feedback moment needs info.correct (true or false).');
+        end
+        if phaseOf(info) == "main", head = 'Feedback'; else, head = 'Practice'; end
+        if info.correct, how = 'right'; else, how = 'not right'; end
+        line = sprintf('%s: %s. The gold card shows the truth.', head, how);
     case "reward"
         line = 'Star: one per answer, right or wrong.';
     case "cup"

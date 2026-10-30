@@ -38,9 +38,21 @@ function result = kidsMain(cfg, stim, vars)
 %   src.record, and the result gets t0, flow (every sample pulled, [t flowSlm]) and
 %   markers (rrstMarker('log'): every marker sent, LSL or not), all on GetSecs.
 %
+%   Feedback (cfg.feedback): after every practice answer (feedback.practice) and,
+%   with feedback.main, every main answer, the child sees it for cfg.timing.feedback
+%   s: style "cards" (default) shows the two answer cards, the correct one in a thick
+%   gold frame with a star badge, the chosen one in its white frame; right: a gold
+%   tick and the star cue; wrong: the chosen card fades, the mouse on the correct
+%   card squeezes twice (or a Z floats up) and the tryagain cue (kidsQuestion's
+%   feedback state, kidsFeedbackBeat, kidsFeedbackLayout). Style "reveal": the
+%   earlier scene (the mouse pinching or asleep in a spotlight). The experimenter's
+%   line says right or not, then the truth sentence. The tutorial demos keep the
+%   reveal (there is no answer to mark).
+%
 %   Sound: kidsSound plays the rain and the cues: ready (Ready to slurp?, end of a
-%   rest), mouse (wedge moving, story beat 2, practice reveal of a pinch),
-%   slurp/bubbles/tryagain (slurp phase), star, cup.
+%   rest), mouse (wedge moving, story beat 2, the reveal of a pinch), squeak (the
+%   mouse's cheeky face by the cup), slurp/bubbles/tryagain (slurp phase), star
+%   (star flight; right answer), tryagain (wrong answer), cup.
 %
 %   Screens: kidsBeat gives the scene, length and cue of every moment (story in three
 %   beats, each held until Space; move; ready; practice reveal; star flight; cup tip
@@ -169,9 +181,10 @@ try
                 mustOk = false;
                 missed(end + 1) = sprintf('level %g wrong (practice %d)', level, pr.k); %#ok<AGROW>
             end
-            % the truth, every time: the mouse pinching (load) or asleep (catch)
-            say("reveal", struct('phase', "practice"));
-            if playBeat("reveal", progress, level) == "abort", finish("aborted"); return; end
+            % the truth, every time (cfg.feedback): the answer cards, the correct one in gold
+            if cfg.feedback.practice && showFeedback(tr, level, "practice", progress) == "abort"
+                finish("aborted"); return
+            end
         end
         passed = nCorrect >= cfg.practice.passMin && mustOk;
         if passed
@@ -207,6 +220,9 @@ try
                 trials(end + 1) = tr; %#ok<AGROW>
                 kp = kidsRecord(kp, level, tr.response, info);
                 nAnswered = nAnswered + 1;
+                if cfg.feedback.main && showFeedback(tr, level, "main", progress) == "abort"
+                    finish("aborted"); return
+                end
                 % the star flies to its slot, then it counts; the tenth tips the cup
                 say("reward");
                 if playBeat("star", progress) == "abort", finish("aborted"); return; end
@@ -340,6 +356,36 @@ end
         end
         if status == "answered"
             rrstMarker(kidsMarkerLabel("outcome", tr.n, level, tr.response), tAnswer);
+        end
+    end
+
+    function status = showFeedback(tr, level, phase, prog)
+        % The child's feedback after an answer (cfg.feedback.style): "cards", the two
+        % answer cards with the correct one in gold (kidsQuestion's feedback state,
+        % kidsFeedbackBeat: star or tryagain cue, cfg.timing.feedback s), or "reveal",
+        % the earlier scene. The experimenter's line says right or not, then the truth.
+        % status "abort" on Esc.
+        if cfg.feedback.style == "reveal"
+            say("reveal", struct('phase', phase));
+            status = playBeat("reveal", prog, level);
+            return
+        end
+        isRight = tr.response == (level > 0);
+        say("feedback", struct('phase', phase, 'correct', isRight));
+        if level > 0, truth = "yes"; sentence = txt.yesFeedback; else, truth = "no"; sentence = txt.noFeedback; end
+        fb = kidsFeedbackBeat(tr.answer, truth, 0, cfg.timing);
+        drawQuestionWith(sentence, tr.answer, true, truth, 0);
+        Screen('Flip', scr.win);
+        playCue(fb.cue);
+        status = "";
+        dur = fb.dur * ts; tStart = GetSecs;
+        while true
+            p = min((GetSecs - tStart) / max(dur, eps), 1);
+            drawQuestionWith(sentence, tr.answer, true, truth, p);
+            Screen('Flip', scr.win);
+            [down, ~, code] = KbCheck;
+            if down && any(code(keys.abort)), status = "abort"; return; end
+            if p >= 1, return; end
         end
     end
 
@@ -513,12 +559,23 @@ end
 
     function drawQuestion(varargin)
         % The answer screen (kidsQuestion) with the experimenter's line; no Flip.
+        drawQuestionWith('', varargin{:});
+    end
+
+    function drawQuestionWith(sentence, varargin)
+        % kidsQuestion(scr, txt, varargin{:}) with the experimenter's line and, on a
+        % second line, sentence (the truth after an answer; '' for none); no Flip.
         kidsQuestion(scr, txt, varargin{:});
-        if isempty(expLine), return; end
+        line = expLine;
+        if ~isempty(sentence)
+            if isempty(line), line = sentence; else, line = [line '\n' sentence]; end
+        end
+        if isempty(line), return; end
         base = Screen('TextSize', scr.win);
         H = scr.winRect(4) - scr.winRect(2); W = scr.winRect(3) - scr.winRect(1);
+        nLines = numel(strfind(line, '\n')) + 1;
         Screen('TextSize', scr.win, max(10, round(0.6 * base)));
-        DrawFormattedText(scr.win, expLine, 0.02 * W, 0.975 * H - 0.7 * base, ...
+        DrawFormattedText(scr.win, line, 0.02 * W, 0.975 * H - 0.7 * base * nLines, ...
             0.55 * scr.colours.text + 0.45 * [0.85 0.85 0.85]);
         Screen('TextSize', scr.win, base);
     end
