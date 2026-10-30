@@ -375,6 +375,22 @@ classdef TestKidsScene < matlab.unittest.TestCase
             end
         end
 
+        function napBarDrawsAllTheWayToEmpty(tc)
+            % The stand-in Screen rejects inverted rects as Psychtoolbox does; the
+            % bar's last few percent are narrower than its rounded ends (the mock
+            % session of 2026-10-30 stopped there with "Invalid Rect Argument").
+            here = fileparts(mfilename('fullpath'));
+            stubs = fullfile(here, 'ptbstubs');
+            addpath(stubs);
+            tc.addTeardown(@() rmpath(stubs));
+            for k = 1:numel(tc.Windows)
+                scr = struct('win', 1, 'winRect', tc.Windows{k}, 'colours', colours());
+                for left = [1 0.5 0.12 0.1 0.08 0.05 0.03 0.02 0.01 0.001 0]
+                    kidsScene(scr, struct('pose', "sleep", 'restLeft', left, 'straw', false));
+                end
+            end
+        end
+
         function rendersTheSceneInARealWindow(tc)
             tc.assumeTrue(endsWith(which('Screen'), mexext), 'Psychtoolbox is not on the path.');
             oldSync = Screen('Preference', 'SkipSyncTests', 1);
