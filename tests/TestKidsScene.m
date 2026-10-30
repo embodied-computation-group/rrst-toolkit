@@ -10,7 +10,7 @@ classdef TestKidsScene < matlab.unittest.TestCase
         Windows = {[0 0 1600 900], [0 0 2560 1440], [0 0 2560 1440] / 3, ...
             [0 0 1024 768], [0 0 900 1000]}
         Poses = ["idle" "ready" "slurp" "ahh" "tryagain" "celebrate" "sleep" "strain"]
-        MousePoses = ["run" "pinch" "sleep" "hidden"]
+        MousePoses = ["run" "pinch" "sleep" "hidden" "toCup" "cheeky" "hide"]
         Reveals = ["" "pinch" "sleep"]
         Win = [0 0 1600 900]
     end
@@ -239,6 +239,66 @@ classdef TestKidsScene < matlab.unittest.TestCase
             tc.verifyEqual(kidsPose(struct('mousePose', "hidden", 'mouseX', 0.5), tc.Win).mouse.pose, "hidden");
         end
 
+        function mouseRunsToTheCupBouncing(tc)
+            % The move (2026-10-30): "toCup" runs from the left edge to the cheeky
+            % spot by the table as mouseProgress goes 0 to 1, bouncing with the clock.
+            for k = [1 2 4]
+                r = tc.Windows{k}; W = r(3); H = r(4);
+                spot = kidsPose(struct('mousePose', "cheeky"), r).mouse;
+                g0 = kidsPose(struct('mousePose', "toCup", 'mouseProgress', 0), r).mouse;
+                g1 = kidsPose(struct('mousePose', "toCup", 'mouseProgress', 1), r).mouse;
+                tc.verifyLessThan(g0.x, 0.1 * W, 'starts at the left');
+                tc.verifyEqual(g1.x, spot.x, 'AbsTol', 1e-9, 'ends at the cheeky spot');
+                xs = arrayfun(@(q) kidsPose(struct('mousePose', "toCup", 'mouseProgress', q), r).mouse.x, 0:0.1:1);
+                tc.verifyTrue(all(diff(xs) > 0), 'runs to the right');
+                ys = arrayfun(@(t) kidsPose(struct('mousePose', "toCup", 'mouseProgress', 0.5, 't', t), r).mouse.y, 0:0.02:0.5);
+                tc.verifyGreaterThan(max(ys) - min(ys), 0.003 * H, 'bounces');
+                tc.verifyLessThan(max(abs(ys - 0.92 * H)), 0.03 * H, 'along the ground');
+            end
+        end
+
+        function cheekyMouseStandsByTheCup(tc)
+            % Upright, eyes wide, a grin, a paw up (waving), on the ground left of the
+            % table, clear of the monster.
+            for k = [1 2 3 4]
+                r = tc.Windows{k};
+                g = kidsPose(struct('mousePose', "cheeky", 't', 0.3), r);
+                mo = g.mouse; ch = mo.cheeky;
+                tc.verifyEqual(mo.pose, "cheeky");
+                tc.verifyTrue(ch.active);
+                tc.verifyFalse(mo.behind);
+                tc.verifyLessThan(ch.head(2), mo.y, 'upright: the head above the body');
+                tc.verifyGreaterThanOrEqual(min(ch.eyes(:, 3)), 0.15 * mo.size, 'eyes wide');
+                tc.verifyGreaterThan(ch.grin(2), max(ch.eyes(:, 2)), 'the grin under the eyes');
+                tc.verifyLessThan(ch.hand(2), ch.shoulder(2), 'a paw up');
+                tc.verifyLessThan(ch.hand(2), ch.head(2), 'up beside the head');
+                tc.verifyLessThan(mo.x + 0.7 * mo.size, g.table.top(1), 'left of the table');
+                tc.verifyGreaterThan(mo.x - 0.7 * mo.size, g.monster.body(3), 'clear of the monster');
+                tc.verifyGreaterThan(ch.feet(2), g.groundY, 'stands on the ground');
+            end
+            a = kidsPose(struct('mousePose', "cheeky", 't', 0), tc.Win).mouse.cheeky.hand;
+            b = kidsPose(struct('mousePose', "cheeky", 't', 0.12), tc.Win).mouse.cheeky.hand;
+            tc.verifyGreaterThan(norm(a(1:2) - b(1:2)), 0, 'the paw waves');
+            tc.verifyFalse(kidsPose(struct('mouseX', 0.5), tc.Win).mouse.cheeky.active);
+        end
+
+        function hidingMouseEndsBehindTheCup(tc)
+            for k = [1 2 3 4]
+                r = tc.Windows{k};
+                spot = kidsPose(struct('mousePose', "cheeky"), r).mouse;
+                g0 = kidsPose(struct('mousePose', "hide", 'mouseProgress', 0), r);
+                g1 = kidsPose(struct('mousePose', "hide", 'mouseProgress', 1), r);
+                tc.verifyTrue(g0.mouse.behind && g1.mouse.behind, 'drawn behind the table and cup');
+                tc.verifyEqual(g0.mouse.x, spot.x, 'AbsTol', 1e-9, 'starts at the cheeky spot');
+                tc.verifyTrue(inside(g1.mouse.box, bbox(g1.cup.poly)), 'ends behind the cup');
+                tc.verifyLessThan(g1.mouse.scale, 1);
+                tc.verifyTrue(g1.cup.visible);
+            end
+            tc.verifyEqual(kidsPose(struct('mousePose', "hide"), tc.Win).mouse.x, ...
+                kidsPose(struct('mousePose', "hide", 'mouseProgress', 0), tc.Win).mouse.x, ...
+                'no progress: still at the start');
+        end
+
         function sleepingMouseStaysOnScreen(tc)
             for k = 1:numel(tc.Windows)
                 r = tc.Windows{k};
@@ -367,6 +427,11 @@ classdef TestKidsScene < matlab.unittest.TestCase
                     end
                 end
                 for mp = tc.MousePoses, kidsScene(scr, struct('mousePose', mp, 'mouseX', 0.5)); end
+                for q = [0 0.3 0.7 1]
+                    kidsScene(scr, struct('mousePose', "toCup", 'mouseProgress', q, 'straw', false, 't', q));
+                    kidsScene(scr, struct('mousePose', "hide", 'mouseProgress', q, 'straw', false));
+                end
+                kidsScene(scr, struct('mousePose', "cheeky", 't', 1.7, 'straw', false));
                 for rv = tc.Reveals, kidsScene(scr, struct('reveal', rv, 'cup', 0)); end
                 for p = [0 0.3 1], kidsScene(scr, struct('stars', 5, 'flyStar', p)); end
                 for p = [0 0.3 1], kidsScene(scr, struct('cupsDone', 1, 'cupTip', p, 'cup', 0)); end

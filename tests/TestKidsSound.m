@@ -6,7 +6,7 @@ classdef TestKidsSound < matlab.unittest.TestCase
     properties (TestParameter)
         cue = struct('ready', {{'ready', 0.4}}, 'slurp', {{'slurp', 0.6}}, ...
             'bubbles', {{'bubbles', 0.8}}, 'star', {{'star', 0.5}}, 'cup', {{'cup', 1.2}}, ...
-            'mouse', {{'mouse', 0.8}}, 'tryagain', {{'tryagain', 0.5}});
+            'mouse', {{'mouse', 0.8}}, 'tryagain', {{'tryagain', 0.5}}, 'squeak', {{'squeak', 0.3}});
         fs = {44100, 48000};
     end
 
@@ -81,6 +81,19 @@ classdef TestKidsSound < matlab.unittest.TestCase
             semitones = 12 * log2(f1 / f2);
             tc.verifyGreaterThan(semitones, 0.5, 'second note should be lower');
             tc.verifyLessThanOrEqual(semitones, 2.5, 'fall should be at most a whole tone');
+        end
+
+        function squeakIsTwoRisingChirps(tc)
+            % The cheeky mouse by the cup (2026-10-30): two short chirps, each rising,
+            % the second higher than the first.
+            fsx = 48000;
+            x = kidsCueWave('squeak', fsx);
+            f = @(a, b) dominantFrequency(x(round(a * fsx):round(b * fsx), 1), fsx);
+            tc.verifyGreaterThan(f(0.075, 0.10), f(0.025, 0.05), 'first chirp rises');
+            tc.verifyGreaterThan(f(0.215, 0.245), f(0.155, 0.185), 'second chirp rises');
+            tc.verifyGreaterThan(f(0.155, 0.245), f(0.025, 0.10), 'second chirp higher');
+            gap = x(round(0.125 * fsx):round(0.14 * fsx), 1);
+            tc.verifyLessThan(max(abs(gap)), 0.1, 'two chirps, a gap between');
         end
 
         function readyRises(tc)
