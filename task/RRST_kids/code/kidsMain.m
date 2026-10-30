@@ -24,7 +24,14 @@ function result = kidsMain(cfg, stim, vars)
 %   Per trial: tr.slurps (every slurp the detector saw), tr.shortSlurps, tr.flowLost.
 %
 %   Sound: kidsSound plays the rain and the cues: ready (Ready to slurp?, end of a
-%   rest), mouse (wedge moving), slurp/bubbles/tryagain (slurp phase), star, cup.
+%   rest), mouse (wedge moving, story beat 2, practice reveal of a pinch),
+%   slurp/bubbles/tryagain (slurp phase), star, cup.
+%
+%   Screens: kidsBeat gives the scene, length and cue of every moment (story in three
+%   beats, each held until Space; move; ready; practice reveal; star flight; cup tip
+%   and celebrate; nap and stretch; sticker); kidsSlurpPhase the slurp phase's poses.
+%   Every frame gets t = seconds since the session started (blink, Z's, waving) and
+%   flavour = cupsDone + 1. Sentences are the experimenter's small line.
 %
 %   Experimenter: click the face the child chose, or Left/n = easy (no),
 %   Right/y = squishy (yes); the chosen face lights up for 0.5 s, x = bad breath (trial repeated later), Space = pause (wedge to
@@ -74,18 +81,22 @@ nRun = 0;                                    % trials run so far (marker and tr.
 
 try
     scr = openScreen(cfg);
-    progress = struct('stars', 0, 'cupsDone', 0, 'nCups', ceil((cfg.child.numPsiTrials + cfg.child.numCatchTrials) / 10));
+    progress = struct('stars', 0, 'cupsDone', 0, 'starsPerCup', 10, ...
+        'nCups', ceil((cfg.child.numPsiTrials + cfg.child.numCatchTrials) / 10));
 
-    show(scr, struct('straw', false, 'text', txt.calibrating), progress);
+    show(scr, kidsBeat("calibrating", 0, beatCtx(progress)), progress);
     rrstMarker('calibration_start');
     stim.calibrate();
     rrstMarker('calibration_end');
     stim.rest();
     snd = kidsSound(cfg.noise, cfg.sound);           % rain loop and cue sounds
 
-    % Story
-    rrstMarker('story', show(scr, struct('mouseX', 0.9, 'text', txt.story), progress));
-    if waitGo(), finish("aborted"); return; end
+    % Story: three beats, each held until Space (the experimenter narrates over them)
+    for beat = ["story1" "story2" "story3"]
+        [st, tBeat] = playBeat(beat, progress);
+        if beat == "story1", rrstMarker('story', tBeat); end
+        if st == "abort" || holdBeat(beat, progress), finish("aborted"); return; end
+    end
 
     % Practice
     passed = false;
@@ -110,22 +121,20 @@ try
             correct = tr.response == (level > 0);
             nCorrect = nCorrect + correct;
             if ismember(level, cfg.practice.mustPass) && ~correct, mustOk = false; end
-            if level > 0, fb = txt.yesFeedback; else, fb = txt.noFeedback; end   % the truth, every time
-            show(scr, struct('cup', 0, 'text', fb), progress); pauseFor(1.5);
+            % the truth, every time: the mouse pinching (load) or asleep (catch)
+            if playBeat("reveal", progress, level) == "abort", finish("aborted"); return; end
         end
         if nCorrect >= cfg.practice.passMin && mustOk
             passed = true; break
         end
     end
     if ~passed
-        show(scr, struct('text', txt.thanks), progress); pauseFor(3);
+        playBeat("thanks", progress);
         finish("practiceFailed"); return
     end
 
     % Main trials
-    rrstMarker('main_start', show(scr, struct('mouseX', 0.9, 'text', txt.ready), progress));
-    playCue("ready");
-    if waitGo(), finish("aborted"); return; end
+    if readyScreen(progress, 'main_start'), finish("aborted"); return; end
     nAnswered = 0;
     while ~kidsShouldStop(kp, cfg)
         [level, info] = kidsNextLevel(kp, cfg);
@@ -138,11 +147,12 @@ try
                 trials(end + 1) = tr; %#ok<AGROW>
                 kp = kidsRecord(kp, level, tr.response, info);
                 nAnswered = nAnswered + 1;
+                % the star flies to its slot, then it counts; the tenth tips the cup
+                if playBeat("star", progress) == "abort", finish("aborted"); return; end
                 progress.stars = progress.stars + 1;
-                if reward(progress) == "abort", finish("aborted"); return; end
-                if progress.stars == 10
+                if progress.stars == progress.starsPerCup
+                    if playBeat("cup", progress) == "abort", finish("aborted"); return; end
                     progress.cupsDone = progress.cupsDone + 1;
-                    if dance(progress) == "abort", finish("aborted"); return; end
                     progress.stars = 0;
                 end
                 if mod(nAnswered, cfg.timing.pauseEvery) == 0 && ~kidsShouldStop(kp, cfg)
@@ -155,7 +165,7 @@ try
         end
         stim.rest();
     end
-    show(scr, struct('cup', 0, 'text', txt.sticker), progress); pauseFor(3);
+    playBeat("sticker", progress);
     [~, why] = kidsShouldStop(kp, cfg);
     finish("complete:" + why);
 catch err
@@ -178,23 +188,24 @@ end
             'isCatch', info.isCatch, 'proposed', info.proposed, 'limited', info.limited, ...
             'answer', "", 'response', NaN, 'rt', NaN, 'moveT', NaN, 'slurpT', NaN, 'tStart', GetSecs - t0, ...
             'slurps', [], 'shortSlurps', false, 'flowLost', false);
-        % Move: the mouse scampers while the wedge goes to the level
+        % Move: the mouse scampers while the wedge goes to the level (the same
+        % picture for catch and load trials: kidsBeat "move" has no level)
         tMove = GetSecs;
-        show(scr, struct('mouseX', 0.1, 'straw', false), prog);
-        playCue("mouse");
+        c = beatCtx(prog);
+        [s, ~, cue] = kidsBeat("move", 0, c);
+        show(scr, s, prog);
+        playCue(cue);
         if level == 0, mv = stim.null(); else, mv = stim.present(level); end
         rrstMarker(kidsMarkerLabel("level", tr.n, level));   % move confirmed (as the adult task)
         tr.moveT = mv.elapsed;
-        status = animate(cfg.timing.moveMin - (GetSecs - tMove), @(p) struct('mouseX', 0.1 + 0.8 * p, 'straw', false), prog);
+        status = animate(cfg.timing.moveMin - (GetSecs - tMove), @(p) kidsBeat("move", p, c), prog);
         if status ~= "", return; end
         % A lost airflow stream: look for it again before the child is asked to slurp
         if ~isempty(fl) && fl.lost && ismethod(src, 'reconnect')
             if src.reconnect(0.5), fprintf('Airflow stream is back.\n'); end
         end
         % The experimenter starts the slurps when the child is ready (Space)
-        show(scr, struct('text', txt.cue), prog);
-        playCue("ready");
-        if waitGo(), status = "abort"; return; end
+        if readyScreen(prog), status = "abort"; return; end
         rrstMarker(kidsMarkerLabel("go", tr.n));
         % Slurps at this level (kidsSlurpPhase): breath-driven with the sensor, else timed
         if isa(src, 'kidsSimFlow')                     % simulated flow: the child breathes
@@ -242,7 +253,7 @@ end
             case "abort", status = "abort";
             case "pause"
                 stim.null();
-                show(scr, struct('cup', 0, 'text', txt.pause), prog);
+                show(scr, kidsBeat("pause", 0, beatCtx(prog)), prog);
                 if waitGo(), status = "abort"; else, status = "repeat"; end
             otherwise, status = "repeat";            % "bad" or "none"
         end
@@ -300,27 +311,46 @@ end
         waitRelease();
     end
 
-    function status = reward(prog)
-        playCue("star");
-        status = animate(cfg.timing.reward, @(p) struct('cup', 0, 'wiggle', 15 * sin(p * 4 * pi), 'text', txt.star), prog);
+    function [status, tFlip] = playBeat(name, prog, level)
+        % One beat (kidsBeat) from its start: first frame, its cue, its animation.
+        % status "abort" on Esc; tFlip: the first frame's flip time.
+        if nargin < 3, level = NaN; end
+        c = beatCtx(prog, level);
+        [s, dur, cue] = kidsBeat(name, 0, c);
+        tFlip = show(scr, s, prog);
+        playCue(cue);
+        status = animate(dur, @(p) kidsBeat(name, p, c), prog);
     end
 
-    function status = dance(prog)
-        playCue("cup");
-        status = animate(cfg.timing.dance, @(p) struct('cup', 0, 'wiggle', 40 * sin(p * 8 * pi), 'belly', 0.5 + 0.5 * sin(p * 6 * pi), 'text', txt.cupDone), prog);
+    function aborted = holdBeat(name, prog, level)
+        % Hold a beat's last frame (still animated by t) until Space; true on Esc.
+        if nargin < 3, level = NaN; end
+        c = beatCtx(prog, level);
+        aborted = waitGo(@() show(scr, kidsBeat(name, 1, c), prog));
+    end
+
+    function aborted = readyScreen(prog, marker)
+        % "Ready to slurp?" with the ready cue, until the experimenter's Space.
+        c = beatCtx(prog);
+        [s, ~, cue] = kidsBeat("ready", 0, c);
+        tFlip = show(scr, s, prog);
+        if nargin > 1, rrstMarker(marker, tFlip); end
+        playCue(cue);
+        aborted = holdBeat("ready", prog);
+    end
+
+    function c = beatCtx(prog, level)
+        if nargin < 2, level = NaN; end
+        c = struct('stars', prog.stars, 'cupsDone', prog.cupsDone, 'nCups', prog.nCups, ...
+            'txt', txt, 'timing', cfg.timing, 'level', level);
     end
 
     function aborted = rest(prog)
-        tStart = GetSecs;
-        rrstMarker('rest_start', tStart);
-        while GetSecs - tStart < cfg.timing.pause * ts
-            show(scr, struct('cup', 1, 'straw', false, 'text', sprintf(txt.rest, ceil(cfg.timing.pause * ts - (GetSecs - tStart)))), prog);
-            [down, ~, code] = KbCheck;
-            if down && any(code(keys.abort)), aborted = true; return; end
-        end
-        show(scr, struct('mouseX', 0.9, 'text', txt.ready), prog);
-        playCue("ready");
-        aborted = waitGo();
+        % A nap (the bar drains), a stretch, then the ready screen.
+        rrstMarker('rest_start', GetSecs);
+        aborted = playBeat("nap", prog) == "abort" || playBeat("stretch", prog) == "abort";
+        if aborted, return; end
+        aborted = readyScreen(prog);
         if ~aborted, rrstMarker('rest_end'); end    % experimenter's Space: trials resume
     end
 
@@ -336,7 +366,7 @@ end
     end
 
     function playCue(name)
-        if ~isempty(snd), snd.play(name); end
+        if ~isempty(snd) && name ~= "", snd.play(name); end
     end
 
     function closeSound()
@@ -362,15 +392,23 @@ end
     end
 
     function tFlip = show(scrIn, s, prog)
-        % Draw the scene and flip; tFlip is the flip's onset (GetSecs time).
-        s.stars = prog.stars; s.cupsDone = prog.cupsDone; s.nCups = prog.nCups;
+        % Draw the scene and flip; tFlip is the flip's onset (GetSecs time). Fields
+        % the scene does not set: progress from prog, flavour = cupsDone + 1, and the
+        % clock t (seconds since the session started) for the blink, Z's and waving.
+        if ~isfield(s, 'stars'), s.stars = prog.stars; end
+        if ~isfield(s, 'cupsDone'), s.cupsDone = prog.cupsDone; end
+        if ~isfield(s, 'nCups'), s.nCups = prog.nCups; end
+        if ~isfield(s, 'flavour'), s.flavour = s.cupsDone + 1; end
+        if ~isfield(s, 't'), s.t = GetSecs - t0; end
         kidsScene(scrIn, s);
         tFlip = Screen('Flip', scrIn.win);
     end
 
-    function aborted = waitGo()
-        % Experimenter presses Space to go on; Esc returns true (abort).
+    function aborted = waitGo(redraw)
+        % Experimenter presses Space to go on; Esc returns true (abort). redraw
+        % (optional) draws and flips the held frame each time round (one per frame).
         aborted = false;
+        if nargin < 1, redraw = []; end
         if ~isempty(sim), pauseFor(0.3); return; end
         waitRelease();
         while true
@@ -378,7 +416,7 @@ end
             if down && any(code(keys.go)), break; end
             if down && any(code(keys.abort)), aborted = true; break; end
             GetMouse;                    % keeps the window responsive (KbCheck alone lets Windows grey it out)
-            WaitSecs(0.001);
+            if isempty(redraw), WaitSecs(0.001); else, redraw(); end
         end
         waitRelease();
     end

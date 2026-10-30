@@ -8,7 +8,6 @@ t.calibrating = 'Getting the straw ready...';
 t.story1 = 'This is Milkshake Monster!\nIt loves milkshake. Slurp!';   % story beats (kidsBeat)
 t.story2 = 'A cheeky mouse likes to pinch the straw.\nThen slurping feels squishy!';
 t.story3 = 'Off it runs! Sometimes it pinches,\nsometimes it sleeps.';
-t.story = [t.story1 '\n\n' t.story2];        % the one-screen story (kidsMain until the beats are wired)
 t.ready = 'Ready to slurp?';
 t.cue = 'Ready to slurp?';
 t.inhale = 'Big slurp!';
