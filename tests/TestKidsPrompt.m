@@ -28,6 +28,7 @@ classdef TestKidsPrompt < matlab.unittest.TestCase
                 "demo",        struct('demo', "pinch")
                 "demo",        struct('demo', "sleep")
                 "bridge",      struct()
+                "mainStart",   struct()
                 "move",        struct()
                 "ready",       struct('phase', "practice", 'k', 3, 'n', 6)
                 "ready",       struct('phase', "practice", 'k', 12, 'n', 12)
