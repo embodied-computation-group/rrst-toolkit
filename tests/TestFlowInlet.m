@@ -41,9 +41,20 @@ classdef TestFlowInlet < matlab.unittest.TestCase
     methods (Test)
         % --- opening ----------------------------------------------------------
         function noStreamIsAnErrorWithinTheTimeout(tc)
-            t = tic;
-            tc.verifyError(@() flowInlet(tc.LiblslDir, 0.5, Name=tc.name), 'rrst:noFlowStream');
-            tc.verifyLessThan(toc(t), 3);
+            % liblsl 1.18's resolve overran a timeout of 0.495 to 0.5 s by about 5 s on
+            % the stim laptop (2026-10-30, every call; 0.49 and 0.505 s were on time):
+            % the timeouts next to 0.5 s are the ones that must be checked.
+            for timeoutS = [0.2 0.495 0.5]
+                t = tic;
+                try
+                    flowInlet(tc.LiblslDir, timeoutS, Name=tc.name);
+                    tc.verifyFail(sprintf('no error without a stream (timeout %g s)', timeoutS));
+                catch err
+                    tc.verifyEqual(err.identifier, 'rrst:noFlowStream');
+                    tc.verifySubstring(err.message, 'No airflow stream');
+                end
+                tc.verifyLessThan(toc(t), timeoutS + 1, sprintf('timeout %g s', timeoutS));
+            end
         end
 
         function noStreamMessageNamesTheFix(tc)
@@ -127,6 +138,17 @@ classdef TestFlowInlet < matlab.unittest.TestCase
             tc.waitForConsumer();
             tc.push(ones(20, 1));
             tc.verifySize(tc.pullAll(src, 20), [20 2]);
+        end
+
+        function reconnectReturnsWithinItsTimeout(tc)
+            % kidsMain looks for a lost stream with reconnect(0.5) before every trial.
+            src = tc.openWithOutlet();
+            tc.dropOutlet();
+            for timeoutS = [0.495 0.5]
+                t = tic;
+                tc.verifyFalse(src.reconnect(timeoutS));
+                tc.verifyLessThan(toc(t), timeoutS + 1, sprintf('timeout %g s', timeoutS));
+            end
         end
 
         function closeReleasesTheInlet(tc)
