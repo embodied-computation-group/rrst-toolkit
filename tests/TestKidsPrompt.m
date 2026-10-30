@@ -6,6 +6,7 @@ classdef TestKidsPrompt < matlab.unittest.TestCase
 
     properties (Constant)
         MaxLen = 90
+        MaxLenCounts = 116       % the main trial line with its counts (2026-10-30)
     end
 
     methods (TestClassSetup)
@@ -134,9 +135,87 @@ classdef TestKidsPrompt < matlab.unittest.TestCase
             tc.verifyError(@() kidsPrompt("feedback", struct('phase', "practice")), 'rrst:badPrompt');
         end
 
+        function mainLineCountsTheTrials(tc)
+            % Second real run (2026-10-30): "trial 21" and a third break although 20
+            % trials were planned; 20 Psi + 8 catch = up to 28 and the early stop
+            % needs 20 Psi trials, but the experimenter could not see that.
+            info = struct('phase', "main", 'n', 21, 'nMax', 28, 'psiDone', 15, 'psiN', 20, ...
+                'catchDone', 6, 'catchN', 8, 'feedback', false);
+            tc.verifyEqual(kidsPrompt("ready", info), ['Trial 21 of up to 28 (Psi 15/20, catch 6/8). ' ...
+                'Space starts the slurps. No feedback; one star per answer.']);
+            info.feedback = true;
+            tc.verifyEqual(kidsPrompt("ready", info), ['Trial 21 of up to 28 (Psi 15/20, catch 6/8). ' ...
+                'Space starts the slurps. Feedback on; one star per answer.']);
+            % the counts are of trials done: the line does not depend on this trial
+            for level = [0 35 85]
+                info.level = level; info.isCatch = level == 0;
+                line = kidsPrompt("ready", info);
+                tc.verifyFalse(contains(lower(line), 'level'), line);
+                tc.verifyFalse(contains(line, '%'), line);
+                tc.verifyEqual(line, kidsPrompt("ready", rmfield(info, {'level', 'isCatch'})));
+            end
+            % the largest numbers a session can reach still fit on the line
+            big = struct('phase', "main", 'n', 120, 'nMax', 140, 'psiDone', 100, 'psiN', 100, ...
+                'catchDone', 40, 'catchN', 40, 'feedback', true);
+            tc.verifyLessThan(numel(kidsPrompt("ready", big)), tc.MaxLenCounts);
+        end
+
+        function mainStartSaysWhetherThereIsFeedback(tc)
+            tc.verifyEqual(kidsPrompt("mainStart", struct()), ...
+                'Practice passed. Main trials: no feedback, one star per answer. Space.');
+            tc.verifyEqual(kidsPrompt("mainStart", struct('feedback', true)), ...
+                'Practice passed. Main trials: feedback on, one star per answer. Space.');
+        end
+
+        function consoleShowsThePlanTheEstimateAndWhyItStopped(tc)
+            cfg = kidsConfig();
+            cfg.child.numPsiTrials = 20; cfg.child.numCatchTrials = 8;
+            cfg.child.stopSE = 8; cfg.child.stopMinTrials = 20;
+            kp = fakeKp(15, 6, 72.34, 7.12, 28);
+            tc.verifyEqual(kidsRunReport(kp, cfg, "plan"), ['Main trials: up to 28 (20 Psi + 8 catch). ' ...
+                'Early stop: SE < 8 after 20 Psi trials.']);
+            tc.verifyEqual(kidsRunReport(kp, cfg, "progress"), ['Threshold 72.3 %, SE 7.1. ' ...
+                'Early stop: SE < 8 after 20 Psi trials; now SE 7.1 after 15 (5 more Psi trials needed).']);
+            kp = fakeKp(20, 7, 86.9, 7.1, 28);
+            tc.verifyEqual(kidsRunReport(kp, cfg, "progress"), ['Threshold 86.9 %, SE 7.1. ' ...
+                'Early stop: SE < 8 after 20 Psi trials; now SE 7.1 after 20: stops now.']);
+            kp = fakeKp(21, 7, 60, 9.26, 28);
+            tc.verifyEqual(kidsRunReport(kp, cfg, "progress"), ['Threshold 60.0 %, SE 9.3. ' ...
+                'Early stop: SE < 8 after 20 Psi trials; now SE 9.3 after 21: goes on (0 trials left).']);
+            kp = fakeKp(20, 7, 86.9, 7.1, 28);
+            tc.verifyEqual(kidsRunReport(kp, cfg, "end", "precise"), ['Stopped early: SE 7.1 < 8 after ' ...
+                '20 Psi trials (27 of up to 28 trials run). Threshold 86.9 %.']);
+            kp = fakeKp(20, 8, 70, 9, 28);
+            tc.verifyEqual(kidsRunReport(kp, cfg, "end", "complete"), ['Stopped: all 28 planned trials ' ...
+                'run (20 Psi, 8 catch); SE 9.0 (the early stop needs SE < 8 after 20 Psi trials). Threshold 70.0 %.']);
+            tc.verifyEqual(kidsRunReport(kp, cfg, "end", "repeats"), ['Stopped: more than 10 repeated ' ...
+                'trials (no answer, bad breath or pause). Threshold 70.0 %, SE 9.0.']);
+            kp = fakeKp(0, 0, NaN, NaN, 28);
+            tc.verifyTrue(startsWith(kidsRunReport(kp, cfg, "progress"), 'No estimate yet.'));
+            tc.verifyError(@() kidsRunReport(kp, cfg, "end", "bored"), 'rrst:badPrompt');
+            tc.verifyError(@() kidsRunReport(kp, cfg, "summary"), 'rrst:badPrompt');
+        end
+
         function unknownMomentIsAnError(tc)
             tc.verifyError(@() kidsPrompt("dance", struct()), 'rrst:badPrompt');
             tc.verifyError(@() kidsPrompt("ready", struct('phase', "warmup")), 'rrst:badPrompt');
         end
     end
+end
+
+function kp = fakeKp(nPsi, nCatch, threshold, se, nSchedule)
+% A kidsProcedure state after nPsi Psi and nCatch catch trials were answered, with
+% the posterior's threshold and SE (no Palamedes; NaN: no estimate yet).
+kp.schedule = false(1, nSchedule);
+kp.schedule(1 + 2 * (1:nCatch)) = true;
+kp.k = nPsi + nCatch + 1;
+kp.nPsiDone = nPsi;
+kp.nRepeats = 0;
+isCatch = num2cell([true(1, nCatch), false(1, nPsi)]);
+kp.history = struct('level', 50, 'response', 1, 'isCatch', isCatch);
+if isnan(threshold)
+    kp.PM = struct('threshold', [], 'seThreshold', []);
+else
+    kp.PM = struct('threshold', [80 threshold], 'seThreshold', [12 se]);
+end
 end
