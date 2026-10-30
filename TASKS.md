@@ -114,11 +114,23 @@ session so a fresh session can continue from the files.
     7. Poses wired into the session (`kidsBeat`: story beats, practice reveal, star
        flight, cup tip, nap), reference slurp from every detected free slurp, free
        slurps never marked weak, flowInlet's resolve stepped clear of 0.5 s.
-    Tests: 340 pass (whole suite, 2026-10-30); an unattended mock session with the
-    simulated child completes on the breath path (3 counted slurps every trial). Next:
-    the pilot protocol `docs/kids_pilot_protocol_2026-10-30.md` (experimenter self-test
-    with feedback on and off, then one child as a usability check). Not for children
-    before that. Open:
+    8. After the first real run with feedback (2026-10-30, adult; every slurp detected,
+       aborted in practice round 2: the reveal made no sense without knowing it was
+       practice): the experimenter line on every screen and the console (`kidsPrompt`:
+       `PRACTICE k of n`, `Trial n`, which key goes on), the practice outcome per round
+       with the reason, the intro tutorial (`cfg.tutorial`: free play, pinch and sleep
+       demos, the answer cards; replaces the two free slurps), the cup tip held for the
+       sticker, and a 1.0 s drain (`cfg.timing.drain`) on the breath path.
+    Tests: 366 pass (whole suite, 2026-10-30); an unattended mock session with the
+    simulated child completes through the tutorial and on the breath path (3 counted
+    slurps every trial). Next: the pilot protocol
+    `docs/kids_pilot_protocol_2026-10-30.md` (experimenter self-test with feedback on
+    and off, then one child as a usability check). Not for children before that. Open:
+    - **Practice at 80 % failed for an adult** (2026-10-30: "easy" twice at 80, both
+      must-pass trials). The practice levels, pass rule and cap are unchanged: a design
+      call for Micah (the first adult pilot's threshold was 79 %).
+    - The tutorial has run only in mock sessions; the earlier key frames (01-14) were
+      rendered before the experimenter line and do not show it.
     - Lag from breath to screen: `TODO(measure)` in `handbook/shared/airflow-sensor.md`
       (`bench/flowFeedbackCheck(60, SmallWindow=false)`).
     - Cue sounds not checked by ear (loudness over the rain, timing).
