@@ -3,16 +3,24 @@ classdef kidsSimFlow < handle
     %   src = kidsSimFlow()                         clock driven by advance(), starts at 0
     %   src = kidsSimFlow('Noise', 0.3, 'Seed', 1)  gaussian noise (slm SD), reproducible
     %   src = kidsSimFlow('Clock', @GetSecs)        pull() first advances to the clock's time
+    %   src = kidsSimFlow('Jitter', 0.8e-3)         each reported time moved by up to
+    %                                               +-0.8 ms (uniform), like live LSL times
     %
     %   s = src.pull() returns the samples generated since the last call as an N-by-2
-    %   double [tSeconds flowSlm] (0-by-2 if none), timestamps strictly increasing, at
-    %   src.rate (1000 Hz). src.lost is a settable logical, to simulate a lost stream.
+    %   double [tSeconds flowSlm] (0-by-2 if none), at src.rate (1000 Hz). Times
+    %   strictly increase unless 'Jitter' is set: then the rows stay in sample order
+    %   and the flow is that of the true times, but a reported time can step back
+    %   (flowInlet help: live times do, at chunk boundaries). The jitter has its own
+    %   random stream, so the noise is the same with and without it.
+    %   src.lost is a settable logical, to simulate a lost stream.
     %
     %   src.advance(dt)              move the clock on by dt s, generating those samples
-    %   src.breathe(peak, dur)       one inhalation starting now: half-sine flow of the
+    %   src.breathe(peak, dur)       one inhalation starting now (the clock's time in
+    %                                'Clock' mode, even before the next pull): half-sine flow of the
     %                                given peak (slm) and duration (s), then the T-valve
     %                                backflow (backflowSlm for backflowDur s)
     %   src.breathe(peak, dur, n, interval)   n such breaths, onsets interval s apart
+    %   src.breathe(peak, dur, n, interval, delay)   ...the first one delay s from now
     %   src.quiet()                  cancel every scheduled breath: flow is 0 (plus
     %                                noise and extra) from now on
     %   src.extra = @(t) ...         optional extra flow (slm) at sample times t, e.g. a
@@ -31,6 +39,7 @@ classdef kidsSimFlow < handle
 
     properties (SetAccess = private)
         rate = 1000                  % Hz
+        jitter = 0                   % s, maximum time error of a reported sample
         t = 0                        % current clock time, s
     end
 
@@ -40,6 +49,7 @@ classdef kidsSimFlow < handle
         buf = zeros(0, 2)
         breaths = zeros(0, 3)        % [onset dur peak]
         rng
+        jitterRng
         clock = []
     end
 
@@ -51,11 +61,14 @@ classdef kidsSimFlow < handle
             ip.addParameter('Seed', 0, @isscalar);
             ip.addParameter('Clock', [], @(x) isempty(x) || isa(x, 'function_handle'));
             ip.addParameter('T0', 0, @isscalar);
+            ip.addParameter('Jitter', 0, @(x) isscalar(x) && x >= 0);
             ip.parse(varargin{:});
             o = ip.Results;
             src.rate = o.Rate;
             src.noiseSlm = o.Noise;
+            src.jitter = o.Jitter;
             src.rng = RandStream('mt19937ar', 'Seed', o.Seed);
+            src.jitterRng = RandStream('mt19937ar', 'Seed', o.Seed + 1);
             src.clock = o.Clock;
             if isempty(src.clock)
                 src.t0 = o.T0;
@@ -76,7 +89,11 @@ classdef kidsSimFlow < handle
             end
             k = (src.nextK:kEnd)';
             ts = src.t0 + k / src.rate;
-            src.buf = [src.buf; ts, src.flowAt(ts)];
+            reported = ts;
+            if src.jitter > 0
+                reported = ts + src.jitter * (2 * rand(src.jitterRng, size(ts)) - 1);
+            end
+            src.buf = [src.buf; reported, src.flowAt(ts)];
             src.nextK = kEnd + 1;
         end
 
@@ -88,14 +105,20 @@ classdef kidsSimFlow < handle
             src.buf = zeros(0, 2);
         end
 
-        function breathe(src, peakSlm, durS, n, intervalS)
+        function breathe(src, peakSlm, durS, n, intervalS, delayS)
             if nargin < 4, n = 1; end
             if nargin < 5, intervalS = 0; end
+            if nargin < 6, delayS = 0; end
             if ~(isscalar(peakSlm) && peakSlm > 0 && isscalar(durS) && durS > 0 && ...
-                    isscalar(n) && n >= 1 && isscalar(intervalS) && intervalS >= 0)
+                    isscalar(n) && n >= 1 && isscalar(intervalS) && intervalS >= 0 && ...
+                    isscalar(delayS) && delayS >= 0)
                 error('rrst:outOfRange', 'breathe needs a positive peak, duration and count.');
             end
-            onsets = src.t + (0:n-1)' * intervalS;
+            now = src.t;                                % with a clock: its time, pulled or not
+            if ~isempty(src.clock)
+                now = max(src.clock(), src.t);
+            end
+            onsets = now + delayS + (0:n-1)' * intervalS;
             src.breaths = [src.breaths; onsets, repmat([durS peakSlm], n, 1)];
         end
 

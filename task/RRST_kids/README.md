@@ -9,7 +9,8 @@ text is English only and must be translated (Swiss German / Danish) before use.
 A purple monster drinks milkshake through a long straw (the mouthpiece). A cheeky
 mouse sometimes pinches the straw, so the slurp feels "squishy". On each trial the
 experimenter starts the slurping when the child is ready; the child takes three slurps
-at the same level and says whether the mouse pinched. Every answer earns a star; ten stars
+at the same level, the monster drinks when the child slurps (airflow sensor), and the
+child says whether the mouse pinched. Every answer earns a star; ten stars
 finish a milkshake and earn a real sticker from the experimenter.
 
 ## Why it differs from the adult task
@@ -25,7 +26,7 @@ finish a milkshake and earn a real sticker from the experimenter.
 | Start | Psi's choice | forced 70 % (just perceptible for an adult) |
 | Jumps | any | at most 15 % above the highest level so far |
 | Trials | 100 | 30 Psi + 10 catch; stops early when SE < 8 after 20 Psi trials |
-| Breathing | 0.8 s timed inhale | experimenter presses Space when the child is ready; `cfg.child.slurps` (3) slurps paced at 1.2 s in (belly grows, milkshake drains a third), 1.8 s out (bubbles); pacing is not enforced and Space ends the slurps early. One timed breath was too hard to catch for a 4.5-year-old (first try, 2026-10-28). |
+| Breathing | 0.8 s timed inhale | experimenter presses Space when the child is ready; then the child's own breath drives the monster (airflow sensor): the belly fills with the slurp's volume, each counted slurp drains a third of the milkshake with bubbles, and the trial goes on when `cfg.child.slurps` (3) slurps have counted. No pacing. One timed breath was too hard to catch for a 4.5-year-old (first try, 2026-10-28). Without the sensor: the old timed animation (1.2 s in, 1.8 s out, x3). |
 | Answer | participant clicks | **experimenter clicks** what the child says or points at |
 | Feedback | none | practice only (the truth, every time); main trials: a star for every answer |
 
@@ -46,34 +47,80 @@ connected; click **Start recording** in the app if it hasn't started. Mock-devic
 such exception). `cfg.markers.lsl = false` runs without LSL; liblsl-Matlab
 (`C:\toolbox\liblsl-Matlab`, `cfg.markers.liblslDir`) is then not needed.
 
+**The airflow sensor is required by default** (`cfg.flow.enabled = true`,
+`cfg.flow.feedback = "breath"`): the Physio Recorder's RRST preset starts
+`flow_lsl.py`, which streams the SFM3019 as the LSL stream `Flow`. Right after the
+marker stream, the task looks for `Flow` for `cfg.flow.timeout` (10 s), reads it for
+1 s and prints either
+
+```
+Airflow sensor OK: 0.0 slm at rest
+```
+
+or stops with the problem and its fix (no stream: start the Physio Recorder or
+`flow_lsl.py`; frozen, reversed, out of range or constant flow: the message names the
+check). Nothing moves before this check passes.
+
 ```matlab
 cd <repo>/task/RRST_kids
 addpath('config');
 
-% Try it without a device or a child: simulated device and child, small window, 5x faster
+% Try it without a device or a child: simulated device, child and airflow, small window, 5x faster
 cfg = kidsConfig(); cfg.device.mock = true; cfg.smallWindow = true;
 cfg.debug.simulateChild = [70 8 0.1 0.1];   % [threshold slope falseAlarm lapse]
 cfg.debug.timeScale = 0.2;
 runKidsRRST(cfg)
 
-% With the device (stim laptop: through the USB hub)
+% With the device (stim laptop: through the USB hub) and the airflow sensor
 cfg = kidsConfig(); cfg.device.port = "COM7";
 runKidsRRST(cfg)
+
+% Without the airflow sensor: the timed animation of the first version
+cfg = kidsConfig(); cfg.flow.enabled = false; cfg.flow.feedback = "none";
+runKidsRRST(cfg)
 ```
+
+A simulated child always gets synthetic airflow (three 25-slm, 1.3-s breaths per
+trial, 2.5 s apart, starting 0.5 s after Space), so it runs through the breath-driven
+trial; a mock device uses the live stream if one appears within 2 s, else synthetic
+airflow. Both print `*** SIMULATED FLOW ***`. `cfg.flow.feedback = "none"` with the
+sensor on keeps the timed animation but still records every slurp.
+
+**Console during the session** (the experimenter's view; the child sees none of it):
+
+```
+Reference slurp 0.42 L, peak 18 slm. Belly full at 0.17 L; a slurp counts above 0.11 L.
+Slurp 1 counted: 0.35 L, peak 25 slm (1 of 3).
+Slurp 2 too weak (0.05 L; a slurp counts from 0.11 L): not counted, try again.
+No slurp seen for 8 s: mouthpiece in? Space = go on, x = repeat, Esc = abort
+Airflow stream lost: this trial finishes with the timed animation (flowLost). ...
+```
+
+The reference line comes after the two free slurps: the reference volume is the
+median of the counted free slurps (clamped to 0.15-2 L); the belly is full at
+`cfg.flow.bellyFraction` (40 %) of it, and a slurp counts from 25 % of it and at least
+0.10 L. If no free slurp counted, the default 0.6 L stays and the console says so (in
+red). A slurp longer than `cfg.flow.maxSlurpDur` (6 s) is not counted and the console
+suggests a leak. If the stream is lost mid-session the trial finishes with the timed
+animation (`flowLost`), the task looks for the stream again before each trial and
+prints `Airflow stream is back.`; the session never stops because of airflow.
 
 **Experimenter:** click the face the child chose (any button; the pointer shows only on
 the answer screen, a white ring marks the face under it, and clicks in the middle strip are
 ignored), or Left arrow / `n` = "easy" (no), Right arrow / `y` = "squishy" (yes). The chosen
 face lights up for half a second so you can see what was recorded. `x` = bad breath (trial repeated later). Space = pause
 (wedge to 0) and continue. Esc = abort (wedge parked open, data saved as `Aborted_`).
-Space also moves on from the story, "Ready to slurp?" and break screens, and ends the
-slurps early.
+Space also moves on from the story, "Ready to slurp?" and break screens. **During the
+slurps:** Space = go on to the question with the slurps so far (flagged
+`shortSlurps`; with no slurp counted the trial is repeated later instead, answer
+`noslurp`), `x` = bad breath (trial repeated later), Esc = abort.
 
 **Session:** calibration with nobody on the tube (about 0.5 min) -> story -> 2 free
 slurps and 6 practice trials with feedback (80, 0, 80, 0, 75, 0; pass: 5 of 6 and both
 80s right; one retry, then the session ends as `PracticeFailed_`, which is itself an
 outcome) -> up to 40 main trials with a 45-s break every 10 -> sticker. About 15-20 s per
-trial, so about 15-20 minutes in all.
+trial with the timed animation, so about 15-20 minutes in all; three real slurps take
+6-8 s, so breath-driven trials are a little shorter.
 
 **Markers** (stream `RRST`; names match the adult task where the event exists). `n`
 counts every trial run, free slurps and repeats included, so each `n` is unique; it is
@@ -88,6 +135,9 @@ counts every trial run, free slurps and repeats included, so each `n` is unique;
 | `main_start` | "Ready" screen before the main trials appears |
 | `trial_<n>_level_<x>` | wedge move confirmed; catch trials `level_0` |
 | `trial_<n>_go` | experimenter's Space: slurps start |
+| `slurp_<k>_onset` | slurp k starts (sample time of the onset); k numbers every slurp of the trial, counted or not |
+| `slurp_<k>_end_<L>_<slm>` | slurp k counted: volume in L (2 decimals), peak in slm (sample time of the end) |
+| `slurp_<k>_weak`, `slurp_<k>_overlong` | slurp k not counted (too small; longer than `cfg.flow.maxSlurpDur`) |
 | `question` | answer screen appears (flip onset) |
 | `answer_yes`, `answer_no`, `bad_breath`, `no_answer`, `pause` | experimenter's entry (`no_answer`: none in time) |
 | `trial_<n>_correct` / `trial_<n>_wrong` | answered trials: "yes" on a load or "no" on a catch trial is correct |
@@ -98,6 +148,13 @@ counts every trial run, free slurps and repeats included, so each `n` is unique;
 (every trial including repeats, practice, Psi posterior, bias flags, outcome), the
 configuration, and the device's full move log and transcript; and a `.csv` with one
 row per trial. Prefixes: `MOCK_`, `SIM_`, `Aborted_`, `Error_`, `PracticeFailed_`.
+Airflow per trial: in the `.mat`, `tr.slurps` holds every slurp the detector saw
+(`onsetT`, `endT` on the GetSecs clock, `durationS`, `peakSlm`, `volumeL`, `counted`,
+`type`: end, weak, overlong or interrupted); `vars.flowSource` is `live`, `simulated`
+or `off`. The `.csv` has the summary columns `nSlurps` (counted slurps),
+`slurpVolumeL` and `slurpPeakSlm` (means over the counted slurps, empty if none),
+`shortSlurps` (Space ended the slurps before three counted) and `flowLost` (the
+stream was lost during the trial); `slurpT` is the length of the slurp phase.
 
 ## Safety
 
@@ -114,7 +171,7 @@ row per trial. Prefixes: `MOCK_`, `SIM_`, `Aborted_`, `Error_`, `PracticeFailed_
 
 ## Files
 
-- `runKidsRRST.m`: entry point (configuration, markers, device, recorder check, calibration prompt).
+- `runKidsRRST.m`: entry point (configuration, markers, airflow check, device, recorder check, calibration prompt).
 - `config/kidsConfig.m`, `config/validateKidsConfig.m`.
 - `code/kidsProcedure.m`, `kidsNextLevel.m`, `kidsRecord.m`, `kidsRequeue.m`,
   `kidsShouldStop.m`, `kidsSchedule.m`, `kidsFlags.m`, `kidsCheckLevel.m`: the
@@ -123,6 +180,10 @@ row per trial. Prefixes: `MOCK_`, `SIM_`, `Aborted_`, `Error_`, `PracticeFailed_
   only), `kidsText.m`, `kidsSave.m`.
 - `code/kidsOpenMarkers.m`, `kidsWaitsForRecorder.m`, `kidsMarkerLabel.m`: LSL markers
   through the shared `task/helpers/rrstMarker.m`, tested in `tests/TestKidsMarkers.m`.
+- `code/kidsSlurpPhase.m`: one trial's slurps, breath-driven or timed, tested in
+  `tests/TestKidsSlurpPhase.m`; `code/kidsFlow.m` (breath detector), `kidsSimFlow.m`
+  (synthetic airflow), `kidsBreathScale.m`, tested in `tests/TestKidsFlow.m`; the live
+  stream through the shared `task/helpers/flowInlet.m`.
 - `simulateKids.m`: precision across simulated children, no screen or device.
 - `qcKids.m`: QC figure for one saved session.
 - Masking sound: the adult task's rain loop at volume 0.6; check the level for small
@@ -151,8 +212,10 @@ snd.close();                             % replaces stopMaskingNoise; also on er
 `cfg.noise.enabled`). Without Psychtoolbox or an audio device, `kidsSound` prints one
 `rrst:soundOff` warning and every call is a silent no-op, so a sound problem never
 stops the session; check the console for that warning. `snd.active` (cues) and
-`snd.rainOn` (rain) say what is playing. Not yet wired into `kidsMain`, which still
-calls `startMaskingNoise`; use one or the other, never both. A cue at its peak over a
+`snd.rainOn` (rain) say what is playing. `kidsMain` uses it instead of
+`startMaskingNoise` (never both): `ready` on "Ready to slurp?" and when a break ends,
+`mouse` while the wedge moves, `slurp` at a slurp's onset, `bubbles` when it counts,
+`tryagain` when it does not, `star` for an answer, `cup` for a full cup. A cue at its peak over a
 loud rain droplet can clip briefly (0.6 + 0.72 > 1); lower `cfg.sound.volume` if that
 is audible.
 
@@ -184,9 +247,11 @@ ever exceeded the cap. Two problems:
 ## Not done or not checked
 
 - Never run with a child; one adult run on the real device.
-- Cue sounds exist (`kidsSound`) but are not yet played by `kidsMain`. They have run
-  without error on the stim PC (2026-10-30, nobody listening); not heard by a child,
-  and their loudness over the rain has not been checked by ear.
+- Cue sounds have run without error on the stim PC (2026-10-30, nobody listening);
+  not heard by a child, and their loudness over the rain has not been checked by ear.
+- Breath-driven trials have run only with synthetic airflow (mock session) and the
+  live launch check; not yet with a person breathing (plan step 6: adult pilot, feedback
+  on versus off).
 - Esc is checked during animations, answers and rests, not while the wedge is moving.
 - Translations; the colours and drawings have not been seen by a child.
 - Design questions from the spec: the cap, what to report when a child's threshold

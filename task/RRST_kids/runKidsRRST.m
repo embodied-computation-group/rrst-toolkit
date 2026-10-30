@@ -17,13 +17,21 @@ function result = runKidsRRST(cfg)
 %   launch, so start the Physio Recorder (RRST preset) first. A real session waits
 %   before calibration until a recorder receives the markers; mock and simulated-child
 %   runs don't. cfg.markers.lsl = false runs without LSL (liblsl not needed).
+%
+%   Airflow: with cfg.flow.enabled (default) the "Flow" LSL stream of the SFM3019
+%   (plux-lsl/flow_lsl.py, started by the Physio Recorder's RRST preset) is required:
+%   the task finds it (cfg.flow.timeout s), reads 1 s and prints "Airflow sensor OK"
+%   or stops with the fix (rrst:noFlowStream, rrst:flowBad). A simulated child always
+%   uses synthetic flow (kidsSimFlow); a mock device uses the live stream if one is
+%   found within 2 s, else synthetic flow. Both print SIMULATED FLOW.
+%   cfg.flow.enabled = false; cfg.flow.feedback = "none" runs the timed animation.
 %   See README.md in this folder.
 
 here = fileparts(mfilename('fullpath'));
 root = fileparts(fileparts(here));
 addpath(fullfile(here, 'code'), fullfile(here, 'config'), fullfile(root, 'device'), ...
-    fullfile(root, 'task', 'RRST_2-0', 'code'), ...       % startMaskingNoise, stopMaskingNoise
-    fullfile(root, 'task', 'helpers'));                   % rrstMarker, waitForRecorder
+    fullfile(root, 'task', 'RRST_2-0', 'code'), ...       % uniqueFileName
+    fullfile(root, 'task', 'helpers'));                   % rrstMarker, waitForRecorder, flowInlet
 
 if nargin < 1
     cfg = kidsConfig();
@@ -40,6 +48,10 @@ fprintf('RRST-Kids, %s. Cap %g %% of the adult scale.\n', cfg.label, cfg.child.h
 %% Event markers (LSL). Opened first so a recorder started now already sees them.
 closeMarkers = kidsOpenMarkers(cfg); %#ok<NASGU>   closes the stream when this function ends
 
+%% Airflow (breath feedback): the sensor is checked before anything else happens
+[flowSrc, flowSource] = openFlow(cfg);
+closeFlow = onCleanup(@() closeFlowSource(flowSrc)); %#ok<NASGU>
+
 %% Child
 if isempty(cfg.debug.simulateChild)
     vars.subNo = input('Child ID (number)?   ');
@@ -49,6 +61,8 @@ end
 if isempty(vars.subNo), vars.subNo = 9999; end
 vars.seed = sum(100 * clock); %#ok<CLOCK>
 vars.started = datestr(now, 'yyyy-mm-dd HH:MM:SS'); %#ok<TNOW1,DATST>
+vars.flowSource = flowSource;               % "live" | "simulated" | "off" (saved)
+vars.flowSrc = flowSrc;                     % the source itself (kidsMain; not saved)
 
 %% Device
 if cfg.device.mock
@@ -81,4 +95,49 @@ Screen('Preference', 'SkipSyncTests', 1);
 Screen('Preference', 'VisualDebugLevel', 0);
 if isempty(cfg.debug.simulateChild), HideCursor; end
 result = kidsMain(cfg, stim, vars);
+end
+
+function [src, kind] = openFlow(cfg)
+% The airflow source: the live "Flow" stream, synthetic flow for tests, or none.
+src = [];
+kind = "off";
+if ~cfg.flow.enabled
+    fprintf('Airflow sensor not used (cfg.flow.enabled = false): timed slurp animation.\n');
+    return
+end
+simulated = ~isempty(cfg.debug.simulateChild);   % a simulated child cannot breathe into the sensor
+if ~simulated
+    timeout = cfg.flow.timeout;
+    if cfg.device.mock
+        timeout = min(timeout, 2);
+    end
+    try
+        src = flowInlet(cfg.markers.liblslDir, timeout);
+    catch err
+        if ~(cfg.device.mock && ismember(err.identifier, {'rrst:noFlowStream', 'rrst:noLiblsl'}))
+            % the kids task also needs the timed animation chosen (validateKidsConfig)
+            error(err.identifier, '%s', strrep(err.message, 'set cfg.flow.enabled = false', ...
+                'set cfg.flow.enabled = false and cfg.flow.feedback = "none"'));
+        end
+    end
+end
+if isempty(src)
+    src = kidsSimFlow('Clock', @GetSecs);
+    kind = "simulated";
+    fprintf(2, '\n*** SIMULATED FLOW: no airflow sensor, the breaths are synthetic. ***\n\n');
+    return
+end
+[ok, msg] = src.check(1);
+fprintf('%s\n', msg);
+if ~ok
+    src.close();
+    error('rrst:flowBad', '%s', msg);
+end
+kind = "live";
+end
+
+function closeFlowSource(src)
+if ~isempty(src) && ismethod(src, 'close')
+    src.close();
+end
 end

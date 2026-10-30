@@ -7,6 +7,11 @@ function label = kidsMarkerLabel(event, varargin)
 %                                                   marker: the session's 'aborted' follows)
 %   kidsMarkerLabel("outcome", n, level, response)  'trial_<n>_correct' | 'trial_<n>_wrong':
 %                                                   correct when response (1 yes, 0 no) == (level > 0)
+%   kidsMarkerLabel("slurp", k, "onset")           'slurp_<k>_onset'
+%   kidsMarkerLabel("slurp", k, "end", vol, peak)   'slurp_<k>_end_<vol>_<peak>': a counted
+%                                                   slurp, volume in L (%.2f), peak in slm (%.0f)
+%   kidsMarkerLabel("slurp", k, "weak"|"overlong")  'slurp_<k>_weak' | 'slurp_<k>_overlong': not counted
+%                                                   k numbers every slurp of the trial (tr.slurps(k))
 %   The level uses %g, as the adult task's trial_<n>_level_<x>.
 switch event
     case "level"
@@ -23,6 +28,20 @@ switch event
             case "abort", label = '';
             otherwise
                 error('rrst:badMarker', 'Unknown answer "%s".', varargin{1});
+        end
+    case "slurp"
+        if numel(varargin) < 2
+            error('rrst:badMarker', 'A slurp marker needs the slurp number and the event.');
+        end
+        k = varargin{1};
+        type = string(varargin{2});
+        switch type
+            case "end"
+                label = sprintf('slurp_%d_end_%.2f_%.0f', k, varargin{3}, varargin{4});
+            case {"onset", "weak", "overlong"}
+                label = sprintf('slurp_%d_%s', k, type);
+            otherwise
+                error('rrst:badMarker', 'Unknown slurp event "%s".', type);
         end
     case "outcome"
         [n, level, response] = varargin{:};
