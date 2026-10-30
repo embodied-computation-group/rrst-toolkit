@@ -96,6 +96,36 @@ trial; a mock device uses the live stream if one appears within 2 s, else synthe
 airflow. Both print `*** SIMULATED FLOW ***`. `cfg.flow.feedback = "none"` with the
 sensor on keeps the timed animation but still records every slurp.
 
+### Without the Physio Recorder
+
+`cfg.recording.mode = "standalone"` runs the task from MATLAB alone: no Physio
+Recorder, no LabRecorder. Close the Physio Recorder (and SEK-ControlCenter) first, plug
+in the SensorBridge, then:
+
+```matlab
+cd C:\Users\stim\Desktop\cannabodies\rrst-toolkit\task\RRST_kids
+addpath('config');
+cfg = kidsConfig(); cfg.device.port = "COM7"; cfg.recording.mode = "standalone";
+runKidsRRST(cfg)
+```
+
+The first line says `STANDALONE recording`. If no `Flow` stream appears within 2 s the
+task starts `plux-lsl\flow_lsl.py` itself, hidden (`flowStreamer`; `cfg.flow.streamer`
+and `cfg.flow.streamerScript`, by default `plux-lsl` next to this toolkit) and prints
+its PID and log file, waits up to `cfg.flow.timeout` for the stream, and runs the usual
+`Airflow sensor OK` check; if the stream never comes it stops with the streamer's last
+output (e.g. `SensorBridge not found`). A streamer that was already running is used and
+left running. The task never waits for a recorder (`Standalone recording: the task
+records flow and markers itself.`), keeps every flow sample it pulls (1 kHz) and every
+marker it sends, also with `cfg.markers.lsl = false`, and stops the streamer it started
+at the end, after Esc and after an error. Saved next to the `.mat`:
+`result.flow` (`[t flowSlm]`), `result.markers` (table `t`, `label`) and `result.t0`
+(trial `tStart` = 0), all on the GetSecs clock, and `<name>_flow.csv` (`t,flow`). The
+markers also go to LSL when `cfg.markers.lsl` is on, so a recorder can run alongside.
+No PLUX (ECG, respiration belt) in this mode: that needs the Physio Recorder. The data
+are written at the end of the session (also after Esc or an error); if MATLAB itself is
+killed, the session's flow is lost.
+
 **Experimenter line.** Every screen carries one short line for the experimenter,
 small at the bottom left (`kidsPrompt`), and the console prints it (`>>`) whenever it
 changes: what is happening and which key goes on, e.g.
@@ -263,6 +293,10 @@ shows every pose.
   `tests/TestKidsSlurpPhase.m`; `code/kidsFlow.m` (breath detector), `kidsSimFlow.m`
   (synthetic airflow), `kidsBreathScale.m`, tested in `tests/TestKidsFlow.m`; the live
   stream through the shared `task/helpers/flowInlet.m`.
+- Standalone recording: `code/kidsStandalone.m`, and the shared
+  `task/helpers/flowStreamer.m` (starts and stops `flow_lsl.py`, reusable by the adult
+  task) and `flowRecord.m` (the growing sample store behind `src.record`), tested in
+  `tests/TestKidsStandalone.m`.
 - `simulateKids.m`: precision across simulated children, no screen or device.
 - `qcKids.m`: QC figure for one saved session.
 - Masking sound: the adult task's rain loop at volume 0.6; check the level for small

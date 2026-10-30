@@ -165,6 +165,15 @@ cfg.markers.lsl = false;                     % no LSL needed for a test run
 runKidsRRST(cfg)
 ```
 
+**Without the Physio Recorder.** `cfg.recording.mode = "standalone"` runs the task
+from MATLAB alone: close the Physio Recorder, then
+`cfg = kidsConfig(); cfg.device.port = "COM7"; cfg.recording.mode = "standalone"; runKidsRRST(cfg)`.
+The first console line says `STANDALONE recording`. With no `Flow` stream running the
+task starts `flow_lsl.py` itself, hidden, and stops it at the end (also after Esc or an
+error); one already running is used and left alone. It never waits for a recorder, and
+saves every flow sample and marker it sees in the `.mat` (`result.flow`,
+`result.markers`) and in `<name>_flow.csv`. There is no PLUX (ECG, belt) in this mode.
+
 `cfg.flow.feedback = "none"` with the sensor on keeps the timed animation but still
 records every slurp (the comparison run of the pilot protocol). MATLAB asks for the
 child ID, then for Enter once the tube is in and nobody is on the mouthpiece

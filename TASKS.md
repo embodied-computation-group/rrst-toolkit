@@ -121,6 +121,11 @@ session so a fresh session can continue from the files.
        with the reason, the intro tutorial (`cfg.tutorial`: free play, pinch and sleep
        demos, the answer cards; replaces the two free slurps), the cup tip held for the
        sticker, and a 1.0 s drain (`cfg.timing.drain`) on the breath path.
+    9. Standalone recording, no Physio Recorder (branch `kids-standalone`, 2026-10-30):
+       `cfg.recording.mode = "standalone"` starts `flow_lsl.py` itself (`flowStreamer`,
+       reusable by the adult task), never waits for a recorder, saves `result.flow`,
+       `result.markers` and `<name>_flow.csv`; 394 tests pass, checked live on the stim
+       laptop (mock device); not yet run with the real device and a person.
     Tests: 366 pass (whole suite, 2026-10-30); an unattended mock session with the
     simulated child completes through the tutorial and on the breath path (3 counted
     slurps every trial). Next: the pilot protocol

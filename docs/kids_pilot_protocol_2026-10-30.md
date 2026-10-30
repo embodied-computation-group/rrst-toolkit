@@ -50,6 +50,18 @@ cfg = kidsConfig(); cfg.device.port = "COM7";
 cfg.child.numPsiTrials = 20; cfg.child.numCatchTrials = 8;   % shorter than the default 30 + 10
 ```
 
+**Alternative: without the Physio Recorder.** Close the Physio Recorder (and
+SEK-ControlCenter), keep the SensorBridge plugged in, and add one line to the settings
+before `runKidsRRST(cfg)`:
+```matlab
+cfg.recording.mode = "standalone";   % the task starts flow_lsl.py and records flow and markers itself
+```
+The first console line then says `STANDALONE recording`; the task starts the flow
+sensor itself (or uses one already running), never asks for a recording to start, and
+saves the flow and the markers in the `.mat` (`result.flow`, `result.markers`) and in
+`<name>_flow.csv`. No PLUX (ECG, belt) in this mode. In what follows, skip the steps
+that start the Physio Recorder; the `_flow.csv` replaces the recorder's `.xdf`.
+
 **Run A1, feedback on** (`cfg.flow.feedback = "breath"`, the default). Start the Physio
 Recorder recording when the task asks for it. Go through calibration, story, the tutorial
 (free play, the pinch and sleep demos, the answer cards) and the practice, then the main
@@ -109,6 +121,9 @@ cfg.child.stopMinTrials = 10;
 cfg.timing.pause = 30;
 ```
 `validateKidsConfig` will refuse anything above the cap, so these are checked at launch.
+Without the Physio Recorder (as in Session A): close it, and add
+`cfg.recording.mode = "standalone";` before `runKidsRRST(cfg)`; the task starts the
+flow sensor and saves flow and markers itself (`_flow.csv` next to the `.mat`).
 
 **Setup**
 - A new single-use filtered mouthpiece and a cleaned coupler (`handbook/shared/hygiene.md`).
@@ -116,7 +131,8 @@ cfg.timing.pause = 30;
 - Headphones at the volume you found in the pre-check, tried on her for comfort before
   the task starts; if she will not wear them, run without the rain (`cfg.noise.enabled =
   false`) and accept the motor noise.
-- Calibration before she sits down (the script asks). Physio Recorder recording.
+- Calibration before she sits down (the script asks). Physio Recorder recording (or
+  standalone: then nothing to start, the first console line says `STANDALONE recording`).
 - You sit next to her with the keyboard and mouse; she only needs to breathe and point.
 - A second adult or a phone on a stand filming the screen and her face is the most
   useful record of all (your call as her parent; it stays with you, not in the repo).
