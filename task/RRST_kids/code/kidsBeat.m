@@ -1,6 +1,6 @@
-function [s, dur, cue] = kidsBeat(beat, p, ctx)
+function [s, dur, cue, marks] = kidsBeat(beat, p, ctx)
 %KIDSBEAT Scene, length and cue sound of one moment of an RRST-Kids session (pure).
-%   [s, dur, cue] = kidsBeat(beat, p, ctx)
+%   [s, dur, cue, marks] = kidsBeat(beat, p, ctx)
 %
 %   beat  one of the names below
 %   p     progress through the beat's animation, 0 to 1 (1: its last frame, which
@@ -11,14 +11,19 @@ function [s, dur, cue] = kidsBeat(beat, p, ctx)
 %         flavour = cupsDone + 1; sentences go in text (the experimenter's small line)
 %   dur   s, the animation's length before cfg.debug.timeScale (0: a still)
 %   cue   kidsSound cue to play when the beat starts ("" for none)
+%   marks cues inside the beat: struct array with fields p and cue; kidsMain plays
+%         each once, when the beat's progress first reaches p (empty for most beats)
 %
 %   Beats (plan docs/kids_flow_feedback_and_ux_plan_2026-10-30.md, section 5.3):
 %     calibrating  no straw, "Getting the straw ready..."
 %     story1       3 s: "slurp" while the cup drains over 2 s, then "ahh" with bubbles
 %     story2       0.8 s: "strain", the mouse pinching the straw; cue mouse
 %     story3       1.5 s: the mouse runs off (mouseX 0.3 to 1), the monster "idle"
-%     move         cfg.timing.moveMin: the mouse runs along the bottom (0.1 to 0.9),
-%                  no straw; cue mouse. The same for catch and load trials.
+%     move         at least cfg.timing.moveMin, as long as the wedge moves (kidsMain
+%                  times p with kidsMoveProgress): the mouse runs from the left to the
+%                  cup ("toCup", 0 to 0.6), stands by it with a cheeky face ("cheeky",
+%                  0.6 to 0.9; mark: squeak at 0.6) and hides behind it ("hide", 0.9
+%                  to 1); no straw; cue mouse. The same for catch and load trials.
 %     ready        "ready": looking at the child, mouth open on the straw; cue ready
 %     reveal       1.5 s, practice feedback: the mouse pinching (level > 0; cue mouse)
 %                  or asleep (catch) in a spotlight, cup 0
@@ -41,8 +46,9 @@ t = ctx.timing; txt = ctx.txt;
 s = struct('belly', 0, 'cup', 1, 'straw', true, 'mouseX', NaN, 'bubbles', NaN, ...
     'wiggle', 0, 'stars', ctx.stars, 'cupsDone', ctx.cupsDone, 'nCups', ctx.nCups, ...
     'text', '', 'pose', "idle", 'mousePose', "", 'reveal', "", 'flyStar', NaN, ...
-    'cupTip', NaN, 'restLeft', NaN, 'flavour', 1);
+    'cupTip', NaN, 'restLeft', NaN, 'flavour', 1, 'mouseProgress', NaN);
 dur = 0; cue = "";
+marks = struct('p', {}, 'cue', {});
 switch beat
     case "calibrating"
         s.straw = false; s.text = txt.calibrating;
@@ -66,7 +72,15 @@ switch beat
         s.text = txt.story3;
     case "move"
         dur = t.moveMin; cue = "mouse";
-        s.straw = false; s.mousePose = "run"; s.mouseX = 0.1 + 0.8 * p;
+        marks = struct('p', 0.6, 'cue', "squeak");
+        s.straw = false;
+        if p < 0.6                                   % runs from the left to the cup
+            s.mousePose = "toCup"; s.mouseProgress = p / 0.6;
+        elseif p < 0.9                               % a cheeky face by the cup
+            s.mousePose = "cheeky";
+        else                                         % hides behind the cup
+            s.mousePose = "hide"; s.mouseProgress = (p - 0.9) / 0.1;
+        end
     case "ready"
         cue = "ready";
         s.pose = "ready"; s.text = txt.cue;

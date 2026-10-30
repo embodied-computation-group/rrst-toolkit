@@ -11,7 +11,7 @@ classdef kidsSound < handle
     %   cfg.noise.volume (when cfg.noise.enabled), the other plays the cues at
     %   cfg.sound.volume (when cfg.sound.enabled). The cue waveforms come from
     %   kidsCueWave and are made once, here. Cue names: ready, slurp, bubbles, star,
-    %   cup, mouse, tryagain.
+    %   cup, mouse, tryagain, squeak.
     %
     %   This replaces startMaskingNoise/stopMaskingNoise for the kids task:
     %       snd = kidsSound(cfg.noise, cfg.sound);   % instead of startMaskingNoise
@@ -30,7 +30,7 @@ classdef kidsSound < handle
     %   unknown cue name (rrst:badCue) do throw: they are bugs, not sound failures.
 
     properties (Constant)
-        cueNames = ["ready" "slurp" "bubbles" "star" "cup" "mouse" "tryagain"]
+        cueNames = ["ready" "slurp" "bubbles" "star" "cup" "mouse" "tryagain" "squeak"]
     end
 
     properties (SetAccess = private)

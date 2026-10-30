@@ -17,7 +17,11 @@ function kidsScene(scr, s)
 %               "strain" (story only: cheeks puffed, eyes wide)
 %     t         s     animation clock for blink, Z's, straw wiggle, waving (0)
 %     mousePose ""    "run" (at mouseX), "pinch" (squeezing the straw), "sleep" (curled
-%               up by the table), "hidden"; "" (default): "run" when mouseX is set
+%               up by the table), "hidden"; "" (default): "run" when mouseX is set.
+%               The move: "toCup" (running from the left to the cup at
+%               mouseProgress, bouncing), "cheeky" (upright by the cup, eyes wide,
+%               grin, a paw waving), "hide" (hopping behind the cup at mouseProgress)
+%     mouseProgress 0-1  progress of "toCup" and "hide" (NaN: 0)
 %     reveal    ""    "pinch" | "sleep": practice feedback, the mouse in that pose in a
 %               spotlight (overrides mousePose)
 %     flyStar   0-1   star flying from the belly to slot stars+1 (NaN: none)
@@ -44,6 +48,9 @@ if g.restBar.active
     if g.restBar.fill(3) - g.restBar.fill(1) > 0.5
         pill(w, [1 0.88 0.45], g.restBar.fill, rad);
     end
+end
+if g.mouse.behind                                           % hiding: behind the table and cup
+    drawMouse(w, c, g.mouse.x, g.mouse.y, g.mouse.size * g.mouse.scale);
 end
 wood = [0.8 0.6 0.42];
 Screen('FillRect', w, 0.85 * wood, g.table.legs');
@@ -132,7 +139,8 @@ if mo.spotlight.active
     Screen('FrameOval', w, [1 1 1 0.9], sl, max(1, 0.005 * H));
 end
 switch mo.pose
-    case "run", drawMouse(w, c, mo.x, mo.y, mo.size);
+    case {"run", "toCup"}, drawMouse(w, c, mo.x, mo.y, mo.size);
+    case "cheeky", cheekyMouse(w, c, mo.cheeky, mo.size);
     case "pinch", squeezingMouse(w, c, mo.x, mo.y, st.width, mo.size);
     case "sleep"
         sleepingMouse(w, c, mo.x, mo.y, mo.size);
@@ -280,6 +288,47 @@ Screen('FillOval', w, c.mouse, [x + 0.6 * s, y - 0.9 * s, x + 1.4 * s, y - 0.1 *
 Screen('FillOval', w, c.mouseEar, [x + 0.7 * s, y - 1.2 * s, x + 1.1 * s, y - 0.8 * s]);
 Screen('FillOval', w, [0.1 0.1 0.1], [x + 1.15 * s, y - 0.6 * s, x + 1.25 * s, y - 0.5 * s]);   % eye
 Screen('DrawLine', w, c.mouse, x - s, y, x - 1.8 * s, y - 0.4 * s, 3);          % tail
+end
+
+function cheekyMouse(w, c, k, s)
+% The mouse upright by the cup, facing the child (geometry: kidsPose): wide eyes, a
+% grin with two teeth, one paw waving, the other on its hip, tail curling up.
+dark = [0.1 0.1 0.1]; light = 0.6 * c.mouse + 0.4;
+lw = max(1, 0.1 * s);
+for i = 1:2                                                  % tail
+    thickLine(w, c.mouse, k.tail(i, :), k.tail(i + 1, :), lw);
+end
+for side = [-1 1]                                           % feet
+    Screen('FillOval', w, c.mouse, disc2(k.feet(1) + side * 0.32 * s, k.feet(2), 0.3 * s, 0.14 * s));
+end
+thickLine(w, c.mouse, k.shoulder, k.hand(1:2), 0.2 * s);     % the waving arm, behind the body
+Screen('FillOval', w, c.mouse, k.body);
+Screen('FillOval', w, light, k.body + [0.22 0.35 -0.22 -0.1] * s);   % belly
+Screen('FillOval', w, c.mouseEar, disc(k.hand(1), k.hand(2), k.hand(3)));
+Screen('FillOval', w, c.mouseEar, disc(k.hip(1), k.hip(2), k.hip(3)));
+for i = 1:2                                                  % ears
+    Screen('FillOval', w, c.mouse, disc(k.ears(i, 1), k.ears(i, 2), k.ears(i, 3)));
+    Screen('FillOval', w, c.mouseEar, disc(k.ears(i, 1), k.ears(i, 2), 0.62 * k.ears(i, 3)));
+end
+Screen('FillOval', w, c.mouse, disc(k.head(1), k.head(2), k.head(3)));
+for i = 1:2                                                  % wide eyes
+    Screen('FillOval', w, [1 1 1], disc(k.eyes(i, 1), k.eyes(i, 2), k.eyes(i, 3)));
+    Screen('FillOval', w, dark, disc(k.pupils(i, 1), k.pupils(i, 2), k.pupils(i, 3)));
+    Screen('FillOval', w, [1 1 1], disc(k.pupils(i, 1) - 0.3 * k.pupils(i, 3), ...
+        k.pupils(i, 2) - 0.3 * k.pupils(i, 3), 0.35 * k.pupils(i, 3)));
+end
+Screen('FillArc', w, c.mouth, k.grin, 90, 180);              % the grin (lower half)
+Screen('FillRect', w, [1 1 1], k.teeth);
+Screen('DrawLine', w, c.mouth, (k.teeth(1) + k.teeth(3)) / 2, k.teeth(2), (k.teeth(1) + k.teeth(3)) / 2, k.teeth(4), 1);
+Screen('FillOval', w, c.mouseEar, disc(k.nose(1), k.nose(2), k.nose(3)));
+for i = 1:size(k.whiskers, 1)
+    l = k.whiskers(i, :);
+    thickLine(w, 0.7 * c.mouse, l(1:2), l(3:4), max(1, 0.03 * s));
+end
+end
+
+function r = disc2(x, y, rx, ry)
+r = [x - rx, y - ry, x + rx, y + ry];
 end
 
 function squeezingMouse(w, c, px, py, sw, s)

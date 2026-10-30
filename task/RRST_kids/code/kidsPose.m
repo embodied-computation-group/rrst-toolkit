@@ -18,8 +18,13 @@ function g = kidsPose(s, winRect)
 %                 hands (n x 3 discs), motion (n x 4 lines at the straw), zees (n x 4:
 %                 x y h alpha)
 %     blink       true while the idle eyes are shut
-%     mouse       pose run|pinch|sleep|hidden, x, y, size, zees, spotlight
-%                 (active, disc)
+%     mouse       pose run|pinch|sleep|hidden|toCup|cheeky|hide, x, y, size, zees,
+%                 spotlight (active, disc), behind (drawn behind the table and cup:
+%                 "hide"), scale (of size; < 1 while hiding), box (body and head of
+%                 a side-on mouse, [l t r b]), cheeky (active, head [x y r], eyes
+%                 (2 x 3: x y r), pupils (2 x 3), grin (rect), teeth (rect),
+%                 shoulder [x y], hand [x y r], hip [x y r], feet [x y], body (rect),
+%                 ears (2 x 3), nose [x y r], tail (3 x 2 points), whiskers (4 x 4))
 %     bubbles     n x 3 [x y r] (exhale bubbles; empty for none)
 %     slots, slotFilled, starR      the star row (rects round each star)
 %     cupSlots, cupSlotFilled, cupSlotColour    the done-cups row
@@ -193,10 +198,32 @@ if mp == "" && ~isnan(s.mouseX), mp = "run"; end
 if mp == "" || (mp == "run" && isnan(s.mouseX)), mp = "hidden"; end
 mo.pose = mp; mo.size = 0.055 * H; mo.zees = zeros(0, 4);
 mo.x = NaN; mo.y = NaN;
+mo.behind = false; mo.scale = 1;
+mo.cheeky = struct('active', false);
 st.pinch = struct('active', false, 'x', NaN, 'halfLen', NaN, 'halfWidth', NaN);
+% The move (kidsBeat "move"): the cheeky spot is on the ground just left of the table
+spotSize = 0.05 * H;
+spot = [g.table.top(1) - 1.15 * spotSize, 0.92 * H];
+q = s.mouseProgress; if isnan(q), q = 0; end
+q = min(max(q, 0), 1);
 switch mp
     case "run"
         mo.size = 0.05 * H; mo.x = 0.1 * W + 0.8 * W * s.mouseX; mo.y = 0.92 * H;
+    case "toCup"                                % from the left edge to the cheeky spot, bouncing
+        mo.size = spotSize;
+        x0 = 0.04 * W;
+        mo.x = x0 + (spot(1) - x0) * q;
+        mo.y = spot(2) - 0.012 * H * abs(sin(2 * pi * 3 * s.t));
+    case "cheeky"
+        mo.size = spotSize; mo.x = spot(1); mo.y = spot(2);
+        mo.cheeky = cheekyMouse(mo.x, mo.y, mo.size, s.t);
+    case "hide"                                 % hops from the spot to behind the cup
+        mo.size = spotSize; mo.behind = true;
+        e = q^2 * (3 - 2 * q);                  % ease in and out
+        b = [ux, tableY - 0.5 * cupH];
+        pos = (1 - e) * spot + e * b - [0, 0.08 * H * sin(pi * q)];
+        mo.x = pos(1); mo.y = pos(2);
+        mo.scale = 1 - 0.3 * e;
     case "pinch"
         x = st.mouth(1) + 0.58 * (st.elbow(1) - st.mouth(1));
         st.pinch = struct('active', true, 'x', x, 'halfLen', 0.045 * H, 'halfWidth', 0.12 * sw);
@@ -205,6 +232,8 @@ switch mp
         mo.x = min(ux + 0.25 * H, W - 0.1 * H); mo.y = g.groundY + 0.09 * H;
         mo.zees = zees([mo.x - 1.2 * mo.size, mo.y - 1.4 * mo.size], 1.6 * mo.size, s.t, 0.6 * mo.size);
 end
+r = mo.size * mo.scale;                     % a side-on mouse: body, head and ear
+mo.box = [mo.x - r, mo.y - 1.2 * r, mo.x + 1.4 * r, mo.y + 0.6 * r];
 st.visible = s.straw || st.pinch.active;    % a pinch needs a straw
 g.straw = st;
 mo.spotlight = struct('active', s.reveal ~= "", 'disc', [NaN NaN NaN NaN]);
@@ -283,12 +312,12 @@ function s = fillIn(s)
 d = struct('belly', 0, 'cup', 1, 'straw', true, 'mouseX', NaN, 'bubbles', NaN, ...
     'wiggle', 0, 'stars', 0, 'cupsDone', 0, 'starsPerCup', 10, 'nCups', 4, 'text', '', ...
     'pose', "idle", 't', 0, 'mousePose', "", 'reveal', "", 'flyStar', NaN, 'cupTip', NaN, ...
-    'restLeft', NaN, 'flavour', 1, 'childText', '');
+    'restLeft', NaN, 'flavour', 1, 'childText', '', 'mouseProgress', NaN);
 for f = fieldnames(d)'
     if ~isfield(s, f{1}), s.(f{1}) = d.(f{1}); end
 end
 s.pose = name(s.pose, ["idle" "ready" "slurp" "ahh" "tryagain" "celebrate" "sleep" "strain"], 'pose');
-s.mousePose = name(s.mousePose, ["" "run" "pinch" "sleep" "hidden"], 'mousePose');
+s.mousePose = name(s.mousePose, ["" "run" "pinch" "sleep" "hidden" "toCup" "cheeky" "hide"], 'mousePose');
 s.reveal = name(s.reveal, ["" "pinch" "sleep"], 'reveal');
 f = s.flavour;
 if ~(isnumeric(f) && isscalar(f) && f >= 1 && f == round(f))
@@ -305,6 +334,30 @@ v = string(v);
 if ~ismember(v, allowed)
     error('rrst:badPose', 'Unknown %s "%s"; use one of: %s.', field, v, strjoin(allowed(allowed ~= ""), ', '));
 end
+end
+
+function c = cheekyMouse(x, y, s, t)
+% The mouse upright by the cup, facing the child: eyes wide, a grin with two teeth,
+% one paw up and waving (2.5 Hz), the other on its hip. (x, y): body centre; s: size.
+c.active = true;
+c.body = [x - 0.6 * s, y - 0.85 * s, x + 0.6 * s, y + 0.55 * s];
+c.feet = [x, y + 0.55 * s];
+c.head = [x, y - 1.3 * s, 0.6 * s];
+c.ears = [x - 0.5 * s, y - 1.85 * s, 0.32 * s; x + 0.5 * s, y - 1.85 * s, 0.32 * s];
+c.eyes = [x - 0.24 * s, y - 1.42 * s, 0.17 * s; x + 0.24 * s, y - 1.42 * s, 0.17 * s];
+c.pupils = [c.eyes(:, 1), c.eyes(:, 2) + 0.02 * s, [0.085; 0.085] * s];
+c.nose = [x, y - 1.22 * s, 0.08 * s];
+c.grin = [x - 0.3 * s, y - 1.32 * s, x + 0.3 * s, y - 0.98 * s];
+c.teeth = [x - 0.09 * s, y - 1.15 * s, x + 0.09 * s, y - 1.06 * s];
+c.shoulder = [x + 0.5 * s, y - 0.65 * s];
+a = 0.6 + 0.25 * sin(2 * pi * 2.5 * t);     % waving: the arm swings about 30 degrees
+c.hand = [c.shoulder + 1.1 * s * [sin(a), -cos(a)], 0.16 * s];
+c.hip = [x - 0.6 * s, y - 0.25 * s, 0.15 * s];
+c.tail = [x + 0.45 * s, y + 0.35 * s; x + 1.1 * s, y + 0.15 * s; x + 1.3 * s, y - 0.4 * s];
+c.whiskers = [x - 0.15 * s, y - 1.2 * s, x - 0.75 * s, y - 1.3 * s; ...
+    x - 0.15 * s, y - 1.17 * s, x - 0.75 * s, y - 1.1 * s; ...
+    x + 0.15 * s, y - 1.2 * s, x + 0.75 * s, y - 1.3 * s; ...
+    x + 0.15 * s, y - 1.17 * s, x + 0.75 * s, y - 1.1 * s];
 end
 
 function z = zees(base, rise, t, h)
