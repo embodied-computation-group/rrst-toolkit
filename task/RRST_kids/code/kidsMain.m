@@ -62,6 +62,10 @@ function result = kidsMain(cfg, stim, vars)
 %   kidsPrompt's line for the moment (what is happening, which key goes on; also
 %   printed on the console, once per change), then the scene's own sentence. Each
 %   practice answer and each round's outcome (passed, or why not) go to the console.
+%   Main trials: the experimenter line counts them ("Trial 21 of up to 28 (Psi 15/20,
+%   catch 6/8). ..."; the counts are of trials done); the console prints the plan at
+%   main start, after every answer the threshold, its SE and where the early stop
+%   stands, and at the end why the run stopped (kidsRunReport).
 %   The tenth star's cup tip is held until Space (the sticker).
 %
 %   Experimenter: click the face the child chose, or Left/n = easy (no),
@@ -204,14 +208,19 @@ try
         finish("practiceFailed"); return
     end
 
-    % Main trials
-    say("mainStart");
+    % Main trials: the plan on the console, the counts on the experimenter line
+    say("mainStart", struct('feedback', cfg.feedback.main));
+    fprintf('%s\n', kidsRunReport(kp, cfg, "plan"));
     if readyScreen(progress, 'main_start'), finish("aborted"); return; end
     nAnswered = 0;
     while ~kidsShouldStop(kp, cfg)
         [level, info] = kidsNextLevel(kp, cfg);
         nMain = nMain + 1;
-        [tr, status] = runTrial(level, info, true, progress, struct('phase', "main", 'n', nMain));
+        mainPr = struct('phase', "main", 'n', nMain, 'nMax', numel(kp.schedule), ...
+            'psiDone', kp.nPsiDone, 'psiN', cfg.child.numPsiTrials, ...
+            'catchDone', nnz([kp.history.isCatch]), 'catchN', cfg.child.numCatchTrials, ...
+            'feedback', cfg.feedback.main);
+        [tr, status] = runTrial(level, info, true, progress, mainPr);
         switch status
             case "abort"
                 finish("aborted"); return
@@ -220,6 +229,8 @@ try
                 trials(end + 1) = tr; %#ok<AGROW>
                 kp = kidsRecord(kp, level, tr.response, info);
                 nAnswered = nAnswered + 1;
+                % the estimate and where the early stop stands (console only)
+                fprintf('Trial %d: %s. %s\n', nMain, answerWord(tr.response), kidsRunReport(kp, cfg, "progress"));
                 if cfg.feedback.main && showFeedback(tr, level, "main", progress) == "abort"
                     finish("aborted"); return
                 end
@@ -240,15 +251,17 @@ try
                     if rest(progress), finish("aborted"); return; end
                 end
             otherwise   % no answer, bad breath or pause: repeat this trial type later
+                fprintf('Trial %d: no usable answer (%s); this trial type is repeated later.\n', nMain, tr.answer);
                 tr.phase = "repeat";
                 trials(end + 1) = tr; %#ok<AGROW>
                 kp = kidsRequeue(kp);
         end
         stim.rest();
     end
+    [~, why] = kidsShouldStop(kp, cfg);
+    fprintf('%s\n', kidsRunReport(kp, cfg, "end", why));
     say("done");
     playBeat("sticker", progress);
-    [~, why] = kidsShouldStop(kp, cfg);
     finish("complete:" + why);
 catch err
     try, rrstMarker('aborted'); catch, end
