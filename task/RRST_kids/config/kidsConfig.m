@@ -23,6 +23,14 @@ cfg.stim.unit = "percent";               % 0 = wedge touching the tube, 100 = ba
 cfg.stim.restRange = [10 50];            % rest between trials, well below the cap
 cfg.stim.calibrationTolerance = 300;     % steps; catches tube in/out mismatch
 
+% --- Event markers (as the adult pilot) -------------------------------------
+% LSL marker stream "RRST" for recording with physiology and airflow. Opened at
+% launch, so start the Physio Recorder (RRST preset) first; it starts recording
+% when the stream appears. Mock and simulated-child runs never wait for a recorder.
+cfg.markers.lsl = true;
+cfg.markers.requireRecorder = true;      % wait before calibration until a recorder receives the markers
+cfg.markers.liblslDir = "C:\toolbox\liblsl-Matlab";
+
 % --- Child safety and procedure --------------------------------------------
 cfg.child.hardCap = 85;                  % % of the adult scale; never exceeded (85 is the absolute maximum)
 cfg.child.rampMax = 15;                  % no level more than this above the highest level so far

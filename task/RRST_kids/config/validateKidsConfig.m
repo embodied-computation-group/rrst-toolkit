@@ -36,4 +36,21 @@ end
 if cfg.noise.enabled && strlength(string(cfg.noise.file)) > 0 && ~isfile(cfg.noise.file)
     bad('noise.file not found: %s', cfg.noise.file);
 end
+if ~isfield(cfg, 'markers') || ~isfield(cfg.markers, 'lsl') || ~isLogicalScalar(cfg.markers.lsl)
+    bad('markers.lsl must be true or false.');
+end
+if ~isfield(cfg.markers, 'requireRecorder') || ~isLogicalScalar(cfg.markers.requireRecorder)
+    bad('markers.requireRecorder must be true or false.');
+end
+if ~isfield(cfg.markers, 'liblslDir') || ~isText(cfg.markers.liblslDir)
+    bad('markers.liblslDir must be a folder name (text).');
+end
+end
+
+function tf = isLogicalScalar(x)
+tf = islogical(x) && isscalar(x);
+end
+
+function tf = isText(x)
+tf = ((isstring(x) && isscalar(x)) || (ischar(x) && isrow(x))) && strlength(string(x)) > 0;
 end

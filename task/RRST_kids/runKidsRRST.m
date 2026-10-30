@@ -12,12 +12,18 @@ function result = runKidsRRST(cfg)
 %   SAFETY: no level above cfg.child.hardCap (85 % of the adult scale at most) is
 %   ever sent. Calibration closes the wedge fully: do it before the child sits down.
 %   Esc aborts at any time (wedge parked open, data saved). Space pauses.
+%
+%   Markers: with cfg.markers.lsl (default) the "RRST" LSL marker stream opens at
+%   launch, so start the Physio Recorder (RRST preset) first. A real session waits
+%   before calibration until a recorder receives the markers; mock and simulated-child
+%   runs don't. cfg.markers.lsl = false runs without LSL (liblsl not needed).
 %   See README.md in this folder.
 
 here = fileparts(mfilename('fullpath'));
 root = fileparts(fileparts(here));
 addpath(fullfile(here, 'code'), fullfile(here, 'config'), fullfile(root, 'device'), ...
-    fullfile(root, 'task', 'RRST_2-0', 'code'));          % startMaskingNoise, stopMaskingNoise
+    fullfile(root, 'task', 'RRST_2-0', 'code'), ...       % startMaskingNoise, stopMaskingNoise
+    fullfile(root, 'task', 'helpers'));                   % rrstMarker, waitForRecorder
 
 if nargin < 1
     cfg = kidsConfig();
@@ -30,6 +36,9 @@ if isempty(which('PsychtoolboxVersion')) || isempty(which('PAL_AMPM_setupPM'))
     error('rrst:missingToolbox', 'Psychtoolbox 3 and Palamedes must be on the MATLAB path.');
 end
 fprintf('RRST-Kids, %s. Cap %g %% of the adult scale.\n', cfg.label, cfg.child.hardCap);
+
+%% Event markers (LSL). Opened first so a recorder started now already sees them.
+closeMarkers = kidsOpenMarkers(cfg); %#ok<NASGU>   closes the stream when this function ends
 
 %% Child
 if isempty(cfg.debug.simulateChild)
@@ -59,6 +68,9 @@ stim = rrst.Stimulator(dev, rec, 'Unit', cfg.stim.unit, 'RestRange', cfg.stim.re
 stim.validateLevels([cfg.psi.stimRange cfg.practice.levels cfg.child.hardCap]);
 fprintf('Device %s, firmware %s\n', st.deviceId, st.softwareVersion);
 
+if kidsWaitsForRecorder(cfg)               % never for a mock device or a simulated child
+    waitForRecorder();
+end
 if isempty(cfg.debug.simulateChild)
     input(sprintf(['\nCalibration closes the wedge fully. Tube in, NOBODY on the mouthpiece.\n' ...
         'Press Enter when ready...']));

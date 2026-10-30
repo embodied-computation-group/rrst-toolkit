@@ -15,6 +15,14 @@ function result = kidsMain(cfg, stim, vars)
 %
 %   cfg.debug.simulateChild = [alpha beta gamma lambda] answers by itself (testing);
 %   cfg.debug.timeScale shortens every duration.
+%
+%   LSL markers (rrstMarker; no-ops unless runKidsRRST opened the stream):
+%   calibration_start/end, story, practice_start (each round), main_start, and per
+%   trial trial_<n>_level_<x> (move confirmed; catch trials level_0), trial_<n>_go
+%   (Space), question (screen onset), answer_yes|answer_no|bad_breath|no_answer|pause,
+%   trial_<n>_correct|wrong (answered trials: "yes" on a load or "no" on a catch is
+%   correct); rest_start/end; aborted (Esc or error) or done. n counts every trial
+%   run, free slurps and repeats included, so each n is unique; it is tr.n.
 
 ts = cfg.debug.timeScale;
 txt = kidsText(cfg.text.language);
@@ -30,25 +38,29 @@ keys = struct('no', KbName({'LeftArrow', 'n'}), 'yes', KbName({'RightArrow', 'y'
 sim = cfg.debug.simulateChild;
 rs = RandStream('mt19937ar', 'Seed', vars.seed);
 t0 = GetSecs;
+nRun = 0;                                    % trials run so far (marker and tr.n)
 
 try
     scr = openScreen(cfg);
     progress = struct('stars', 0, 'cupsDone', 0, 'nCups', ceil((cfg.child.numPsiTrials + cfg.child.numCatchTrials) / 10));
 
     show(scr, struct('straw', false, 'text', txt.calibrating), progress);
+    rrstMarker('calibration_start');
     stim.calibrate();
+    rrstMarker('calibration_end');
     stim.rest();
     if cfg.noise.enabled
         noise = startMaskingNoise(cfg.noise);
     end
 
     % Story
-    show(scr, struct('mouseX', 0.9, 'text', txt.story), progress);
+    rrstMarker('story', show(scr, struct('mouseX', 0.9, 'text', txt.story), progress));
     if waitGo(), finish("aborted"); return; end
 
     % Practice
     passed = false;
     for round = 1:cfg.practice.maxRounds
+        rrstMarker('practice_start');
         nCorrect = 0; mustOk = true;
         for i = 1:numel(cfg.practice.levels)
             level = cfg.practice.levels(i);
@@ -75,7 +87,7 @@ try
     end
 
     % Main trials
-    show(scr, struct('mouseX', 0.9, 'text', txt.ready), progress);
+    rrstMarker('main_start', show(scr, struct('mouseX', 0.9, 'text', txt.ready), progress));
     if waitGo(), finish("aborted"); return; end
     nAnswered = 0;
     while ~kidsShouldStop(kp, cfg)
@@ -110,6 +122,7 @@ try
     [~, why] = kidsShouldStop(kp, cfg);
     finish("complete:" + why);
 catch err
+    try, rrstMarker('aborted'); catch, end
     try, stim.park(); catch, end
     stopMaskingNoise(noise); noise = [];
     sca; ShowCursor; Priority(0);
@@ -123,19 +136,22 @@ end
 
     function [tr, status] = runTrial(level, info, ask, prog)
         kidsCheckLevel(level, cfg);
-        tr = struct('n', numel(trials) + numel(practice) + 1, 'phase', "", 'level', level, ...
+        nRun = nRun + 1;
+        tr = struct('n', nRun, 'phase', "", 'level', level, ...
             'isCatch', info.isCatch, 'proposed', info.proposed, 'limited', info.limited, ...
             'answer', "", 'response', NaN, 'rt', NaN, 'moveT', NaN, 'slurpT', NaN, 'tStart', GetSecs - t0);
         % Move: the mouse scampers while the wedge goes to the level
         tMove = GetSecs;
         show(scr, struct('mouseX', 0.1, 'straw', false), prog);
         if level == 0, mv = stim.null(); else, mv = stim.present(level); end
+        rrstMarker(kidsMarkerLabel("level", tr.n, level));   % move confirmed (as the adult task)
         tr.moveT = mv.elapsed;
         status = animate(cfg.timing.moveMin - (GetSecs - tMove), @(p) struct('mouseX', 0.1 + 0.8 * p, 'straw', false), prog);
         if status ~= "", return; end
         % The experimenter starts the slurps when the child is ready (Space)
         show(scr, struct('text', txt.cue), prog);
         if waitGo(), status = "abort"; return; end
+        rrstMarker(kidsMarkerLabel("go", tr.n));
         % Slurps at this level: each drinks a share of the milkshake. Pacing only; the
         % experimenter can end them early with Space once the child has slurped enough.
         n = cfg.child.slurps; tr.slurpT = GetSecs;
@@ -152,9 +168,11 @@ end
             status = "free"; return
         end
         % Question: the experimenter clicks the child's answer
-        kidsQuestion(scr, txt); Screen('Flip', scr.win);
-        [answer, rt] = getAnswer(level);
+        kidsQuestion(scr, txt); rrstMarker('question', Screen('Flip', scr.win));
+        [answer, rt, tAnswer] = getAnswer(level);
         tr.answer = answer; tr.rt = rt;
+        label = kidsMarkerLabel("answer", answer);
+        if ~isempty(label), rrstMarker(label, tAnswer); end
         switch answer
             case "yes", tr.response = 1; status = "answered";
             case "no",  tr.response = 0; status = "answered";
@@ -164,6 +182,9 @@ end
                 show(scr, struct('cup', 0, 'text', txt.pause), prog);
                 if waitGo(), status = "abort"; else, status = "repeat"; end
             otherwise, status = "repeat";            % "bad" or "none"
+        end
+        if status == "answered"
+            rrstMarker(kidsMarkerLabel("outcome", tr.n, level, tr.response), tAnswer);
         end
     end
 
@@ -184,13 +205,14 @@ end
         end
     end
 
-    function [answer, rt] = getAnswer(level)
+    function [answer, rt, tAnswer] = getAnswer(level)
+        % tAnswer: GetSecs time the answer was registered (for its marker)
         tStart = GetSecs;
         if ~isempty(sim)
             pauseFor(0.4);
             if rand(rs) < PAL_Weibull(sim, level), answer = "yes"; else, answer = "no"; end
             kidsQuestion(scr, txt, answer, true); Screen('Flip', scr.win);
-            rt = GetSecs - tStart; return
+            rt = GetSecs - tStart; tAnswer = tStart + rt; return
         end
         waitRelease();
         ShowCursor('Hand', scr.screenID);
@@ -209,7 +231,7 @@ end
             if answer ~= "none", break; end
             kidsQuestion(scr, txt, side); Screen('Flip', scr.win);
         end
-        rt = GetSecs - tStart;
+        rt = GetSecs - tStart; tAnswer = tStart + rt;
         HideCursor(scr.screenID);
         if ismember(answer, ["yes" "no"])                 % show what was registered
             kidsQuestion(scr, txt, answer, true); Screen('Flip', scr.win);
@@ -228,6 +250,7 @@ end
 
     function aborted = rest(prog)
         tStart = GetSecs;
+        rrstMarker('rest_start', tStart);
         while GetSecs - tStart < cfg.timing.pause * ts
             show(scr, struct('cup', 1, 'straw', false, 'text', sprintf(txt.rest, ceil(cfg.timing.pause * ts - (GetSecs - tStart)))), prog);
             [down, ~, code] = KbCheck;
@@ -235,12 +258,14 @@ end
         end
         show(scr, struct('mouseX', 0.9, 'text', txt.ready), prog);
         aborted = waitGo();
+        if ~aborted, rrstMarker('rest_end'); end    % experimenter's Space: trials resume
     end
 
-    function show(scrIn, s, prog)
+    function tFlip = show(scrIn, s, prog)
+        % Draw the scene and flip; tFlip is the flip's onset (GetSecs time).
         s.stars = prog.stars; s.cupsDone = prog.cupsDone; s.nCups = prog.nCups;
         kidsScene(scrIn, s);
-        Screen('Flip', scrIn.win);
+        tFlip = Screen('Flip', scrIn.win);
     end
 
     function aborted = waitGo()
@@ -275,6 +300,7 @@ end
     end
 
     function finish(outcome)
+        if outcome == "aborted", rrstMarker('aborted'); else, rrstMarker('done'); end
         stim.park();
         stopMaskingNoise(noise); noise = [];
         sca; ShowCursor; Priority(0);
