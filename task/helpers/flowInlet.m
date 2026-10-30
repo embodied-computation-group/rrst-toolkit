@@ -207,6 +207,14 @@ classdef flowInlet < handle
     methods (Access = private)
         function info = resolve(src, timeoutS)
             % The stream named src.name, preferring one on this computer; [] if none.
+            % liblsl 1.18 overruns a resolve timeout just below 0.5 s by about 5 s: on
+            % the stim laptop (2026-10-30) 0.495 and 0.5 s took 5.5 s on nearly every
+            % call, while 0.2 to 0.49 s and 0.505 to 3 s returned on time. 0.5 s is
+            % also liblsl's default MulticastMinRTT, so the timeout probably races the
+            % resolver's wave timer. Step clear of it.
+            if timeoutS > 0.48 && timeoutS < 0.52
+                timeoutS = 0.52;
+            end
             infos = lsl_resolve_byprop(src.lib, 'name', char(src.name), 1, timeoutS);
             info = [];
             if isempty(infos)
