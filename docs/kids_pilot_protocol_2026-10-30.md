@@ -43,7 +43,8 @@ Purpose: does the breath feedback feel immediate and right, does the detector be
 real breaths through the obstruction, and a first look at the level-leak question (plan
 step 6). Two runs, same settings except the feedback mode.
 
-Settings for both runs (ID 9001, session numbers 1 and 2):
+Settings for both runs (ID 9001 for A1 and 9002 for A2: the kids task asks only for an
+ID, and the file name carries the ID and the time):
 ```matlab
 cfg = kidsConfig(); cfg.device.port = "COM7";
 cfg.child.numPsiTrials = 20; cfg.child.numCatchTrials = 8;   % shorter than the default 30 + 10
@@ -56,7 +57,7 @@ running, note on paper:
 
 | What to watch | Note |
 |---|---|
-| Free slurps | The console's reference line (volume, belly-full and counts-above thresholds). Does the belly fill in step with your breath, or late? |
+| Free slurps | The console's reference line (volume, belly-full and counts-above thresholds). Does the belly fill in step with your breath, or late? (Free slurps are never marked weak on screen; the console says "small, sets the reference".) |
 | Every slurp | Did the belly start to rise as soon as you began inhaling? Did the drain happen on the breath's end? |
 | False onsets | Any slurp counted when you had not inhaled (the T-valve backflow must never trigger one)? |
 | Weak slurps | Did any real breath come out as "weak"? At which level? |
@@ -70,10 +71,11 @@ so the flow is still recorded and the free slurps still set the reference). Same
 procedure. Note the same things where they apply, and whether the fixed pacing now feels
 slow or fast compared with A1.
 
-**Afterwards** for both files in `data/raw/`:
+**Afterwards** for both files in `data/raw/`, from the repo root:
 ```matlab
-qcKids("data/raw/RRSTkids_9001_s1_<date>.mat")
-qcKids("data/raw/RRSTkids_9001_s2_<date>.mat")
+addpath('task/RRST_kids');
+qcKids("data/raw/RRSTkids_9001_<date>.mat")   % A1, feedback on
+qcKids("data/raw/RRSTkids_9002_<date>.mat")   % A2, feedback off
 ```
 Compare between A1 and A2: false alarms on catch trials, the fitted guess rate (yes-bias)
 in the QC summary, the threshold and its SE, trials to stop, and the mean trial length
@@ -121,8 +123,9 @@ cfg.timing.pause = 30;
 **Structure**
 1. **Free play (2 min, wedge at 0).** Before the story: "Can you make the monster's
    belly big?" Let her breathe through the mouthpiece and watch the belly. This is where
-   you learn whether the feedback is self-explanatory. The two free slurps in the task
-   repeat this and set her reference volume; read the console line and write it down.
+   you learn whether the feedback is self-explanatory. The two free trials in the task
+   (three slurps each) repeat this and set her reference volume from every slurp the
+   sensor saw, however small; read the console line and write it down.
 2. **Story.** Tell it in your own words over the screens. Press Space to move on when
    she looks ready, not before.
 3. **Practice (6 trials with the reveal).** Let the screen do the explaining: after each
@@ -137,7 +140,7 @@ cfg.timing.pause = 30;
 |---|---|
 | Ready cue | Did she put the mouthpiece in and breathe without a verbal prompt? Count prompts per trial. |
 | Breathing | Did she breathe before Space, on the cue, or only after being told? Any blowing instead of sucking? |
-| Weak / timeout | How many "weak" slurps (console) and whether the try-again pose and sound registered with her. |
+| Weak / timeout | How many "weak" slurps (console) and whether the try-again pose and sound registered with her (they never come in the free trials). |
 | Belly | Did she look at the belly while breathing? Any comment ("it's getting big")? |
 | Question | Did she answer by speaking, pointing, or both? Any preference for one card regardless of the trial? Did she understand "squishy"? |
 | Reveal (practice) | Did she react to the mouse being shown? Did the idea of the pinch land? |
@@ -146,7 +149,7 @@ cfg.timing.pause = 30;
 | Quotes | Anything she said about the monster, the mouse, the straw, the feeling. |
 
 **Afterwards**
-- `qcKids` on the file; look at `tr.slurps` in the `.mat` for her slurp volumes and peak
+- `qcKids` on the file (as above); look at `tr.slurps` in the `.mat` for her slurp volumes and peak
   flow per trial, and how many were weak. Her reference volume tells you whether the
   pilot thresholds (0.10 L floor, 25 % of reference) are right for a child.
 - The recorder's `.xdf` has the flow with every `slurp_<k>_onset` marker: check that
