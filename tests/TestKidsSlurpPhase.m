@@ -32,6 +32,14 @@ classdef TestKidsSlurpPhase < matlab.unittest.TestCase
         end
     end
 
+    methods (Static)
+        function p = peakFor(volumeL)
+            % Peak (slm) of a 1 s half-sine breath of volumeL litres; the detector
+            % measures about 3 mL less (onset threshold and filter).
+            p = (volumeL + 0.003) * 60 * pi / 2;
+        end
+    end
+
     methods
         function cfg = config(~)
             cfg = kidsConfig();
@@ -39,8 +47,9 @@ classdef TestKidsSlurpPhase < matlab.unittest.TestCase
             cfg.debug.timeScale = 1;
         end
 
-        function io = fakeIo(tc, sim)
+        function io = fakeIo(tc, sim, free)
             if nargin < 2, sim = false; end
+            if nargin < 3, free = false; end
             io.draw = @(s) tc.draw(s);
             io.keys = @() tc.key();
             io.now = @() tc.T;
@@ -48,6 +57,7 @@ classdef TestKidsSlurpPhase < matlab.unittest.TestCase
             io.sound = @(name) tc.sound(name);
             io.prompt = @(msg) tc.prompt(msg);
             io.sim = sim;
+            io.free = free;
         end
 
         function [fl, src] = flow(tc, cfg)
@@ -99,6 +109,20 @@ classdef TestKidsSlurpPhase < matlab.unittest.TestCase
                     v(k) = tc.scenes{k}.(name);
                 end
             end
+        end
+
+        function p = poses(tc)
+            % The pose of every drawn scene ("idle" where the scene has none).
+            p = repmat("idle", 1, numel(tc.scenes));
+            for k = 1:numel(tc.scenes)
+                if isfield(tc.scenes{k}, 'pose'), p(k) = tc.scenes{k}.pose; end
+            end
+        end
+
+        function reset(tc)
+            % A fresh recording for a second phase in the same test (the clock runs on).
+            tc.scenes = {}; tc.drawT = []; tc.markers = strings(0, 1); tc.markerT = [];
+            tc.sounds = strings(0, 1); tc.prompts = strings(0, 1);
         end
 
         function verifyCupPasses(tc, values)
@@ -292,6 +316,102 @@ classdef TestKidsSlurpPhase < matlab.unittest.TestCase
             tc.verifyEqual(info.durationS, 3 * (cfg.timing.inhale + cfg.timing.exhale), 'AbsTol', 6 * tc.ANIM_TOL);
         end
 
+        % --- poses (UX pass) ----------------------------------------------------------
+        function posesFollowTheSlurp(tc)
+            cfg = tc.config();
+            [fl, src] = tc.flow(cfg);
+            src.breathe(30, 1.5, 3, 2.5, 0.5);
+            kidsSlurpPhase(fl, cfg, tc.fakeIo());
+            pose = tc.poses(); t = tc.drawT;
+            tc.verifyTrue(all(pose(t < 0.45) == "idle"), 'waiting: idle');
+            tc.verifyTrue(all(pose(t > 0.8 & t < 1.8) == "slurp"), 'slurping while the child inhales');
+            tc.verifyTrue(all(pose(t > 2.3 & t < 2.9) == "ahh"), 'ahh during the bubbles, before the next slurp');
+            tc.verifyTrue(any(pose == "ahh"));
+            tc.verifyFalse(any(pose == "tryagain"), 'three good slurps: never try again');
+        end
+
+        function weakSlurpShowsTryAgainNotSad(tc)
+            cfg = tc.config();
+            [fl, src] = tc.flow(cfg);
+            src.breathe(6, 0.8, 1, 0, 0.5);           % 0.05 L: weak
+            tc.keyPlan = {6, "abort"};
+            kidsSlurpPhase(fl, cfg, tc.fakeIo());
+            pose = tc.poses(); t = tc.drawT;
+            k = find(pose == "tryagain", 1);
+            tc.assertNotEmpty(k, 'the try-again pose after a weak slurp');
+            tc.verifyGreaterThan(t(k), 1.3, 'after the slurp has ended');
+            tc.verifyLessThan(t(find(pose == "tryagain", 1, 'last')), t(k) + cfg.timing.exhale + 0.1, ...
+                'only while the belly deflates');
+            tc.verifyEqual(pose(end), "idle", 'then waiting again');
+        end
+
+        % --- free slurps: the tutorial and the reference ---------------------------------
+        function freeSlurpsNeverShowTryAgain(tc)
+            cfg = tc.config();
+            [fl, src] = tc.flow(cfg);
+            src.breathe(TestKidsSlurpPhase.peakFor(0.12), 1, 3, 2.5, 0.5);  % below the default 0.15 L
+            [status, slurps, info] = kidsSlurpPhase(fl, cfg, tc.fakeIo(false, true));
+            tc.verifyEqual(status, "done", 'every free slurp is drunk on screen');
+            tc.assertNumElements(slurps, 3);
+            tc.verifyEqual([slurps.type], repmat("weak", 1, 3), 'the records keep the type');
+            tc.verifyFalse(any([slurps.counted]));
+            tc.verifyEqual(info.counted, 3);
+            tc.verifyFalse(any(tc.sounds == "tryagain"), 'no try-again sound');
+            tc.verifyFalse(any(tc.poses() == "tryagain"), 'no try-again pose');
+            tc.verifyEqual(tc.sounds', repmat(["slurp" "bubbles"], 1, 3));
+            tc.verifyCupPasses([1 2/3 1/3 0]);
+            tc.verifyEqual(tc.markers(2:2:end)', "slurp_" + (1:3) + "_weak", 'markers keep the type');
+            tc.verifyEmpty(tc.prompts(contains(tc.prompts, "try again")), 'no try-again line either');
+            % an overlong free slurp: not drunk, still no try-again
+            tc.reset();
+            [fl, src] = tc.flow(cfg);
+            src.breathe(20, 7, 1, 0, 0.5);
+            tc.keyPlan = {tc.T + 12, "skip"};
+            kidsSlurpPhase(fl, cfg, tc.fakeIo(false, true));
+            tc.verifyFalse(any(tc.sounds == "tryagain"));
+            tc.verifyFalse(any(tc.poses() == "tryagain"));
+            tc.verifyTrue(any(contains(tc.prompts, "leak")), 'the leak warning stays');
+        end
+
+        function smallFreeSlurpsSetTheReferenceAndASmallSlurpThenCounts(tc)
+            cfg = tc.config();
+            [fl, src] = tc.flow(cfg);
+            src.breathe(TestKidsSlurpPhase.peakFor(0.12), 1, 2, 2.5, 0.5);
+            tc.keyPlan = {8, "skip"};
+            [~, free] = kidsSlurpPhase(fl, cfg, tc.fakeIo(false, true));
+            tc.assertNumElements(free, 2);
+            tc.verifyEqual([free.volumeL], [0.12 0.12], 'AbsTol', 0.01);
+            tc.verifyEqual([free.type], ["weak" "weak"], 'weak against the 0.6 L default');
+            ref = kidsReferenceSlurps(free);
+            tc.verifyNumElements(ref, 2, 'weak free slurps set the reference');
+            minL = fl.setReference([ref.volumeL]);
+            tc.verifyEqual(fl.refVolume, 0.15, 'AbsTol', 1e-12, 'clamped to the 0.15 L floor');
+            tc.verifyEqual(minL, cfg.flow.minVolumeL, 'the 0.10 L floor applies to counting');
+            % a later 0.11 L slurp counts
+            tc.reset();
+            src.quiet();
+            src.breathe(TestKidsSlurpPhase.peakFor(0.11), 1, 1, 0, 0.5);
+            tc.keyPlan = {tc.T + 5, "skip"};
+            [~, later] = kidsSlurpPhase(fl, cfg, tc.fakeIo());
+            tc.assertNumElements(later, 1);
+            tc.verifyEqual(later.volumeL, 0.11, 'AbsTol', 0.006);
+            tc.verifyGreaterThan(later.volumeL, cfg.flow.minVolumeL);
+            tc.verifyTrue(later.counted, 'a 0.11 L slurp counts once the reference is set');
+            tc.verifyEqual(later.type, "end");
+        end
+
+        function referenceUsesEndAndWeakSlurpsOnly(tc)
+            sl = @(v, type) struct('onsetT', 1, 'endT', 2, 'durationS', 1, 'peakSlm', 20, ...
+                'volumeL', v, 'counted', type == "end", 'type', type);
+            s = [sl(0.3, "end"); sl(0.12, "weak"); sl(2.5, "overlong"); sl(0.05, "interrupted")];
+            r = kidsReferenceSlurps(s);
+            tc.verifyEqual([r.volumeL], [0.3 0.12]);
+            tc.verifyEqual(r, s(1:2));
+            tc.verifyEmpty(kidsReferenceSlurps(s(3:4)));
+            tc.verifyEmpty(kidsReferenceSlurps(s([])));
+            tc.verifyEmpty(kidsReferenceSlurps([]));
+        end
+
         % --- timed fallback (no flow) ---------------------------------------------------
         function timedFallbackIsTodaysAnimation(tc)
             cfg = tc.config();
@@ -321,7 +441,10 @@ classdef TestKidsSlurpPhase < matlab.unittest.TestCase
                         else
                             want = struct('belly', 1 - p, 'cup', left - 1 / n, 'bubbles', p, 'text', txt.exhale);
                         end
-                        tc.assertEqual(tc.scenes{k}, want, sprintf('frame %d', k));
+                        got = tc.scenes{k};
+                        if ph == 1, pose = "slurp"; else, pose = "ahh"; end
+                        tc.assertEqual(got.pose, pose, sprintf('frame %d: pose', k));
+                        tc.assertEqual(rmfield(got, 'pose'), want, sprintf('frame %d', k));
                         k = k + 1;
                         if p >= 1, break; end
                     end
