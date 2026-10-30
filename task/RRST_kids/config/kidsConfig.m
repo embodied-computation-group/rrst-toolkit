@@ -51,8 +51,7 @@ cfg.child.stopMinTrials = 20;            % ...after at least this many Psi trial
 cfg.child.slurps = 3;                    % breaths per trial, all at the trial's level
 cfg.child.maxRepeats = 10;               % trials re-queued after no answer or a bad breath
 cfg.child.flagFAmax = 0.40;              % false-alarm rate above this: threshold unusable
-cfg.child.flagHitMin = 0.60;             % hit rate at levels >= flagHighLevel below this: unusable
-cfg.child.flagHighLevel = 80;
+cfg.child.flagHighLevel = 80;            % the QC figure reports the hit rate at and above this (no longer a flag)
 
 cfg.psi.PF = "PAL_Weibull";
 cfg.psi.stimRange = 0:5:100;             % must contain 0 (catch) and the start level

@@ -350,11 +350,12 @@ Threshold estimates are within about 4-6 % (RMS) for every profile, and most run
 early after about 27 trials (20 Psi + catch), i.e. about 5 minutes of trials. No level
 ever exceeded the cap. Two problems:
 
-- **The "low hit rate" flag misfires for children with high thresholds.** It flags a
-  child who says "yes" to fewer than 60 % of trials at 80 % and above, but for a child
-  whose threshold is near 80 that is expected, not a sign of a bad session (43 % of
-  low-bias children at threshold 80 were flagged). The rule should only apply when the
-  estimated threshold is well below 80, or be dropped. Not changed yet: a design call.
+- **The "low hit rate" flag was dropped (Micah, 2026-10-30).** It flagged a child who
+  said "yes" to fewer than 60 % of trials at 80 % and above, but for a child whose
+  threshold is near or above 80 that is expected (43 % of low-bias simulated children
+  at threshold 80 were flagged, and both adult pilots). `kidsFlags` now flags only
+  false alarms; the hit rate at and above `cfg.child.flagHighLevel` is still reported
+  in the QC figure.
 - **The false-alarm flag is noisy** with only about 8 catch trials per run: a third of
   children with a true false-alarm rate of 0.35 cross the 0.4 line. More catch trials
   or a posterior-based rule (the guess rate is estimated anyway) would be steadier.

@@ -299,9 +299,9 @@ console with the reason.
   less pressure drop, and a cap below full scale left high thresholds unmeasurable.
   `cfg.child.hardCap` remains for any site that wants one. Practice moved from
   80/80/75 to 90/90/85 the same day, after an adult missed two of three at 80.
-- **The "low hit rate" flag misfires** for thresholds near 80 % (43 % of simulated
-  children there were flagged). It should apply only when the estimated threshold is
-  well below 80, or be dropped.
+- **The "low hit rate" flag was dropped** on 2026-10-30: it misfired for thresholds
+  near or above 80 % (43 % of simulated children there, and both adult pilots). Only
+  false alarms flag a session now; the hit rate at and above 80 is still reported.
 - **The false-alarm flag is noisy** with about 8 catch trials; more catch trials or a
   rule based on the estimated guess rate would be steadier.
 - Translations (Swiss German, Danish). The cue sounds' loudness over the rain is still
