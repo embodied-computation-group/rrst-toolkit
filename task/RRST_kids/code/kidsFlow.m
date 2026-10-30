@@ -3,6 +3,9 @@ classdef kidsFlow < handle
     %   f = kidsFlow(src, p)   src: flow source with s = src.pull() ([t flowSlm], N-by-2,
     %                          new samples only) and src.lost (flowInlet, kidsSimFlow),
     %                          or [] for none. p: the cfg.flow struct.
+    %   f.rate                 Hz, the sample rate used to integrate: the source's
+    %                          nominalRate (flowInlet) or rate (kidsSimFlow), else
+    %                          p.rate if given, else 1000.
     %
     %   f.start()              begin a slurp phase: counts and slurps cleared, samples
     %                          already waiting are used to warm the filter only. A breath
@@ -25,11 +28,17 @@ classdef kidsFlow < handle
     %   a causal first-order low-pass at p.smoothHz; onset when the filtered flow stays
     %   above p.onsetSlm for p.onsetHold s, end when it stays below for p.offsetHold s.
     %   Volume (L) integrates the positive filtered flow from the first sample above
-    %   threshold to the confirmed end (slm / 60 * dt): the T-valve backflow never
+    %   threshold to the confirmed end (slm / 60 / rate per sample): the T-valve backflow never
     %   subtracts and, being negative, never triggers. A slurp counts ("end") when its
     %   volume is at least max(p.minVolumeFrac * refVolume, p.minVolumeL), otherwise
     %   "weak"; one lasting more than p.maxSlurpDur is "overlong", not counted, and the
     %   detector then waits for flow to return below threshold.
+    %
+    %   Each sample counts 1/rate s, in the filter and in the volume. Sample times are
+    %   used only for the holds, durations and event times: live LSL times can step
+    %   back by ~1 ms at chunk boundaries (flowInlet help), so diff(t) would lose
+    %   volume. Samples lost at the bridge are not seen here (no nSeq), so a gap is
+    %   integrated as if it held no samples.
 
     properties (SetAccess = private)
         belly = 0                    % 0..1, current slurp's volume via kidsBreathScale
@@ -40,6 +49,7 @@ classdef kidsFlow < handle
         lastSampleT = NaN            % time of the last sample pulled
         timedOut = false             % no onset for slurpTimeout s since start or last end
         started = false
+        rate = 1000                  % Hz, see the help
     end
 
     properties (Dependent)
@@ -61,7 +71,6 @@ classdef kidsFlow < handle
     end
 
     properties (Constant, Access = private)
-        MAX_DT = 0.05                % s; a longer gap is integrated as this
         REF_RANGE = [0.15 2]         % L, clamp for the reference volume
     end
 
@@ -70,6 +79,7 @@ classdef kidsFlow < handle
             kidsFlow.validate(p);
             f.src = src;
             f.p = p;
+            f.rate = kidsFlow.sampleRate(src, p);
             f.refVolume = p.refVolumeDefault;
             f.slurps = kidsFlow.noSlurps();
         end
@@ -146,14 +156,14 @@ classdef kidsFlow < handle
             y = f.y;
             prevT = f.prevT;
             on = p.onsetSlm;
+            dt = 1 / f.rate;                          % per sample, never diff(t)
+            alpha = 1 - exp(-2 * pi * p.smoothHz * dt);
             for i = 1:size(s, 1)
                 ti = s(i, 1);
-                if isnan(prevT)
-                    dt = 0;
+                if isnan(y)
                     y = s(i, 2);
                 else
-                    dt = min(max(ti - prevT, 0), f.MAX_DT);
-                    y = y + (1 - exp(-2 * pi * p.smoothHz * dt)) * (s(i, 2) - y);
+                    y = y + alpha * (s(i, 2) - y);
                 end
                 prevT = ti;
                 if f.state == "off"
@@ -234,6 +244,24 @@ classdef kidsFlow < handle
     end
 
     methods (Static, Access = private)
+        function r = sampleRate(src, p)
+            r = NaN;
+            ok = @(v) isnumeric(v) && isscalar(v) && isfinite(v) && v > 0;
+            if ~isempty(src)
+                if isprop(src, 'nominalRate') && ok(src.nominalRate)
+                    r = src.nominalRate;
+                elseif isprop(src, 'rate') && ok(src.rate)
+                    r = src.rate;
+                end
+            end
+            if isnan(r)
+                r = 1000;
+                if isfield(p, 'rate')
+                    r = p.rate;
+                end
+            end
+        end
+
         function validate(p)
             bad = @(msg, varargin) error('rrst:badConfig', ['Flow configuration: ' msg], varargin{:});
             if ~isstruct(p)
@@ -243,6 +271,9 @@ classdef kidsFlow < handle
                 'refVolumeDefault', 'slurpTimeout', 'maxSlurpDur', 'smoothHz'};
             fractions = {'minVolumeFrac', 'bellyFraction'};
             num = @(v) isnumeric(v) && isreal(v) && isscalar(v) && isfinite(v);
+            if isfield(p, 'rate') && ~(num(p.rate) && p.rate > 0)
+                bad('flow.rate must be a positive number of Hz.');
+            end
             for k = 1:numel(positive)
                 n = positive{k};
                 if ~isfield(p, n)
