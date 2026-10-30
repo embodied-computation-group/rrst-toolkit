@@ -202,8 +202,8 @@ mo.behind = false; mo.scale = 1;
 mo.cheeky = struct('active', false);
 st.pinch = struct('active', false, 'x', NaN, 'halfLen', NaN, 'halfWidth', NaN);
 % The move (kidsBeat "move"): the cheeky spot is on the ground just left of the table
-spotSize = 0.05 * H;
-spot = [g.table.top(1) - 1.15 * spotSize, 0.92 * H];
+spotSize = 0.055 * H;
+spot = [g.table.top(1) - 1.1 * spotSize, 0.92 * H];
 q = s.mouseProgress; if isnan(q), q = 0; end
 q = min(max(q, 0), 1);
 switch mp
