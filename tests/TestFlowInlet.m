@@ -20,11 +20,13 @@ classdef TestFlowInlet < matlab.unittest.TestCase
         function addPaths(tc)
             tc.assumeTrue(isfolder(tc.LiblslDir), 'liblsl-Matlab is not installed.');
             root = fileparts(fileparts(mfilename('fullpath')));
-            p = {fullfile(root, 'task', 'helpers'), tc.LiblslDir, fullfile(tc.LiblslDir, 'bin')};
-            addpath(p{:});
-            tc.addTeardown(@() rmpath(p{:}));
+            helpers = fullfile(root, 'task', 'helpers');
+            addpath(helpers);
+            tc.addTeardown(@() rmpath(helpers));
+            % liblsl stays on the path, as flowInlet leaves it: the library handle is
+            % freed when its last copy goes, which can be after the class teardown.
+            addpath(tc.LiblslDir, fullfile(tc.LiblslDir, 'bin'));
             tc.lib = lsl_loadlib();
-            tc.addTeardown(@() tc.releaseLib());   % runs first, while lsl_freelib_ is on the path
         end
     end
 
@@ -62,19 +64,20 @@ classdef TestFlowInlet < matlab.unittest.TestCase
         % --- pull ---------------------------------------------------------------
         function pullReturnsTimeAndFlow(tc)
             src = tc.openWithOutlet();
+            src.staleAfter = 30;                 % the first verify of a session can take ~1 s
             flow = linspace(0, 40, 200)';
             tc.push(flow);
             s = tc.pullAll(src, 200);
-            tc.verifySize(s, [200 2]);
-            tc.verifyEqual(s(:, 2), flow);
-            tc.verifyTrue(all(diff(s(:, 1)) > 0), 'timestamps must increase');
-            tc.verifyTrue(ismember(src.clockBase, ["GetSecs" "lsl"]));
             if src.clockBase == "GetSecs"
                 now = GetSecs;
             else
                 now = lsl_local_clock(tc.lib);
             end
-            tc.verifyLessThan(abs(s(end, 1) - now), 1, 'timestamps are on the wrong clock');
+            tc.verifySize(s, [200 2]);
+            tc.verifyEqual(s(:, 2), flow);
+            tc.verifyTrue(all(diff(s(:, 1)) > 0), 'timestamps must increase');
+            tc.verifyTrue(ismember(src.clockBase, ["GetSecs" "lsl"]));
+            tc.verifyLessThan(abs(s(end, 1) - now), 0.5, 'timestamps are on the wrong clock');
             tc.verifySize(src.pull(), [0 2]);
             tc.verifyFalse(src.lost);
         end
@@ -134,7 +137,7 @@ classdef TestFlowInlet < matlab.unittest.TestCase
             while tc.outlet.have_consumers() && toc(t) < 3
                 pause(0.05);
             end
-            tc.verifyFalse(tc.outlet.have_consumers());
+            tc.verifyFalse(logical(tc.outlet.have_consumers()));
         end
 
         % --- quality check (rules of plux-lsl/flow_quality.py) -----------------
@@ -205,10 +208,6 @@ classdef TestFlowInlet < matlab.unittest.TestCase
             tc.outlet = lsl_outlet(info);
         end
 
-        function releaseLib(tc)
-            tc.lib = [];
-        end
-
         function dropOutlet(tc)
             tc.outlet = [];
         end
@@ -221,7 +220,12 @@ classdef TestFlowInlet < matlab.unittest.TestCase
         end
 
         function waitForConsumer(tc)
-            tc.assertTrue(tc.outlet.wait_for_consumers(5) ~= 0, 'the inlet never connected');
+            % (lsl_outlet.wait_for_consumers calls its mex with the wrong arguments)
+            t = tic;
+            while ~tc.outlet.have_consumers() && toc(t) < 5
+                pause(0.01);
+            end
+            tc.assertTrue(logical(tc.outlet.have_consumers()), 'the inlet never connected');
         end
 
         function push(tc, flow)
