@@ -21,6 +21,12 @@ classdef flowInlet < handle
 %   the offset between the two clocks measured at each pull, as rrstMarker does.
 %   The inlet keeps 5 s of data, so a caller that pauses pulling loses nothing
 %   younger than that.
+%
+%   Times are the streamer's: flow_lsl.py stamps the newest sample of each chunk
+%   with the time it asked the bridge, and LSL spaces the earlier ones at the
+%   nominal 1 ms while the bridge runs at about 1005 Hz. At a chunk boundary a time
+%   can therefore step back by up to about 1 ms (seen live, 2026-10-30). Integrate
+%   volume over samples (flow / 60 / sampleRate litres each), not over diff(t).
 
     properties
         staleAfter (1, 1) double {mustBePositive} = 1.0   % s without samples -> lost
@@ -234,9 +240,9 @@ classdef flowInlet < handle
                 error('rrst:badFlowStream', 'Stream "%s" has %d channel(s); expected [nSeq flow temp].', ...
                     src.name, info.channel_count());
             end
-            inlet = lsl_inlet(info, flowInlet.BufferS);
+            in = lsl_inlet(info, flowInlet.BufferS);
             try
-                inlet.open_stream(5);              % connect now, so no sample is missed
+                in.open_stream(5);              % connect now, so no sample is missed
             catch
                 error('rrst:noFlowStream', ['The airflow stream "%s" was found but did not ' ...
                     'connect within 5 s. Restart the flow stream (Physio Recorder RRST ' ...
@@ -244,11 +250,11 @@ classdef flowInlet < handle
                     'without breath feedback.'], src.name);
             end
             try
-                src.timeCorrection = inlet.time_correction(2);
+                src.timeCorrection = in.time_correction(2);
             catch
                 src.timeCorrection = 0;
             end
-            src.inlet = inlet;
+            src.inlet = in;
             src.lost = false;
             src.lastSeq = NaN;
             src.lastDataT = lsl_local_clock(src.lib);
