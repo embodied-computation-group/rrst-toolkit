@@ -24,7 +24,8 @@ classdef TestKidsSound < matlab.unittest.TestCase
         function cueIsStereoAtTheRequestedRate(tc, cue, fs)
             x = kidsCueWave(cue{1}, fs);
             tc.verifyClass(x, 'double');
-            tc.verifySize(x, [NaN 2]);
+            tc.verifyTrue(ismatrix(x));
+            tc.verifyEqual(size(x, 2), 2);
             tc.verifyEqual(size(x, 1) / fs, cue{2}, 'RelTol', 0.2, ...
                 sprintf('%s should last about %g s', cue{1}, cue{2}));
         end
