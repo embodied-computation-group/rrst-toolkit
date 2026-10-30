@@ -33,6 +33,12 @@ end
 fprintf('Psychtoolbox %s\n', PsychtoolboxVersion);
 fprintf('Configuration: %s, procedure %s, stimulus unit %s\n', cfg.label, cfg.procedure, cfg.stim.unit);
 
+%% Event markers (LSL). Opened first so a recorder started now already sees them.
+if cfg.markers.lsl
+    rrstMarker('open', cfg.markers.liblslDir);
+    closeMarkers = onCleanup(@() rrstMarker('close'));
+end
+
 %% Participant
 vars.exptName   = 'RRST';
 vars.exptVers   = '2-0';
@@ -87,6 +93,10 @@ if cfg.runTutorial
 end
 fprintf('Scale: 0-%g %s (zero = wedge touching the tube, max = barely possible to inhale)\n', ...
     stim.ScaleMax, stim.Unit);
+
+if cfg.markers.lsl && cfg.markers.requireRecorder
+    waitForRecorder();
+end
 
 input(sprintf(['\nCalibration runs with the tube %s, as in the device record.\n' ...
     'The wedge will close fully, then open. Press Enter when ready...'], ...

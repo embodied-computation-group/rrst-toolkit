@@ -5,6 +5,21 @@ session so a fresh session can continue from the files.
 
 ## Now
 
+- [x] **Recording with physiology and airflow (2026-10-28, end of day, ships to Zurich
+      on 2026-10-29).** The task sends LSL markers (`RRST`, opened at launch;
+      `trial_<n>_level_<x>` and `_correct|wrong` added last and only checked in MATLAB,
+      not yet in a live session). It waits before calibration until a recorder receives
+      them (`cfg.markers.requireRecorder`). The Physio Recorder
+      ([plux-lsl](https://github.com/embodied-computation-group/plux-lsl), private,
+      desktop shortcut) records PLUX, flow (SFM3019 via SensorBridge, COM10) and
+      markers, and starts recording by itself when RRST launches. PLUX and flow are
+      optional per PC. Standard figures are made after Stop. A 20-trial pilot passed
+      end to end; data and README are in
+      `bench/sessions/flow__device_2E4441D76D5F2996__2026-10-28/`. liblsl-Matlab needs
+      the 1.18 `lsl.dll`. Open: first ECG test with clip-on leads; the new app code's
+      first full hardware run with ECG; PLUX Bluetooth latency; flow watchdog.
+      Handbook: `shared/airflow-sensor.md`, `shared/recording.md`, roadmap.
+
 - [x] Device layer (`device/+rrst`), built test-first against a simulated device.
       41/41 tests pass; mutation checks recorded in VERIFICATION.md (2026-10-28).
 - [x] Bench step 1: `bench/readStatus.m` (sends only `s`), first 2.0 unit on COM3,
@@ -71,6 +86,25 @@ session so a fresh session can continue from the files.
 
 ## Next
 
+- State at 2026-10-28 evening (before a clear). Focus is Zurich; next up: **PLUX
+  integration** (the task still has `vars.pluxSynch = 0` and old plux-square drawing in
+  the helpers; nothing new written yet).
+  - Done on `main` today: the window no longer greys out on key waits (GetMouse in
+    wait loops); Esc aborts from every screen of the adult task (not during
+    calibration); the tutorial runs one practice trial per `cfg.tutorial.exampleStimuli`
+    level (tested unattended on the mock device only); **multi-session**: runRRST asks
+    for a session number, files are `RRST_<ID>_s<session>_<proc>_<date>`, only a
+    completed file of the same ID+session blocks a run, and no save ever overwrites
+    (`_2`, `_3`). Psychtoolbox stand-ins for helper tests: `tests/ptbstubs`.
+  - Handbook page `handbook/v2/running.md` (how to run the 2.0 task), merged into
+    `main` 2026-10-28. mkdocs isn't installed on the stim laptop, so the strict build
+    hasn't run; links were checked by hand.
+  - Branch `kids-variant`: RRST-Kids ("Milkshake Monster"), parked. Tried once by a
+    4.5-year-old; trials are now experimenter-started with 3 slurps. Not for children
+    yet (see `handbook/v2/kids.md` open questions).
+  - Still open: `task/RRST_2-0/README.md` describes generated pink noise (the code loops
+    the rain file); session number is the visit number, not the dose (keeps the run
+    blind; confirm with Zurich).
 - Zurich design (Micah, 2026-10-28): 30 participants, within-subject placebo vs low vs
   moderate THC. RRST gets 30 minutes in total, including tutorial and breaks. At about
   24 s per trial with confidence (20-trial pilot), that leaves roughly 45-50 Psi trials,

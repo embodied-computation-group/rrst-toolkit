@@ -65,4 +65,10 @@ end
 if isfield(cfg.noise, 'file') && strlength(string(cfg.noise.file)) > 0 && ~isfile(cfg.noise.file)
     bad('noise.file not found: %s', cfg.noise.file);
 end
+if ~isfield(cfg, 'markers') || ~isfield(cfg.markers, 'lsl') || ~islogical(cfg.markers.lsl)
+    bad('markers.lsl must be true or false.');
+end
+if ~isfield(cfg.markers, 'requireRecorder') || ~islogical(cfg.markers.requireRecorder)
+    bad('markers.requireRecorder must be true or false.');
+end
 end
